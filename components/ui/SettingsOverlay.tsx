@@ -118,7 +118,7 @@ export const SettingsOverlay: React.FC = () => {
 
   // --- SUB-VIEWS ---
 
-  const MainView = () => (
+  const renderMainView = () => (
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50 dark:bg-slate-950 animate-slide-in-right transition-colors duration-300">
             {/* Partners Hub */}
             <div>
@@ -248,7 +248,7 @@ export const SettingsOverlay: React.FC = () => {
       </div>
   );
 
-  const EditProfileView = () => (
+  const renderEditProfileView = () => (
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50 dark:bg-slate-950 animate-slide-in-right transition-colors duration-300">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 text-center transition-colors duration-300">
               <div className="w-24 h-24 mx-auto bg-slate-200 dark:bg-slate-800 rounded-full mb-4 relative overflow-hidden group">
@@ -290,7 +290,7 @@ export const SettingsOverlay: React.FC = () => {
       </div>
   );
 
-  const RegisterMerchantView = () => (
+  const renderRegisterMerchantView = () => (
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50 dark:bg-slate-950 animate-slide-in-right transition-colors duration-300">
           <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-purple-900/20">
               <StoreIcon size={32} className="mb-3 opacity-80" />
@@ -351,7 +351,7 @@ export const SettingsOverlay: React.FC = () => {
       </div>
   );
 
-  const RegisterDriverView = () => (
+  const renderRegisterDriverView = () => (
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50 dark:bg-slate-950 animate-slide-in-right transition-colors duration-300">
           <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg shadow-amber-900/20">
               <Bike size={32} className="mb-3 opacity-80" />
@@ -397,7 +397,7 @@ export const SettingsOverlay: React.FC = () => {
       </div>
   );
 
-  const PrivacyView = () => (
+  const renderPrivacyView = () => (
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50 dark:bg-slate-900 animate-slide-in-right">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 text-center">
               <div className="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
@@ -508,11 +508,11 @@ export const SettingsOverlay: React.FC = () => {
         </div>
 
         {/* Dynamic Content */}
-        {currentView === 'MAIN' && <MainView />}
-        {currentView === 'EDIT_PROFILE' && <EditProfileView />}
-        {currentView === 'REGISTER_MERCHANT' && <RegisterMerchantView />}
-        {currentView === 'REGISTER_DRIVER' && <RegisterDriverView />}
-        {currentView === 'PRIVACY' && <PrivacyView />}
+        {currentView === 'MAIN' && renderMainView()}
+        {currentView === 'EDIT_PROFILE' && renderEditProfileView()}
+        {currentView === 'REGISTER_MERCHANT' && renderRegisterMerchantView()}
+        {currentView === 'REGISTER_DRIVER' && renderRegisterDriverView()}
+        {currentView === 'PRIVACY' && renderPrivacyView()}
       </div>
       
       <style>{`
@@ -528,8 +528,8 @@ export const SettingsOverlay: React.FC = () => {
   );
 };
 
-const SettingItem: React.FC<{ icon: React.ReactNode; label: string; hasSwitch?: boolean; active?: boolean }> = ({ icon, label, hasSwitch, active }) => (
-    <div className="flex items-center justify-between p-4 border-b border-slate-50 dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700 active:bg-slate-100 dark:active:bg-slate-600 transition-colors cursor-pointer">
+const SettingItem: React.FC<{ icon: React.ReactNode; label: string; hasSwitch?: boolean; active?: boolean; onClick?: () => void }> = ({ icon, label, hasSwitch, active, onClick }) => (
+    <div onClick={onClick} className="flex items-center justify-between p-4 border-b border-slate-50 dark:border-slate-700 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700 active:bg-slate-100 dark:active:bg-slate-600 transition-colors cursor-pointer">
         <div className="flex items-center gap-3 text-slate-700 dark:text-slate-300">
             {icon}
             <span className="font-medium text-sm">{label}</span>

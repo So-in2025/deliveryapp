@@ -22,9 +22,9 @@ export const Button: React.FC<ButtonProps> = ({
   const variants = {
     primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-md shadow-brand-500/20',
     // Added border-slate-200 and slightly darker text for better contrast against white backgrounds
-    secondary: 'bg-slate-100 text-slate-900 border border-slate-200 hover:bg-slate-200 hover:border-slate-300',
-    outline: 'border-2 border-slate-200 text-slate-900 hover:bg-slate-50', // Darkened text
-    ghost: 'text-slate-700 hover:bg-slate-100', 
+    secondary: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700',
+    outline: 'border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800', // Darkened text
+    ghost: 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800', 
     danger: 'bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/20'
   };
 

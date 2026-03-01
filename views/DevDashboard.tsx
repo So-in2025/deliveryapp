@@ -108,7 +108,7 @@ export const DevDashboard: React.FC = () => {
 
       <div className="space-y-1 mb-8">
         <h1 className="text-3xl font-bold tracking-tighter text-white">CODEX OMEGA</h1>
-        <p className="text-slate-400 text-sm font-mono">Blueprint Maestro // Delivery Local</p>
+        <p className="text-slate-400 text-sm font-mono">Blueprint Maestro // Mazamitla</p>
       </div>
 
       {/* Quick Setup for Testing - NEW SECTION */}

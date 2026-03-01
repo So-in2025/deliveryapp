@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { useConnectivity } from '../context/ConnectivityContext';
 import { UserRole } from '../types';
-import { ShoppingBag, LayoutDashboard, Truck, Settings, LogOut, WifiOff, Shield } from 'lucide-react';
+import { ShoppingBag, LayoutDashboard, Truck, Settings, LogOut, WifiOff, Shield, Palmtree } from 'lucide-react';
 import { IOSInstallPrompt } from './ui/IOSInstallPrompt';
 import { SettingsOverlay } from './ui/SettingsOverlay';
 
@@ -51,10 +51,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         {!isDev && !isAuth && !isAdmin && (
           <header className={`shrink-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-4 py-3 flex justify-between items-center pt-safe transition-colors duration-300 ${!isOnline ? 'mt-6' : ''}`}>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
-                Ω
+              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-700 rounded-lg flex items-center justify-center text-white shadow-md">
+                <Palmtree size={18} />
               </div>
-              <h1 className="font-bold text-slate-800 dark:text-white tracking-tight transition-colors">Delivery<span className="text-brand-600 dark:text-brand-400">Local</span></h1>
+              <h1 className="font-bold text-slate-800 dark:text-white tracking-tight transition-colors">Maza<span className="text-emerald-600 dark:text-emerald-400">mitla</span></h1>
             </div>
             
             {/* Standard Exit/Back Button */}

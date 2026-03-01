@@ -41,7 +41,7 @@ export const MOCK_STORES: Store[] = [
     reviewsCount: 1240,
     deliveryTimeMin: 20,
     deliveryTimeMax: 35,
-    deliveryFee: 2.50,
+    deliveryFee: 45.00,
     createdAt: new Date(NOW.getTime() - (100 * ONE_DAY)).toISOString(), // Old store
     image: 'https://images.unsplash.com/photo-1586816001966-79b736744398?auto=format&fit=crop&w=800&q=80',
     products: [
@@ -49,7 +49,7 @@ export const MOCK_STORES: Store[] = [
         id: 'p1', 
         name: 'Classic Smash', 
         description: 'Doble carne smash, queso cheddar americano, cebolla, pickles y salsa secreta.', 
-        price: 12.50, 
+        price: 165.00, 
         image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=60',
         modifierGroups: [
           {
@@ -69,9 +69,9 @@ export const MOCK_STORES: Store[] = [
             min: 0,
             max: 3,
             options: [
-              { id: 'm4', name: 'Bacon Extra', price: 1.50 },
-              { id: 'm5', name: 'Huevo Frito', price: 1.20 },
-              { id: 'm6', name: 'Queso Cheddar Extra', price: 1.00 }
+              { id: 'm4', name: 'Tocino Extra', price: 25.00 },
+              { id: 'm5', name: 'Huevo Frito', price: 15.00 },
+              { id: 'm6', name: 'Queso Cheddar Extra', price: 20.00 }
             ]
           }
         ]
@@ -79,8 +79,8 @@ export const MOCK_STORES: Store[] = [
       { 
         id: 'p2', 
         name: 'Bacon Royale', 
-        description: 'Bacon crujiente artesanal, aros de cebolla y barbacoa honey.', 
-        price: 14.00, 
+        description: 'Tocino crujiente artesanal, aros de cebolla y barbacoa honey.', 
+        price: 185.00, 
         image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=500&q=60',
         modifierGroups: [
              {
@@ -105,7 +105,7 @@ export const MOCK_STORES: Store[] = [
     reviewsCount: 850,
     deliveryTimeMin: 40,
     deliveryTimeMax: 55,
-    deliveryFee: 3.00,
+    deliveryFee: 55.00,
     createdAt: new Date(NOW.getTime() - (50 * ONE_DAY)).toISOString(),
     image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=800&q=80',
     products: [
@@ -113,14 +113,14 @@ export const MOCK_STORES: Store[] = [
           id: 'p3', 
           name: 'Spicy Tuna Roll', 
           description: 'Atún rojo fresco, mayo sriracha, pepino y topping de sésamo.', 
-          price: 11.00, 
+          price: 145.00, 
           image: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd43fb?auto=format&fit=crop&w=500&q=60' 
       },
       { 
           id: 'p4', 
           name: 'Salmon Nigiri Set', 
           description: 'Selección premium de salmón noruego sobre arroz de sushi avinagrado.', 
-          price: 9.50, 
+          price: 195.00, 
           image: 'https://images.unsplash.com/photo-1617196034438-f4657536d05b?auto=format&fit=crop&w=500&q=60' 
       },
     ]
@@ -133,7 +133,7 @@ export const MOCK_STORES: Store[] = [
     reviewsCount: 200,
     deliveryTimeMin: 30,
     deliveryTimeMax: 45,
-    deliveryFee: 2.00,
+    deliveryFee: 40.00,
     createdAt: new Date(NOW.getTime() - (30 * ONE_DAY)).toISOString(),
     image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=80',
     products: [
@@ -141,14 +141,14 @@ export const MOCK_STORES: Store[] = [
           id: 'p5', 
           name: 'Pizza Margherita DOC', 
           description: 'Tomate San Marzano D.O.P., mozzarella di bufala campana, albahaca fresca.', 
-          price: 15.00, 
+          price: 220.00, 
           image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=500&q=60' 
       },
       { 
           id: 'p6', 
           name: 'Pasta Carbonara', 
           description: 'Spaghetti, guanciale, pecorino romano, yema de huevo y pimienta negra.', 
-          price: 13.50, 
+          price: 180.00, 
           image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=500&q=60' 
       },
     ]
@@ -161,7 +161,7 @@ export const MOCK_STORES: Store[] = [
     reviewsCount: 0, // New Store
     deliveryTimeMin: 15,
     deliveryTimeMax: 25,
-    deliveryFee: 1.50,
+    deliveryFee: 30.00,
     createdAt: new Date().toISOString(), // Brand new (Today)
     image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80',
     products: [
@@ -169,7 +169,7 @@ export const MOCK_STORES: Store[] = [
           id: 'p7', 
           name: 'Tacos al Pastor (x3)', 
           description: 'Cerdo marinado, piña, cilantro y cebolla en tortilla de maíz.', 
-          price: 8.50, 
+          price: 75.00, 
           image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?auto=format&fit=crop&w=500&q=60' 
       }
     ]
@@ -181,11 +181,11 @@ export const INITIAL_ORDERS: Order[] = [
     id: 'ord-001',
     storeId: 's1',
     storeName: 'Burger & Co.',
-    total: 26.50,
-    deliveryFee: 1.50,
+    total: 375.00,
+    deliveryFee: 45.00,
     status: OrderStatus.DELIVERED,
     items: [
-      { product: MOCK_STORES[0].products[0], quantity: 2, selectedModifiers: [], totalPrice: 12.50 }
+      { product: MOCK_STORES[0].products[0], quantity: 2, selectedModifiers: [], totalPrice: 330.00 }
     ],
     createdAt: new Date(NOW.getTime() - (2 * 60 * 60 * 1000)), // 2 hours ago
     address: 'Av. Libertador 1234, 4B',
@@ -197,11 +197,11 @@ export const INITIAL_ORDERS: Order[] = [
     id: 'ord-demo-002',
     storeId: 's2',
     storeName: 'Sushi Zen',
-    total: 45.00,
-    deliveryFee: 3.00,
+    total: 490.00,
+    deliveryFee: 55.00,
     status: OrderStatus.READY, // Ready for Driver to Pick Up
     items: [
-      { product: MOCK_STORES[1].products[0], quantity: 3, selectedModifiers: [], totalPrice: 33.00 }
+      { product: MOCK_STORES[1].products[0], quantity: 3, selectedModifiers: [], totalPrice: 435.00 }
     ],
     createdAt: new Date(NOW.getTime() - (15 * 60 * 1000)), // 15 mins ago
     address: 'Calle Falsa 123',
@@ -213,11 +213,11 @@ export const INITIAL_ORDERS: Order[] = [
     id: 'ord-demo-003',
     storeId: 's4',
     storeName: 'Tacos El Pastor',
-    total: 18.50,
-    deliveryFee: 1.50,
+    total: 180.00,
+    deliveryFee: 30.00,
     status: OrderStatus.PREPARING, // Visible in Merchant View (if Tacos selected)
     items: [
-      { product: MOCK_STORES[3].products[0], quantity: 2, selectedModifiers: [], totalPrice: 17.00 }
+      { product: MOCK_STORES[3].products[0], quantity: 2, selectedModifiers: [], totalPrice: 150.00 }
     ],
     createdAt: new Date(NOW.getTime() - (5 * 60 * 1000)), // 5 mins ago
     address: 'Av. Santa Fe 500',
@@ -229,5 +229,15 @@ export const INITIAL_ORDERS: Order[] = [
 
 export const APP_CONFIG = {
   currency: '$',
-  appName: 'DeliveryLocal'
+  appName: 'Mazamitla'
+};
+
+export const formatCurrency = (amount: number | undefined | null) => {
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    amount = 0;
+  }
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(amount);
 };

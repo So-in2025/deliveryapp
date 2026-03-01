@@ -36,12 +36,12 @@ export const IOSInstallPrompt: React.FC = () => {
 
         <div className="flex gap-4 items-start pr-8">
              <div className="w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center shrink-0">
-                 <img src="https://cdn.jsdelivr.net/gh/lucide-icons/lucide/icons/shopping-bag.svg" className="w-8 h-8 opacity-80" />
+                 <img src="https://cdn.jsdelivr.net/gh/lucide-icons/lucide/icons/palmtree.svg" className="w-8 h-8 opacity-80" />
              </div>
              <div>
                  <h3 className="font-bold text-slate-900 text-lg">Instalar App</h3>
                  <p className="text-slate-500 text-sm leading-relaxed mt-1">
-                     Agrega <b>Delivery Local</b> a tu inicio para una experiencia a pantalla completa.
+                     Agrega <b>Mazamitla</b> a tu inicio para una experiencia a pantalla completa.
                  </p>
              </div>
         </div>

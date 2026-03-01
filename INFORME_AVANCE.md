@@ -1,4 +1,4 @@
-# 📋 INFORME DE ESTADO DEL PROYECTO: Delivery Local
+# 📋 INFORME DE ESTADO DEL PROYECTO: Mazamitla
 
 **Fecha:** 24 Febrero 2026
 **Estado General:** ✅ HITO 2 COMPLETADO (Demo Funcional Lista)

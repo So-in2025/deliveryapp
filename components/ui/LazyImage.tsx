@@ -8,18 +8,27 @@ interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 }
 
 export const LazyImage: React.FC<LazyImageProps> = ({ src, alt, className = '', ...props }) => {
+  const [currentSrc, setCurrentSrc] = useState(src);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    // Reset state when src changes
+  if (src !== currentSrc) {
+    setCurrentSrc(src);
     setIsLoaded(false);
     setError(false);
-    
+  }
+
+  useEffect(() => {
+    let mounted = true;
     const img = new Image();
     img.src = src;
-    img.onload = () => setIsLoaded(true);
-    img.onerror = () => setError(true);
+    img.onload = () => {
+        if (mounted) setIsLoaded(true);
+    };
+    img.onerror = () => {
+        if (mounted) setError(true);
+    };
+    return () => { mounted = false; };
   }, [src]);
 
   return (

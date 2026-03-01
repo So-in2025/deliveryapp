@@ -1,19 +1,40 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
-import { OrderStatus, Store, UserRole, OrderType, Order } from '../types';
-import { APP_CONFIG } from '../constants';
+import { OrderStatus, Store, OrderType } from '../types';
+import { formatCurrency } from '../constants';
 import { Badge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
 import { Button } from '../components/ui/Button';
 import { 
   TrendingUp, Users, Store as StoreIcon, Activity, 
-  DollarSign, BarChart3, Shield, Search, MoreVertical, 
-  Lock, AlertTriangle, CheckCircle2, ChevronRight, Truck, MapPin, ArrowLeft, Mail, Calendar, Receipt
+  DollarSign, Shield, Search, 
+  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail
 } from 'lucide-react';
 
+interface KpiCardProps {
+  title: string;
+  value: string | number;
+  sub: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+const KpiCard = ({ title, value, sub, icon: Icon, color }: KpiCardProps) => (
+  <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
+    <div>
+      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{title}</p>
+      <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
+      <p className={`text-xs font-bold mt-1 ${color}`}>{sub}</p>
+    </div>
+    <div className={`p-2 rounded-lg bg-slate-50 ${color.replace('text-', 'text-opacity-80 text-')}`}>
+      <Icon size={20} />
+    </div>
+  </div>
+);
+
 export const AdminView: React.FC = () => {
-  const { orders, stores, user, assignDriver, drivers, updateOrder } = useApp();
+  const { orders, stores, assignDriver, drivers, resolveClaim } = useApp();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'DISPATCH' | 'STORES' | 'USERS' | 'DISPUTES'>('DASHBOARD');
   
@@ -60,32 +81,19 @@ export const AdminView: React.FC = () => {
 
   // --- SUB-COMPONENTS ---
 
-  const KpiCard = ({ title, value, sub, icon: Icon, color }: any) => (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
-      <div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{title}</p>
-        <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-        <p className={`text-xs font-bold mt-1 ${color}`}>{sub}</p>
-      </div>
-      <div className={`p-2 rounded-lg bg-slate-50 ${color.replace('text-', 'text-opacity-80 text-')}`}>
-        <Icon size={20} />
-      </div>
-    </div>
-  );
-
-  const DashboardTab = () => (
+  const renderDashboardTab = () => (
     <div className="space-y-6 animate-fade-in pb-20">
       <div className="grid grid-cols-2 gap-4 px-4 pt-2">
         <KpiCard 
           title="Revenue Global" 
-          value={`${APP_CONFIG.currency}${kpis.totalSales.toFixed(0)}`}
+          value={formatCurrency(kpis.totalSales)}
           sub="+12% vs ayer"
           icon={DollarSign}
           color="text-emerald-600"
         />
         <KpiCard 
           title="Comisiones (15%)" 
-          value={`${APP_CONFIG.currency}${kpis.platformCommission.toFixed(0)}`}
+          value={formatCurrency(kpis.platformCommission)}
           sub="Ganancia Neta"
           icon={TrendingUp}
           color="text-brand-600"
@@ -121,7 +129,7 @@ export const AdminView: React.FC = () => {
                     <p className="text-sm font-bold text-slate-900 leading-none mb-1">
                       {order.storeName}
                       <span className="text-slate-400 font-normal"> vendió </span> 
-                      {APP_CONFIG.currency}{order.total.toFixed(0)}
+                      {formatCurrency(order.total)}
                     </p>
                     <p className="text-[10px] text-slate-400 flex items-center gap-1">
                       Hace 2 min • {order.items.length} items
@@ -136,7 +144,7 @@ export const AdminView: React.FC = () => {
     </div>
   );
 
-  const DispatchTab = () => {
+  const renderDispatchTab = () => {
       // Logic: Show orders that are READY but NOT assigned (or pending assignment)
       const dispatchableOrders = orders.filter(o => 
           (o.status === OrderStatus.READY || o.status === OrderStatus.ACCEPTED || o.status === OrderStatus.PREPARING) 
@@ -175,7 +183,7 @@ export const AdminView: React.FC = () => {
                                            <MapPin size={12} /> {order.address}
                                        </div>
                                    </div>
-                                   <span className="font-bold text-slate-900">{APP_CONFIG.currency}{order.total.toFixed(2)}</span>
+                                   <span className="font-bold text-slate-900">{formatCurrency(order.total)}</span>
                                </div>
 
                                <div className="space-y-2">
@@ -203,7 +211,7 @@ export const AdminView: React.FC = () => {
       );
   };
 
-  const StoreDetail = () => {
+  const renderStoreDetail = () => {
       if(!selectedStore) return null;
       const storeStats = orders.filter(o => o.storeId === selectedStore.id);
       const totalRevenue = storeStats.reduce((sum, o) => sum + o.total, 0);
@@ -230,7 +238,7 @@ export const AdminView: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                       <div className="bg-white p-4 rounded-xl border border-slate-100 text-center">
                           <p className="text-xs font-bold text-slate-400 uppercase">Ventas Totales</p>
-                          <p className="text-xl font-bold text-slate-900">{APP_CONFIG.currency}{totalRevenue.toFixed(0)}</p>
+                          <p className="text-xl font-bold text-slate-900">{formatCurrency(totalRevenue)}</p>
                       </div>
                       <div className="bg-white p-4 rounded-xl border border-slate-100 text-center">
                           <p className="text-xs font-bold text-slate-400 uppercase">Pedidos</p>
@@ -244,7 +252,7 @@ export const AdminView: React.FC = () => {
                           {selectedStore.products.map(p => (
                               <div key={p.id} className="p-3 flex justify-between items-center">
                                   <span className="text-sm font-medium">{p.name}</span>
-                                  <span className="text-sm text-slate-500">{APP_CONFIG.currency}{p.price}</span>
+                                  <span className="text-sm text-slate-500">{formatCurrency(p.price)}</span>
                               </div>
                           ))}
                       </div>
@@ -254,7 +262,7 @@ export const AdminView: React.FC = () => {
       )
   };
 
-  const StoresTab = () => (
+  const renderStoresTab = () => (
     <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20">
       <div className="bg-white p-2 rounded-xl border border-slate-200 flex items-center gap-2">
          <Search size={18} className="text-slate-400 ml-2" />
@@ -284,7 +292,7 @@ export const AdminView: React.FC = () => {
     </div>
   );
 
-  const UserDetail = () => {
+  const renderUserDetail = () => {
       if(!selectedUser) return null;
       const userOrders = orders.filter(o => o.customerName === selectedUser);
       const totalSpent = userOrders.reduce((acc, o) => acc + o.total, 0);
@@ -310,7 +318,7 @@ export const AdminView: React.FC = () => {
                               <p className="text-[10px] uppercase font-bold text-slate-400">Pedidos</p>
                           </div>
                            <div className="text-center">
-                              <p className="text-xl font-bold text-slate-900">{APP_CONFIG.currency}{totalSpent.toFixed(0)}</p>
+                              <p className="text-xl font-bold text-slate-900">{formatCurrency(totalSpent)}</p>
                               <p className="text-[10px] uppercase font-bold text-slate-400">Total Gastado</p>
                           </div>
                       </div>
@@ -323,7 +331,7 @@ export const AdminView: React.FC = () => {
                               <div key={order.id} className="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center">
                                   <div>
                                       <p className="font-bold text-sm text-slate-900">{order.storeName}</p>
-                                      <p className="text-xs text-slate-500">{new Date(order.createdAt).toLocaleDateString()} • {APP_CONFIG.currency}{order.total}</p>
+                                      <p className="text-xs text-slate-500">{new Date(order.createdAt).toLocaleDateString()} • {formatCurrency(order.total)}</p>
                                   </div>
                                   <Badge status={order.status} />
                               </div>
@@ -335,7 +343,7 @@ export const AdminView: React.FC = () => {
       )
   };
 
-  const UsersTab = () => (
+  const renderUsersTab = () => (
     <div className="px-4 pt-2 animate-fade-in pb-20">
        <div className="text-center py-8">
             <Shield size={40} className="mx-auto text-slate-200 mb-2" />
@@ -359,7 +367,7 @@ export const AdminView: React.FC = () => {
                        </div>
                        <div>
                            <p className="text-sm font-bold text-slate-900">{u.name}</p>
-                           <p className="text-[10px] text-slate-500">{u.totalOrders} pedidos • LTV: {APP_CONFIG.currency}{u.totalSpent.toFixed(0)}</p>
+                           <p className="text-[10px] text-slate-500">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>
                        </div>
                    </div>
                    <ChevronRight size={16} className="text-slate-300" />
@@ -369,11 +377,11 @@ export const AdminView: React.FC = () => {
     </div>
   );
 
-  const DisputesTab = () => {
+  const renderDisputesTab = () => {
     const disputedOrders = orders.filter(o => o.status === OrderStatus.DISPUTED);
 
     const handleResolveDispute = (orderId: string, resolution: 'RESOLVED' | 'REJECTED') => {
-        updateOrder(orderId, resolution === 'RESOLVED' ? OrderStatus.CANCELLED : OrderStatus.DELIVERED);
+        resolveClaim(orderId, resolution);
         showToast(`Reclamo ${resolution === 'RESOLVED' ? 'Aceptado (Reembolsado)' : 'Rechazado'}`, 'success');
     };
 
@@ -415,8 +423,8 @@ export const AdminView: React.FC = () => {
   return (
     <div className="h-full bg-slate-50 flex flex-col">
        {/* Drill-down Views */}
-       {selectedStore ? <StoreDetail /> :
-        selectedUser ? <UserDetail /> : (
+       {selectedStore ? renderStoreDetail() :
+        selectedUser ? renderUserDetail() : (
             <>
                 <div className="bg-slate-900 text-white p-4 pt- safe-pt shadow-md z-10 sticky top-0">
                     <div className="flex justify-between items-center mb-4">
@@ -457,14 +465,21 @@ export const AdminView: React.FC = () => {
                         >
                             Usuarios
                         </button>
+                        <button 
+                            onClick={() => setActiveTab('DISPUTES')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'DISPUTES' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            Reclamos
+                        </button>
                     </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    {activeTab === 'DASHBOARD' && <DashboardTab />}
-                    {activeTab === 'DISPATCH' && <DispatchTab />}
-                    {activeTab === 'STORES' && <StoresTab />}
-                    {activeTab === 'USERS' && <UsersTab />}
+                    {activeTab === 'DASHBOARD' && renderDashboardTab()}
+                    {activeTab === 'DISPATCH' && renderDispatchTab()}
+                    {activeTab === 'STORES' && renderStoresTab()}
+                    {activeTab === 'USERS' && renderUsersTab()}
+                    {activeTab === 'DISPUTES' && renderDisputesTab()}
                 </div>
             </>
         )}

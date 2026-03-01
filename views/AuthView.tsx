@@ -2,7 +2,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { UserRole } from '../types';
-import { ShoppingBag, Store, Bike, Terminal, ArrowRight, MapPin, Shield } from 'lucide-react';
+import { ShoppingBag, Store, Bike, Terminal, ArrowRight, MapPin, Shield, Palmtree } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
 import { DemoGuideModal } from '../components/ui/DemoGuideModal';
@@ -25,17 +25,17 @@ export const AuthView: React.FC = () => {
       <DemoGuideModal />
       
       {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-brand-100 rounded-full blur-3xl opacity-50"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-emerald-100 rounded-full blur-3xl opacity-50"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-green-100 rounded-full blur-3xl opacity-50"></div>
 
       <div className="flex-1 flex flex-col justify-center px-8 relative z-10">
         <div className="mb-10 animate-slide-up">
-          <div className="w-16 h-16 bg-brand-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-xl shadow-brand-500/30 mb-6">
-            Ω
+          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-700 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/30 mb-6">
+            <Palmtree size={32} />
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            Delivery<br />
-            <span className="text-brand-600">Local.</span>
+            Maza<br />
+            <span className="text-emerald-600">mitla.</span>
           </h1>
           <p className="text-slate-500 mt-4 text-lg leading-relaxed">
             La plataforma definitiva para conectar sabores, negocios y personas.

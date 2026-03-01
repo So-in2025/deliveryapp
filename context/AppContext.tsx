@@ -34,6 +34,7 @@ interface AppContextType {
   updateOrder: (orderId: string, status: OrderStatus) => void;
   cancelOrder: (orderId: string, reason: string) => void;
   submitClaim: (orderId: string, reason: string) => void;
+  resolveClaim: (orderId: string, resolution: 'RESOLVED' | 'REJECTED') => void;
   assignDriver: (orderId: string, driverId: string) => void;
   addProduct: (storeId: string, product: Product) => void;
   updateProduct: (storeId: string, product: Product) => void;
@@ -42,6 +43,7 @@ interface AppContextType {
   deleteCoupon: (id: string) => void;
   toggleCoupon: (id: string) => void;
   addReview: (review: Review) => void;
+  reviews: Review[];
   
   isDriverOnline: boolean;
   toggleDriverStatus: () => void;
@@ -127,9 +129,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
   
   const [cartStoreId, setCartStoreId] = useState<string | null>(() => {
-      // Try to recover store ID from cart items context if possible, or reset
-      // For MVP, we'll reset if not explicitly saved. 
-      // Ideally, we should save cartStoreId to localStorage too.
+      if (typeof window !== 'undefined') {
+          return localStorage.getItem('codex_cart_store_v1');
+      }
       return null; 
   });
 
@@ -148,11 +150,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [favorites]);
 
   useEffect(() => {
-    saveCart(cart as any);
-    if (cart.length === 0) setCartStoreId(null);
-  }, [cart]);
-
-  useEffect(() => {
     saveStores(stores);
   }, [stores]);
   
@@ -166,32 +163,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Sync Logic
   useEffect(() => {
-    if (isOnline) {
-      setOrders(prevOrders => {
-        // Migration: Auto-complete stale demo order if found (Fix for "Always says order in progress")
-        const staleOrderIndex = prevOrders.findIndex(o => o.id === 'ord-001' && o.status === OrderStatus.PREPARING);
-        if (staleOrderIndex > -1) {
-            const newOrders = [...prevOrders];
-            newOrders[staleOrderIndex] = { ...newOrders[staleOrderIndex], status: OrderStatus.DELIVERED };
-            saveOrders(newOrders);
-            return newOrders;
-        }
+    if (!isOnline) return;
 
-        const hasPending = prevOrders.some(o => o.isOfflinePending);
-        if (hasPending) {
-           const updatedOrders = prevOrders.map(o => 
-             o.isOfflinePending ? { ...o, isOfflinePending: false } : o
-           );
-           saveOrders(updatedOrders);
-           setTimeout(() => {
-               const count = prevOrders.filter(o => o.isOfflinePending).length;
-               showToast(`Conexión restaurada. ${count} pedido(s) enviado(s).`, 'success');
-           }, 1000);
-           return updatedOrders;
-        }
-        return prevOrders;
-      });
-    }
+    // Wrap in setTimeout to avoid "synchronous setState in effect" warning
+    const timer = setTimeout(() => {
+        setOrders(prevOrders => {
+            const pendingOrders = prevOrders.filter(o => o.isOfflinePending);
+            const hasStale = prevOrders.some(o => o.id === 'ord-001' && o.status === OrderStatus.PREPARING);
+
+            if (pendingOrders.length === 0 && !hasStale) {
+                return prevOrders;
+            }
+
+            const updatedOrders = prevOrders.map(o => {
+                let newOrder = o;
+                // Fix stale
+                if (o.id === 'ord-001' && o.status === OrderStatus.PREPARING) {
+                    newOrder = { ...o, status: OrderStatus.DELIVERED };
+                }
+                // Fix pending
+                if (o.isOfflinePending) {
+                    newOrder = { ...newOrder, isOfflinePending: false };
+                }
+                return newOrder;
+            });
+
+            saveOrders(updatedOrders);
+            
+            if (pendingOrders.length > 0) {
+                // We are already in a timeout, so we can just show toast
+                showToast(`Conexión restaurada. ${pendingOrders.length} pedido(s) enviado(s).`, 'success');
+            }
+
+            return updatedOrders;
+        });
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [isOnline, showToast]);
 
   const toggleSettings = () => setIsSettingsOpen(prev => !prev);
@@ -215,9 +223,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (cart.length > 0 && cartStoreId && cartStoreId !== storeId) {
         // Automatically clear cart if adding from a different store to avoid blocking confirm dialogs
         setCart([]);
+        saveCart([]);
     }
     
     setCartStoreId(storeId);
+    localStorage.setItem('codex_cart_store_v1', storeId);
 
     const modifiersTotal = modifiers.reduce((acc, mod) => acc + mod.price, 0);
     const unitPrice = product.price + modifiersTotal;
@@ -231,18 +241,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return itemModIds === newModIds;
       });
 
+      let newCart;
       if (existingIndex > -1) {
-        const newCart = [...prev];
+        newCart = [...prev];
         newCart[existingIndex].quantity += quantity;
-        return newCart;
+      } else {
+        newCart = [...prev, { product, quantity, selectedModifiers: modifiers, totalPrice: unitPrice }];
       }
-      return [...prev, { product, quantity, selectedModifiers: modifiers, totalPrice: unitPrice }];
+      
+      saveCart(newCart);
+      return newCart;
     });
   };
 
   const clearCart = () => {
       setCart([]);
+      saveCart([]);
       setCartStoreId(null);
+      localStorage.removeItem('codex_cart_store_v1');
   };
 
   const resetOrders = () => {
@@ -266,7 +282,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // Dynamic Delivery Fee Logic
     const store = stores.find(s => s.id === storeId);
-    const deliveryFee = type === OrderType.DELIVERY ? (store?.deliveryFee || 0) : 0;
+    const deliveryFee = type === OrderType.DELIVERY ? (store?.deliveryFee ?? 45) : 0;
     
     const total = Math.max(0, subtotal + deliveryFee - discount);
     
@@ -309,7 +325,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const cancelOrder = (orderId: string, reason: string) => {
-      setOrders(prev => prev.map(o => {
+      const updatedOrders = orders.map(o => {
           if (o.id !== orderId) return o;
           return {
               ...o,
@@ -317,21 +333,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               cancelledReason: reason,
               cancelledAt: new Date()
           };
-      }));
+      });
+      setOrders(updatedOrders);
+      saveOrders(updatedOrders);
       showToast('Pedido cancelado', 'error');
   };
 
   const submitClaim = (orderId: string, reason: string) => {
-      setOrders(prev => prev.map(o => {
-          if (o.id !== orderId) return o;
-          return {
-              ...o,
-              status: OrderStatus.DISPUTED,
-              claimReason: reason,
-              claimStatus: 'OPEN'
-          };
-      }));
+      setOrders(prev => {
+          const updated = prev.map(o => {
+              if (o.id !== orderId) return o;
+              return {
+                  ...o,
+                  status: OrderStatus.DISPUTED,
+                  claimReason: reason,
+                  claimStatus: 'OPEN'
+              };
+          });
+          saveOrders(updated);
+          return updated;
+      });
       showToast('Reclamo enviado. Nos contactaremos pronto.', 'info');
+  };
+
+  const resolveClaim = (orderId: string, resolution: 'RESOLVED' | 'REJECTED') => {
+      setOrders(prev => {
+          const updated = prev.map(o => {
+              if (o.id !== orderId) return o;
+              return {
+                  ...o,
+                  status: resolution === 'RESOLVED' ? OrderStatus.CANCELLED : OrderStatus.DELIVERED,
+                  claimStatus: resolution,
+                  cancelledReason: resolution === 'RESOLVED' ? 'Reembolso por reclamo' : undefined,
+                  cancelledAt: resolution === 'RESOLVED' ? new Date() : undefined
+              };
+          });
+          saveOrders(updated);
+          return updated;
+      });
   };
 
   const assignDriver = (orderId: string, driverId: string) => {
@@ -439,6 +478,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateOrder,
       cancelOrder,
       submitClaim,
+      resolveClaim,
       assignDriver,
       addProduct,
       updateProduct,
@@ -447,6 +487,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       deleteCoupon,
       toggleCoupon,
       addReview,
+      reviews,
       clientViewState,
       setClientViewState,
       selectedStore,
