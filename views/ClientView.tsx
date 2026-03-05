@@ -468,20 +468,20 @@ export const ClientView: React.FC = () => {
   };
 
   const BannerCarousel = () => (
-      <div className="overflow-x-auto scrollbar-hide flex gap-4 px-4 pb-4 snap-x">
+      <div className="overflow-x-auto scrollbar-hide flex gap-4 px-4 pb-4 snap-x lg:grid lg:grid-cols-2 lg:gap-6 lg:px-8 lg:overflow-visible">
             <div 
                 onClick={() => {
                     addCoupon({ id: `promo-${Date.now()}`, code: 'BENVENUTO20', discountPct: 0.2, active: true, description: 'Promo Bienvenida' });
                     showToast('¡Cupón BENVENUTO20 copiado y aplicado!', 'success');
                 }}
-                className="snap-center shrink-0 w-[85%] relative h-40 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
+                className="snap-center shrink-0 w-[85%] relative h-40 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform lg:w-full lg:h-56"
             >
              <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" />
              <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex items-center p-6">
                  <div>
                      <span className="bg-brand-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md mb-2 inline-block">PROMO</span>
-                     <h3 className="text-white text-xl font-bold leading-tight">20% OFF en<br/>Tu Primera Orden</h3>
-                     <p className="text-slate-200 text-xs mt-1">Toca para aplicar</p>
+                     <h3 className="text-white text-xl font-bold leading-tight lg:text-3xl">20% OFF en<br/>Tu Primera Orden</h3>
+                     <p className="text-slate-200 text-xs mt-1 lg:text-sm">Toca para aplicar</p>
                  </div>
              </div>
           </div>
@@ -490,14 +490,14 @@ export const ClientView: React.FC = () => {
                 setSelectedCategory('Pizza & Pasta');
                 showToast('Filtrando: Pizza Artesanal', 'info');
             }}
-            className="snap-center shrink-0 w-[85%] relative h-40 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
+            className="snap-center shrink-0 w-[85%] relative h-40 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform lg:w-full lg:h-56"
           >
              <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" />
              <div className="absolute inset-0 bg-gradient-to-r from-orange-900/70 to-transparent flex items-center p-6">
                  <div>
                      <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md mb-2 inline-block">NUEVO</span>
-                     <h3 className="text-white text-xl font-bold leading-tight">Festival de<br/>Pizza Artesanal</h3>
-                     <p className="text-slate-200 text-xs mt-1">Ver restaurantes</p>
+                     <h3 className="text-white text-xl font-bold leading-tight lg:text-3xl">Festival de<br/>Pizza Artesanal</h3>
+                     <p className="text-slate-200 text-xs mt-1 lg:text-sm">Ver restaurantes</p>
                  </div>
              </div>
           </div>
@@ -1021,8 +1021,8 @@ export const ClientView: React.FC = () => {
 
   const StoreDetail = () => (
       <div className="animate-fade-in relative pb-32 bg-white dark:bg-slate-900 min-h-screen">
-      <div className="relative h-56 w-full bg-slate-800">
-         <LazyImage src={selectedStore?.image} alt={selectedStore?.name} className="w-full h-full" />
+      <div className="relative h-56 w-full bg-slate-800 lg:h-80 lg:rounded-b-3xl overflow-hidden lg:max-w-7xl lg:mx-auto lg:mt-4 lg:rounded-t-3xl">
+         <LazyImage src={selectedStore?.image} alt={selectedStore?.name} className="w-full h-full lg:object-cover" />
          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent"></div>
          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
          <div className="absolute top-4 w-full px-4 flex justify-between z-10">
@@ -1030,10 +1030,10 @@ export const ClientView: React.FC = () => {
             <button onClick={(e) => selectedStore && toggleFavorite(selectedStore.id)} className="bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white/30 transition-colors"><Heart size={20} className={selectedStore && favorites.includes(selectedStore.id) ? "fill-red-500 text-red-500" : "text-white"} /></button>
          </div>
       </div>
-      <div className="px-4 -mt-10 relative z-10">
+      <div className="px-4 -mt-10 relative z-10 lg:max-w-4xl lg:mx-auto lg:-mt-16">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg border border-slate-100 dark:border-slate-700">
-            <h2 className="font-bold text-2xl text-slate-900 dark:text-white">{selectedStore?.name}</h2>
-            <div className="flex items-center gap-2 mt-2 text-slate-500 dark:text-slate-400 text-sm"><Clock size={14} /> <span>{selectedStore?.deliveryTimeMin}-{selectedStore?.deliveryTimeMax} min</span><span>•</span><Star size={14} className="text-amber-400 fill-amber-400" /> <span>{selectedStore?.rating}</span> <span className="text-xs text-slate-400 dark:text-slate-500">({selectedStore?.reviewsCount} reviews)</span></div>
+            <h2 className="font-bold text-2xl text-slate-900 dark:text-white lg:text-4xl">{selectedStore?.name}</h2>
+            <div className="flex items-center gap-2 mt-2 text-slate-500 dark:text-slate-400 text-sm lg:text-base"><Clock size={14} /> <span>{selectedStore?.deliveryTimeMin}-{selectedStore?.deliveryTimeMax} min</span><span>•</span><Star size={14} className="text-amber-400 fill-amber-400" /> <span>{selectedStore?.rating}</span> <span className="text-xs text-slate-400 dark:text-slate-500">({selectedStore?.reviewsCount} reviews)</span></div>
         </div>
       </div>
       <div className="p-4 space-y-6 lg:max-w-4xl lg:mx-auto lg:p-8">
