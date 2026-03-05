@@ -83,7 +83,7 @@ export const AdminView: React.FC = () => {
 
   const renderDashboardTab = () => (
     <div className="space-y-6 animate-fade-in pb-20">
-      <div className="grid grid-cols-2 gap-4 px-4 pt-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 pt-2 lg:max-w-7xl lg:mx-auto lg:w-full">
         <KpiCard 
           title="Revenue Global" 
           value={formatCurrency(kpis.totalSales)}
@@ -114,13 +114,13 @@ export const AdminView: React.FC = () => {
         />
       </div>
 
-      <div className="px-4">
+      <div className="px-4 lg:max-w-7xl lg:mx-auto lg:w-full">
         <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
           <Activity size={18} className="text-brand-600" /> Actividad en Vivo
         </h3>
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50 overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0 lg:gap-4 lg:p-4">
           {recentActivity.map(order => (
-            <div key={order.id} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+            <div key={order.id} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors lg:rounded-xl lg:border lg:border-slate-100">
               <div className="flex items-center gap-3">
                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-500">
                     {order.customerName.charAt(0)}
@@ -152,8 +152,8 @@ export const AdminView: React.FC = () => {
       );
 
       return (
-          <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20">
-               <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-start gap-3">
+          <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+               <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-start gap-3 lg:mb-6">
                    <AlertTriangle size={20} className="text-amber-600 mt-0.5" />
                    <div>
                        <h3 className="font-bold text-amber-800 text-sm">Despacho Manual Activo</h3>
@@ -169,8 +169,9 @@ export const AdminView: React.FC = () => {
                        <p className="text-slate-500 font-bold">Sin pedidos para despachar</p>
                    </div>
                ) : (
-                   dispatchableOrders.map(order => (
-                       <div key={order.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                   <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                   {dispatchableOrders.map(order => (
+                       <div key={order.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
                            <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                                 <span className="text-xs font-mono font-bold text-slate-500">{order.id.slice(-6)}</span>
                                 <Badge status={order.status} />
@@ -205,7 +206,8 @@ export const AdminView: React.FC = () => {
                                </div>
                            </div>
                        </div>
-                   ))
+                   ))}
+                   </div>
                )}
           </div>
       );
@@ -263,17 +265,18 @@ export const AdminView: React.FC = () => {
   };
 
   const renderStoresTab = () => (
-    <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20">
-      <div className="bg-white p-2 rounded-xl border border-slate-200 flex items-center gap-2">
+    <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+      <div className="bg-white p-2 rounded-xl border border-slate-200 flex items-center gap-2 lg:max-w-md">
          <Search size={18} className="text-slate-400 ml-2" />
          <input placeholder="Buscar comercio..." className="flex-1 outline-none text-sm" />
       </div>
 
+      <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
       {stores.map(store => (
         <div 
             key={store.id} 
             onClick={() => setSelectedStore(store)}
-            className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex gap-4 items-center active:scale-[0.99] transition-transform cursor-pointer"
+            className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex gap-4 items-center active:scale-[0.99] transition-transform cursor-pointer h-full"
         >
            <div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden shrink-0">
               <LazyImage src={store.image} alt={store.name} className="w-full h-full" />
@@ -289,6 +292,7 @@ export const AdminView: React.FC = () => {
            <ChevronRight size={18} className="text-slate-300" />
         </div>
       ))}
+      </div>
     </div>
   );
 
@@ -344,22 +348,22 @@ export const AdminView: React.FC = () => {
   };
 
   const renderUsersTab = () => (
-    <div className="px-4 pt-2 animate-fade-in pb-20">
+    <div className="px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
        <div className="text-center py-8">
             <Shield size={40} className="mx-auto text-slate-200 mb-2" />
             <h3 className="font-bold text-slate-900">Base de Usuarios</h3>
             <p className="text-xs text-slate-500">Clientes generados dinámicamente</p>
        </div>
        
-       <div className="bg-white rounded-xl shadow-sm border border-slate-100 text-left overflow-hidden">
-           <div className="p-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
+       <div className="bg-white rounded-xl shadow-sm border border-slate-100 text-left overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:bg-transparent lg:shadow-none lg:border-0">
+           <div className="p-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center lg:hidden">
               <span className="text-xs font-bold text-slate-500 uppercase">Lista de Clientes ({userList.length})</span>
            </div>
            {userList.map((u, i) => (
                <div 
                     key={i} 
                     onClick={() => setSelectedUser(u.name)}
-                    className="p-3 flex justify-between items-center border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer active:bg-slate-100 transition-colors"
+                    className="p-3 flex justify-between items-center border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer active:bg-slate-100 transition-colors lg:bg-white lg:rounded-xl lg:border lg:border-slate-100 lg:shadow-sm"
                 >
                    <div className="flex items-center gap-3">
                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
@@ -386,15 +390,16 @@ export const AdminView: React.FC = () => {
     };
 
     return (
-        <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20">
+        <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
             {disputedOrders.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-2xl border border-slate-100">
                     <Shield size={40} className="mx-auto text-slate-300 mb-2" />
                     <p className="text-slate-500 font-bold">No hay reclamos activos</p>
                 </div>
             ) : (
-                disputedOrders.map(order => (
-                    <div key={order.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+                <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                {disputedOrders.map(order => (
+                    <div key={order.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm h-full flex flex-col justify-between">
                         <div className="flex justify-between items-start mb-2">
                             <div>
                                 <p className="font-bold text-amber-900">Pedido #{order.id.slice(-6)}</p>
@@ -414,7 +419,8 @@ export const AdminView: React.FC = () => {
                             </Button>
                         </div>
                     </div>
-                ))
+                ))}
+                </div>
             )}
         </div>
     );
@@ -427,20 +433,21 @@ export const AdminView: React.FC = () => {
         selectedUser ? renderUserDetail() : (
             <>
                 <div className="bg-slate-900 text-white p-4 pt- safe-pt shadow-md z-10 sticky top-0">
-                    <div className="flex justify-between items-center mb-4">
-                        <div>
-                            <h1 className="text-xl font-bold flex items-center gap-2">
-                            <Shield size={20} className="text-brand-400" />
-                            Admin Panel
-                            </h1>
-                            <p className="text-xs text-slate-400">Vista de Propietario</p>
+                    <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
+                        <div className="flex justify-between items-center mb-4">
+                            <div>
+                                <h1 className="text-xl font-bold flex items-center gap-2">
+                                <Shield size={20} className="text-brand-400" />
+                                Admin Panel
+                                </h1>
+                                <p className="text-xs text-slate-400">Vista de Propietario</p>
+                            </div>
+                            <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700">
+                                <span className="font-bold text-xs">OP</span>
+                            </div>
                         </div>
-                        <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700">
-                            <span className="font-bold text-xs">OP</span>
-                        </div>
-                    </div>
 
-                    <div className="flex bg-slate-800/50 p-1 rounded-xl overflow-x-auto">
+                        <div className="flex bg-slate-800/50 p-1 rounded-xl overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-3xl lg:mx-auto">
                         <button 
                             onClick={() => setActiveTab('DASHBOARD')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'DASHBOARD' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
@@ -471,6 +478,7 @@ export const AdminView: React.FC = () => {
                         >
                             Reclamos
                         </button>
+                    </div>
                     </div>
                 </div>
 

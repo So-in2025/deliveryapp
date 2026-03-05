@@ -32,10 +32,10 @@ const isNewStore = (dateString: string): boolean => {
     return (
         <div 
             onClick={() => onClick(store)}
-            className={`group bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-[0.98] transition-all cursor-pointer animate-slide-up relative ${compact ? 'min-w-[200px] w-[200px]' : 'w-full'}`}
+            className={`group bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-[0.98] transition-all cursor-pointer animate-slide-up relative ${compact ? 'min-w-[200px] w-[200px]' : 'w-full h-full flex flex-col'}`}
             style={{ animationDelay: `${index * 50}ms` }}
         >
-            <div className={`relative w-full rounded-xl overflow-hidden mb-3 bg-slate-100 dark:bg-slate-700 ${compact ? 'h-28' : 'h-40'}`}>
+            <div className={`relative w-full rounded-xl overflow-hidden mb-3 bg-slate-100 dark:bg-slate-700 ${compact ? 'h-28' : 'h-40 shrink-0'}`}>
                 <LazyImage 
                     src={store.image} 
                     alt={store.name} 
@@ -61,16 +61,16 @@ const isNewStore = (dateString: string): boolean => {
                     <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-white"} />
                 </button>
             </div>
-            <div className="px-1">
+            <div className="px-1 flex-1 flex flex-col">
                 <div className="flex justify-between items-start">
                     <h3 className={`font-bold text-slate-900 dark:text-white leading-tight ${compact ? 'text-sm' : 'text-lg'}`}>{store.name}</h3>
-                    <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">
+                    <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md shrink-0">
                         <Star size={12} fill="currentColor" className="text-amber-400" />
                         <span className="text-xs font-bold">{displayRating.toFixed(1)}</span>
                         <span className="text-[10px] text-slate-400 dark:text-slate-500">({store.reviewsCount})</span>
                     </div>
                 </div>
-                <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{store.category} • Envío {formatCurrency(store.deliveryFee ?? 45)}</p>
+                <p className="text-slate-500 dark:text-slate-400 text-xs mt-auto pt-1">{store.category} • Envío {formatCurrency(store.deliveryFee ?? 45)}</p>
             </div>
         </div>
     );
@@ -554,9 +554,9 @@ export const ClientView: React.FC = () => {
   );
 
   const StoreList = () => (
-    <div className="space-y-4 animate-fade-in pt-2 bg-slate-50 dark:bg-slate-900">
-      <div className="px-4 py-2 flex justify-between items-center bg-white dark:bg-slate-800 sticky top-0 z-20 shadow-sm border-b border-slate-100 dark:border-slate-700">
-          <div onClick={() => setShowLocationSelector(true)} className="cursor-pointer active:opacity-70 transition-opacity">
+    <div className="space-y-4 animate-fade-in pt-2 bg-slate-50 dark:bg-slate-900 lg:bg-transparent">
+      <div className="px-4 py-2 flex justify-between items-center bg-white dark:bg-slate-800 lg:bg-transparent lg:border-none sticky top-0 z-20 shadow-sm lg:shadow-none border-b border-slate-100 dark:border-slate-700">
+          <div onClick={() => setShowLocationSelector(true)} className="cursor-pointer active:opacity-70 transition-opacity lg:bg-white lg:dark:bg-slate-800 lg:px-4 lg:py-2 lg:rounded-xl lg:shadow-sm lg:border lg:border-slate-100 lg:dark:border-slate-700">
               <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Ubicación</p>
               <div className="flex items-center gap-1 text-slate-900 dark:text-white font-bold text-sm">
                   <MapPin size={14} className="text-brand-600 dark:text-brand-400" />
@@ -567,14 +567,14 @@ export const ClientView: React.FC = () => {
           <div className="flex items-center gap-2">
               <button 
                 onClick={() => setClientViewState('HISTORY')}
-                className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700 px-3 py-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700 lg:bg-white lg:dark:bg-slate-800 px-3 py-1.5 lg:py-2 lg:px-4 rounded-full lg:rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 lg:shadow-sm lg:border lg:border-slate-100 lg:dark:border-slate-700 transition-colors"
               >
                   <History size={14} className="text-brand-600 dark:text-brand-400" />
-                  <span className="font-bold text-xs text-slate-700 dark:text-slate-300">Pedidos</span>
+                  <span className="font-bold text-xs lg:text-sm text-slate-700 dark:text-slate-300">Pedidos</span>
               </button>
               <button 
                 onClick={toggleSettings}
-                className="w-8 h-8 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                className="w-8 h-8 lg:w-10 lg:h-10 bg-slate-100 dark:bg-slate-700 lg:bg-white lg:dark:bg-slate-800 rounded-full lg:rounded-xl flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 lg:shadow-sm lg:border lg:border-slate-100 lg:dark:border-slate-700 transition-colors lg:hidden"
               >
                   <span className="font-bold text-xs text-slate-600 dark:text-slate-300">
                       {user.name.split(' ').map(n => n[0]).join('').substring(0,2)}
@@ -582,12 +582,12 @@ export const ClientView: React.FC = () => {
               </button>
           </div>
       </div>
-      <div className="px-4 mt-2">
-         <div className="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-2">
+      <div className="px-4 mt-2 lg:max-w-2xl lg:mx-auto">
+         <div className="bg-white dark:bg-slate-800 p-2 lg:p-3 rounded-xl lg:rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-2 transition-all focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500">
              <Search size={18} className="text-slate-400 dark:text-slate-500 ml-2" />
              <input 
                 placeholder="¿Qué vas a comer hoy?"
-                className="flex-1 outline-none text-sm p-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400"
+                className="flex-1 outline-none text-sm lg:text-base p-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
              />
@@ -830,7 +830,7 @@ export const ClientView: React.FC = () => {
               <h3 className="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><Ticket size={16} className="text-brand-600 dark:text-brand-400" /> Cupón</h3>
               {appliedCoupon ? (<div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 p-3 rounded-xl"><div className="flex items-center gap-2"><Tag size={16} className="text-green-600 dark:text-green-400" /><div><p className="font-bold text-green-800 dark:text-green-300 text-sm">{appliedCoupon.code}</p><p className="text-xs text-green-600 dark:text-green-400">{(appliedCoupon.discountPct * 100)}% descuento</p></div></div><button onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="p-1 hover:bg-green-100 dark:hover:bg-green-900/40 rounded-full text-green-700 dark:text-green-400"><X size={16} /></button></div>) : (<div className="flex gap-2"><input type="text" placeholder="Ej: BENVENUTO20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} disabled={isProcessing} className="flex-1 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white" /><Button size="sm" onClick={handleApplyCoupon} disabled={!couponCode || isProcessing} className="px-4">Aplicar</Button></div>)}
           </div>
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm">
+          <div id="order-summary" className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm">
              <h3 className="font-bold text-slate-900 dark:text-white mb-3">Resumen</h3>
              <div className="space-y-2 mb-3">{cart.map((item, idx) => (<div key={idx} className="flex justify-between text-sm"><span className="text-slate-600 dark:text-slate-400">{item.quantity}x {item.product.name}</span><span className="text-slate-900 dark:text-white font-medium">{formatCurrency(item.totalPrice * item.quantity)}</span></div>))}</div>
              {orderType === OrderType.DELIVERY && (
@@ -1036,10 +1036,10 @@ export const ClientView: React.FC = () => {
             <div className="flex items-center gap-2 mt-2 text-slate-500 dark:text-slate-400 text-sm"><Clock size={14} /> <span>{selectedStore?.deliveryTimeMin}-{selectedStore?.deliveryTimeMax} min</span><span>•</span><Star size={14} className="text-amber-400 fill-amber-400" /> <span>{selectedStore?.rating}</span> <span className="text-xs text-slate-400 dark:text-slate-500">({selectedStore?.reviewsCount} reviews)</span></div>
         </div>
       </div>
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 lg:max-w-4xl lg:mx-auto lg:p-8">
         <div>
             <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-3">Más vendidos</h3>
-            <div className="space-y-4">
+            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
                 {selectedStore?.products.map(product => (<ProductRow key={product.id} product={product} onAdd={() => { if(selectedStore) { addToCart(product, 1, [], selectedStore.id); showToast('Agregado al carrito', 'success'); } }} onCustomize={() => setProductToCustomize(product)} />))}
             </div>
         </div>
@@ -1120,15 +1120,15 @@ export const ClientView: React.FC = () => {
                     <HorizontalSection title="Más Rápidos" icon={<Zap size={18} className="text-amber-500" />} data={fastestStores} />
                     
                     {/* Main Feed with "History" Link */}
-                    <div className="px-4 space-y-4 mt-2">
+                    <div className="px-4 space-y-4 mt-2 lg:px-8 lg:mt-8">
                         <div className="flex justify-between items-end">
-                            <h3 className="font-bold text-slate-900 dark:text-white text-lg">
+                            <h3 className="font-bold text-slate-900 dark:text-white text-lg lg:text-2xl">
                                 {selectedCategory !== 'ALL' ? selectedCategory : 'Todos los Restaurantes'}
                             </h3>
                         </div>
 
                         {filteredStores.length === 0 ? (
-                            <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 mx-4">
+                            <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 mx-4 lg:mx-0">
                                 <div className="mx-auto w-12 h-12 bg-slate-50 dark:bg-slate-700/50 rounded-full flex items-center justify-center mb-3">
                                     <Search size={20} className="text-slate-300 dark:text-slate-500" />
                                 </div>
@@ -1141,16 +1141,18 @@ export const ClientView: React.FC = () => {
                                 </button>
                             </div>
                         ) : (
-                            filteredStores.map((store, idx) => (
-                                <StoreCard 
-                                    key={store.id} 
-                                    store={store} 
-                                    onClick={setSelectedStore} 
-                                    index={idx}
-                                    isFavorite={favorites.includes(store.id)}
-                                    onToggleFavorite={handleToggleFavorite}
-                                />
-                            ))
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+                                {filteredStores.map((store, idx) => (
+                                    <StoreCard 
+                                        key={store.id} 
+                                        store={store} 
+                                        onClick={setSelectedStore} 
+                                        index={idx}
+                                        isFavorite={favorites.includes(store.id)}
+                                        onToggleFavorite={handleToggleFavorite}
+                                    />
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>

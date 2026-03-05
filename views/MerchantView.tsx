@@ -248,8 +248,8 @@ const CouponManager: React.FC = () => {
             </div>
 
             <h3 className="font-bold text-slate-900 dark:text-white mb-3 px-1">Cupones Activos</h3>
-            <div className="space-y-3">
-                {coupons.length === 0 && <p className="text-slate-400 dark:text-slate-500 text-center py-4">No hay cupones creados.</p>}
+            <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+                {coupons.length === 0 && <p className="text-slate-400 dark:text-slate-500 text-center py-4 lg:col-span-2">No hay cupones creados.</p>}
                 {coupons.map(coupon => (
                     <div key={coupon.id} className={`bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border flex justify-between items-center ${coupon.active ? 'border-brand-200 dark:border-brand-900/30' : 'border-slate-200 dark:border-slate-700 opacity-60'}`}>
                         <div>
@@ -355,9 +355,9 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
         </Button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
         {myStore.products.length === 0 && (
-            <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+            <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl lg:col-span-2">
                 <p className="text-slate-400 dark:text-slate-500 text-sm">Aún no tienes productos.</p>
             </div>
         )}
@@ -490,7 +490,7 @@ export const MerchantView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex p-1 mx-4 mb-2 mt-2 bg-slate-100 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
+        <div className="flex p-1 mx-4 mb-2 mt-2 bg-slate-100 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-2xl lg:mx-auto">
           <button
             onClick={() => setActiveTab('ORDERS')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'ORDERS' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
@@ -518,7 +518,7 @@ export const MerchantView: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+      <div className="p-4 space-y-4 flex-1 overflow-y-auto lg:max-w-7xl lg:mx-auto lg:w-full lg:p-8">
         {activeTab === 'ORDERS' ? (
           activeOrders.length === 0 ? (
             <div className="text-center py-20 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
@@ -526,7 +526,9 @@ export const MerchantView: React.FC = () => {
               <p>Sin pedidos pendientes</p>
             </div>
           ) : (
-            activeOrders.map(order => <OrderCard key={order.id} order={order} />)
+            <div className="space-y-4 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-6 lg:space-y-0">
+                {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
+            </div>
           )
         ) : activeTab === 'MENU' ? (
           <ProductEditor store={myStore} />
@@ -534,7 +536,7 @@ export const MerchantView: React.FC = () => {
           <CouponManager />
         ) : (
           <div className="space-y-4">
-              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex justify-between items-center">
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex justify-between items-center lg:max-w-md lg:mx-auto lg:mb-8">
                   <div>
                       <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Ventas Totales</p>
                       <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalRevenue)}</p>
@@ -549,7 +551,9 @@ export const MerchantView: React.FC = () => {
                       <p>No hay historial de pedidos</p>
                   </div>
               ) : (
-                  historyOrders.map(order => <OrderCard key={order.id} order={order} />)
+                  <div className="space-y-4 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-6 lg:space-y-0">
+                      {historyOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                  </div>
               )}
           </div>
         )}

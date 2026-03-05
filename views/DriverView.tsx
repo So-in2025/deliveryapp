@@ -72,7 +72,7 @@ export const DriverView: React.FC = () => {
             </div>
         </div>
         
-        <div className="flex p-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700">
+        <div className="flex p-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 lg:max-w-2xl lg:mx-auto lg:justify-center">
             <button 
                 onClick={() => setActiveTab('FEED')}
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'FEED' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
@@ -94,7 +94,7 @@ export const DriverView: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 space-y-4 flex-1 overflow-y-auto">
+      <div className="p-4 space-y-4 flex-1 overflow-y-auto lg:max-w-7xl lg:mx-auto lg:w-full lg:p-8">
         
         {/* === TAB: FEED === */}
         {activeTab === 'FEED' && (
@@ -115,57 +115,59 @@ export const DriverView: React.FC = () => {
                         <p className="text-sm text-slate-500 dark:text-slate-400">Mantente en zonas de alta demanda</p>
                     </div>
                 ) : (
-                    availableOrders.map(order => (
-                        <div key={order.id} className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden group">
-                             
-                            <div className="relative z-10">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center border border-slate-200 dark:border-slate-600">
-                                            <Bike size={20} className="text-slate-600 dark:text-slate-400" />
+                    <div className="space-y-4 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-6 lg:space-y-0">
+                        {availableOrders.map(order => (
+                            <div key={order.id} className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden group h-full flex flex-col justify-between">
+                                 
+                                <div className="relative z-10 flex-1 flex flex-col">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center border border-slate-200 dark:border-slate-600">
+                                                <Bike size={20} className="text-slate-600 dark:text-slate-400" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Ganancia Estimada</span>
+                                                <p className="font-bold text-xl text-slate-900 dark:text-white">{formatCurrency(order.type === OrderType.DELIVERY ? (order.deliveryFee ?? 45) : 0)}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500">Ganancia Estimada</span>
-                                            <p className="font-bold text-xl text-slate-900 dark:text-white">{formatCurrency(order.type === OrderType.DELIVERY ? (order.deliveryFee ?? 45) : 0)}</p>
-                                        </div>
-                                    </div>
-                                    {order.paymentMethod === PaymentMethod.CASH && (
-                                        <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 border border-amber-200 dark:border-amber-900/50">
-                                            <Banknote size={12} /> Cobrar Efectivo
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                {/* Route Visualization */}
-                                <div className="relative pl-4 space-y-6 border-l-2 border-slate-100 dark:border-slate-700 ml-2 mb-5">
-                                    {/* Pickup */}
-                                    <div className="relative">
-                                        <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-slate-800"></div>
-                                        <div>
-                                            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Retiro</p>
-                                            <p className="font-bold text-slate-900 dark:text-white text-sm">{order.storeName}</p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">1.2 km</p>
-                                        </div>
+                                        {order.paymentMethod === PaymentMethod.CASH && (
+                                            <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 border border-amber-200 dark:border-amber-900/50">
+                                                <Banknote size={12} /> Cobrar Efectivo
+                                            </div>
+                                        )}
                                     </div>
                                     
-                                    {/* Dropoff */}
-                                    <div className="relative">
-                                        <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-brand-500 border-2 border-white dark:border-slate-800 ring-2 ring-brand-100 dark:ring-brand-900/30"></div>
-                                        <div>
-                                            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Entrega</p>
-                                            {/* Removed 'truncate' and added 'break-words' to ensure full address visibility */}
-                                            <p className="font-bold text-slate-900 dark:text-white text-sm break-words pr-2 leading-tight">{order.address}</p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">2.3 km</p>
+                                    {/* Route Visualization */}
+                                    <div className="relative pl-4 space-y-6 border-l-2 border-slate-100 dark:border-slate-700 ml-2 mb-5 flex-1">
+                                        {/* Pickup */}
+                                        <div className="relative">
+                                            <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 border-2 border-white dark:border-slate-800"></div>
+                                            <div>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Retiro</p>
+                                                <p className="font-bold text-slate-900 dark:text-white text-sm">{order.storeName}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">1.2 km</p>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Dropoff */}
+                                        <div className="relative">
+                                            <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-brand-500 border-2 border-white dark:border-slate-800 ring-2 ring-brand-100 dark:ring-brand-900/30"></div>
+                                            <div>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Entrega</p>
+                                                {/* Removed 'truncate' and added 'break-words' to ensure full address visibility */}
+                                                <p className="font-bold text-slate-900 dark:text-white text-sm break-words pr-2 leading-tight">{order.address}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">2.3 km</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <Button fullWidth onClick={() => handleAcceptOrder(order.id)} className="font-bold">
-                                    Aceptar Entrega
-                                </Button>
+                                    <Button fullWidth onClick={() => handleAcceptOrder(order.id)} className="font-bold mt-auto">
+                                        Aceptar Entrega
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        ))}
+                    </div>
                 )}
             </>
         )}
@@ -181,11 +183,12 @@ export const DriverView: React.FC = () => {
                      </Button>
                  </div>
              ) : (
-               myTasks.map(task => (
-                 <div key={task.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md border-l-4 border-l-brand-500 overflow-hidden">
-                   
-                   {/* Map Placeholder */}
-                   <div className="h-40 bg-slate-200 dark:bg-slate-700 relative border-b border-slate-100 dark:border-slate-700">
+               <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                   {myTasks.map(task => (
+                     <div key={task.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-md border-l-4 border-l-brand-500 overflow-hidden h-full flex flex-col">
+                       
+                       {/* Map Placeholder */}
+                       <div className="h-40 bg-slate-200 dark:bg-slate-700 relative border-b border-slate-100 dark:border-slate-700 shrink-0">
                         <div className="absolute inset-0 bg-[url('https://placehold.co/600x400/e2e8f0/94a3b8?text=Navigation+View')] dark:bg-[url('https://placehold.co/600x400/1e293b/475569?text=Navigation+View')] bg-cover bg-center opacity-70"></div>
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="w-10 h-10 bg-brand-600 rounded-full border-4 border-white dark:border-slate-800 shadow-xl flex items-center justify-center animate-pulse-soft">
@@ -262,7 +265,7 @@ export const DriverView: React.FC = () => {
                          <Button 
                            fullWidth 
                            size="lg"
-                           className={task.status === OrderStatus.DRIVER_ASSIGNED ? 'bg-brand-600 shadow-brand-500/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'}
+                           className={`mt-auto ${task.status === OrderStatus.DRIVER_ASSIGNED ? 'bg-brand-600 shadow-brand-500/30' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'}`}
                            onClick={() => handleProgress(task.id, task.status)}
                          >
                            {task.status === OrderStatus.DRIVER_ASSIGNED ? 'Confirmar Recogida' : 'Confirmar Entrega'}
@@ -270,7 +273,8 @@ export const DriverView: React.FC = () => {
                      )}
                    </div>
                  </div>
-               ))
+               ))}
+             </div>
              )}
            </>
         )}
@@ -283,8 +287,8 @@ export const DriverView: React.FC = () => {
                      <p className="text-slate-500 dark:text-slate-400">No tienes historial de entregas.</p>
                  </div>
              ) : (
-                 <div className="space-y-4">
-                     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex justify-between items-center">
+                 <div className="space-y-4 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-6 lg:space-y-0">
+                     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex justify-between items-center lg:col-span-2 xl:col-span-3 lg:mb-4">
                          <div>
                              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Ganancias Totales</p>
                              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalEarnings)}</p>
