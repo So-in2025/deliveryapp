@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { resetAppData } from '../../services/dataService';
 import { UserRole, Store } from '../../types';
@@ -12,6 +13,7 @@ type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'REGISTER_MERCHANT' | 'REGISTER_DR
 
 export const SettingsOverlay: React.FC = () => {
   const { isSettingsOpen, toggleSettings, role, setRole, user, updateUser, createStore, darkMode, toggleDarkMode, stores, isDriverOnline, toggleDriverStatus } = useApp();
+  const { signOut } = useAuth();
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState<SettingsView>('MAIN');
 
@@ -34,7 +36,8 @@ export const SettingsOverlay: React.FC = () => {
 
   if (!isSettingsOpen) return null;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+      await signOut();
       toggleSettings();
       setRole(UserRole.NONE);
       setCurrentView('MAIN');
