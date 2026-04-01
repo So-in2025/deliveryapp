@@ -13,8 +13,8 @@ export const AuthView: React.FC = () => {
   const { showToast } = useToast();
   const { user, login, signOut, loading } = useAuth();
 
-  const handleRoleSelection = (role: UserRole) => {
-    if (!user) {
+  const handleRoleSelection = (role: UserRole, isGuest: boolean = false) => {
+    if (!user && !isGuest) {
       showToast("Por favor, inicia sesión primero", "info");
       login();
       return;
@@ -192,17 +192,36 @@ export const AuthView: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="mb-10"
+                className="mb-10 space-y-4"
             >
                 {!user ? (
-                    <button
-                        onClick={login}
-                        disabled={loading}
-                        className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-950 font-bold py-4 px-6 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-base border border-stone-800 dark:border-white"
-                    >
-                        <LogIn size={20} className="text-brand-500" />
-                        {loading ? 'Procesando...' : 'Acceder con Google'}
-                    </button>
+                    <>
+                        <button
+                            onClick={login}
+                            disabled={loading}
+                            className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-950 font-bold py-4 px-6 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-base border border-stone-800 dark:border-white"
+                        >
+                            <LogIn size={20} className="text-brand-500" />
+                            {loading ? 'Procesando...' : 'Acceder con Google'}
+                        </button>
+                        
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-stone-200 dark:border-stone-800"></div>
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white dark:bg-stone-950 px-2 text-stone-500">o</span>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => handleRoleSelection(UserRole.CLIENT, true)}
+                            className="w-full bg-transparent text-stone-600 dark:text-stone-400 font-bold py-4 px-6 rounded-2xl border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-900 transition-all flex items-center justify-center gap-3 text-base"
+                        >
+                            <UserIcon size={20} />
+                            Entrar como Invitado (Demo)
+                        </button>
+                    </>
                 ) : (
                     <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200 dark:border-stone-800 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-4">
@@ -239,7 +258,7 @@ export const AuthView: React.FC = () => {
                     title="Realizar Pedido" 
                     subtitle="Cliente Final" 
                     variant="primary"
-                    onClick={() => handleRoleSelection(UserRole.CLIENT)}
+                    onClick={() => handleRoleSelection(UserRole.CLIENT, true)}
                     delay={0.2}
                 />
                 <div className="grid grid-cols-2 gap-4">
@@ -248,7 +267,7 @@ export const AuthView: React.FC = () => {
                         title="Vender" 
                         subtitle="Comercio" 
                         variant="secondary"
-                        onClick={() => handleRoleSelection(UserRole.MERCHANT)}
+                        onClick={() => handleRoleSelection(UserRole.MERCHANT, true)}
                         delay={0.3}
                     />
                     <RoleButton 
@@ -256,7 +275,7 @@ export const AuthView: React.FC = () => {
                         title="Repartir" 
                         subtitle="Driver" 
                         variant="secondary"
-                        onClick={() => handleRoleSelection(UserRole.DRIVER)}
+                        onClick={() => handleRoleSelection(UserRole.DRIVER, true)}
                         delay={0.4}
                     />
                 </div>
@@ -265,7 +284,7 @@ export const AuthView: React.FC = () => {
                     title="Panel Administrativo" 
                     subtitle="Gestión de Plataforma" 
                     variant="dark"
-                    onClick={() => handleRoleSelection(UserRole.ADMIN)}
+                    onClick={() => handleRoleSelection(UserRole.ADMIN, true)}
                     delay={0.5}
                 />
             </div>
