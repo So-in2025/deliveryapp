@@ -3,14 +3,20 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
 import { Truck, Map, History, Settings, LogOut, WifiOff, Navigation, ShieldCheck, Bell } from 'lucide-react';
+import { UserRole } from '../../types';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, driverViewState, setDriverViewState, notifications, setIsNotificationsOpen } = useApp();
+  const { toggleSettings, driverViewState, setDriverViewState, notifications, setIsNotificationsOpen, setRole } = useApp();
   const { signOut } = useAuth();
   const { isOnline } = useConnectivity();
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleSignOut = async () => {
+    await signOut();
+    setRole(UserRole.NONE);
+  };
 
   return (
     <div className="h-[100dvh] w-full flex flex-col items-center overflow-hidden bg-stone-950 transition-colors duration-300">
@@ -46,7 +52,7 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
           <div className="p-4 border-t border-stone-800 space-y-2">
             <DesktopNavItem icon={<Settings />} label="Ajustes" active={false} onClick={toggleSettings} />
-            <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={signOut} isDanger />
+            <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={handleSignOut} isDanger />
           </div>
         </aside>
 
@@ -88,7 +94,7 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
              <NavItem icon={<Map />} label="Mapa" active={driverViewState === 'MAP'} onClick={() => setDriverViewState('MAP')} />
              <NavItem icon={<Navigation />} label="Ruta" active={driverViewState === 'DELIVERIES'} onClick={() => setDriverViewState('DELIVERIES')} />
              <NavItem icon={<History />} label="Entregas" active={driverViewState === 'HISTORY'} onClick={() => setDriverViewState('HISTORY')} />
-             <NavItem icon={<LogOut />} label="Salir" active={false} onClick={signOut} />
+             <NavItem icon={<LogOut />} label="Salir" active={false} onClick={handleSignOut} />
           </nav>
         </div>
       </div>

@@ -128,6 +128,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Sync User Profile from AuthContext
   useEffect(() => {
+    console.log('AuthProfile changed:', authProfile);
     if (authProfile) {
       setUser(authProfile);
       setRoleState(authProfile.role);

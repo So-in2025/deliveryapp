@@ -2,13 +2,19 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, Settings, LogOut, WifiOff, Users, Store, Truck, Database, AlertTriangle, Bell } from 'lucide-react';
+import { UserRole } from '../../types';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, adminViewState, setAdminViewState, notifications, setIsNotificationsOpen } = useApp();
+  const { toggleSettings, adminViewState, setAdminViewState, notifications, setIsNotificationsOpen, setRole } = useApp();
   const { signOut } = useAuth();
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleSignOut = async () => {
+    await signOut();
+    setRole(UserRole.NONE);
+  };
 
   return (
     <div className="h-[100dvh] w-full flex flex-col items-center overflow-hidden bg-stone-950">
@@ -38,7 +44,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
 
           <div className="p-4 border-t border-stone-800 space-y-1">
             <DesktopNavItem icon={<Settings />} label="Configuración" active={adminViewState === 'SETTINGS'} onClick={() => setAdminViewState('SETTINGS')} />
-            <DesktopNavItem icon={<LogOut />} label="Logout" active={false} onClick={signOut} isDanger />
+            <DesktopNavItem icon={<LogOut />} label="Logout" active={false} onClick={handleSignOut} isDanger />
           </div>
         </aside>
 
@@ -63,7 +69,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                     )}
                 </button>
                 <button 
-                    onClick={signOut}
+                    onClick={handleSignOut}
                     className="p-2 rounded bg-red-600/10 text-red-500 hover:bg-red-600/20 transition-colors"
                 >
                     <LogOut size={16} />

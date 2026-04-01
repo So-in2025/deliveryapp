@@ -3,14 +3,20 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
 import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, BarChart3, Bell, Utensils, Tag } from 'lucide-react';
+import { UserRole } from '../../types';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, merchantViewState, setMerchantViewState, notifications, setIsNotificationsOpen } = useApp();
+  const { toggleSettings, merchantViewState, setMerchantViewState, notifications, setIsNotificationsOpen, setRole } = useApp();
   const { signOut } = useAuth();
   const { isOnline } = useConnectivity();
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleSignOut = async () => {
+    await signOut();
+    setRole(UserRole.NONE);
+  };
 
   return (
     <div className="h-[100dvh] w-full flex flex-col items-center overflow-hidden bg-stone-900 transition-colors duration-300">
@@ -46,7 +52,7 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-2">
-            <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={signOut} isDanger />
+            <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={handleSignOut} isDanger />
           </div>
         </aside>
 
