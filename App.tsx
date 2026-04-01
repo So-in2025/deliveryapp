@@ -124,6 +124,10 @@ const ViewRouter = () => {
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
   return (
     <ConnectivityProvider>
       <ToastProvider>
