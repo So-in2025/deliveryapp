@@ -1,15 +1,17 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order } from '../types';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
-import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, Edit3, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Coffee, Pizza, Search, Sparkles, Zap, Calendar, History, ChevronRight, FileText, Download, AlertTriangle } from 'lucide-react';
-import { APP_CONFIG, formatCurrency } from '../constants';
+import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Coffee, Pizza, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings } from 'lucide-react';
+import { formatCurrency } from '../constants';
 import { useToast } from '../context/ToastContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'motion/react';
 
 // --- HELPER LOGIC ---
 
@@ -32,22 +34,23 @@ const isNewStore = (dateString: string): boolean => {
     return (
         <div 
             onClick={() => onClick(store)}
-            className={`group bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-[0.98] transition-all cursor-pointer animate-slide-up relative ${compact ? 'min-w-[200px] w-[200px]' : 'w-full h-full flex flex-col'}`}
+            className={`group bg-white dark:bg-[#0A0A0A] rounded-[2rem] p-3 shadow-xl shadow-black/5 border border-black/5 dark:border-white/5 active:scale-[0.98] transition-all duration-300 cursor-pointer animate-slide-up relative overflow-hidden ${compact ? 'min-w-[240px] w-[240px]' : 'w-full h-full flex flex-col'}`}
             style={{ animationDelay: `${index * 50}ms` }}
         >
-            <div className={`relative w-full rounded-xl overflow-hidden mb-3 bg-slate-100 dark:bg-slate-700 ${compact ? 'h-28' : 'h-40 shrink-0'}`}>
+            <div className={`relative w-full rounded-[1.5rem] overflow-hidden mb-4 bg-stone-100 dark:bg-stone-900 ${compact ? 'h-32' : 'h-48 shrink-0'}`}>
                 <LazyImage 
                     src={store.image} 
                     alt={store.name} 
-                    className="w-full h-full group-hover:scale-105 transition-transform duration-500" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
                 {/* Badges Overlay */}
-                <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
-                    <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur px-2 py-0.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm text-slate-900 dark:text-white">
+                <div className="absolute top-3 right-3 flex flex-col items-end gap-2 z-10">
+                    <div className="bg-white/90 dark:bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg text-stone-900 dark:text-white border border-white/20">
                         <Clock size={12} /> {store.deliveryTimeMin} min
                     </div>
                     {isNew && (
-                        <div className="bg-brand-500 text-white px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-sm animate-pulse-soft">
+                        <div className="bg-brand-500 text-black px-3 py-1.5 rounded-xl text-[10px] font-bold shadow-lg animate-pulse-soft tracking-widest">
                             NUEVO
                         </div>
                     )}
@@ -56,36 +59,35 @@ const isNewStore = (dateString: string): boolean => {
                 {/* Favorite Button Overlay */}
                 <button 
                     onClick={(e) => onToggleFavorite(e, store.id)}
-                    className="absolute top-2 left-2 p-2 rounded-full bg-white/20 backdrop-blur hover:bg-white/40 active:scale-90 transition-all z-10"
+                    className="absolute top-3 left-3 p-2.5 rounded-xl bg-white/20 dark:bg-black/20 backdrop-blur-md hover:bg-white/40 dark:hover:bg-black/40 active:scale-90 transition-all z-10 border border-white/20"
                 >
                     <Heart size={18} className={isFavorite ? "fill-red-500 text-red-500" : "text-white"} />
                 </button>
             </div>
-            <div className="px-1 flex-1 flex flex-col">
-                <div className="flex justify-between items-start">
-                    <h3 className={`font-bold text-slate-900 dark:text-white leading-tight ${compact ? 'text-sm' : 'text-lg'}`}>{store.name}</h3>
-                    <div className="flex items-center gap-1 text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md shrink-0">
+            <div className="px-2 flex-1 flex flex-col pb-1">
+                <div className="flex justify-between items-start gap-2">
+                    <h3 className={`font-bold text-stone-900 dark:text-white leading-tight tracking-tight ${compact ? 'text-base' : 'text-xl'}`}>{store.name}</h3>
+                    <div className="flex items-center gap-1 text-stone-900 dark:text-white bg-stone-100 dark:bg-white/10 px-2 py-1 rounded-lg shrink-0">
                         <Star size={12} fill="currentColor" className="text-amber-400" />
                         <span className="text-xs font-bold">{displayRating.toFixed(1)}</span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500">({store.reviewsCount})</span>
                     </div>
                 </div>
-                <p className="text-slate-500 dark:text-slate-400 text-xs mt-auto pt-1">{store.category} • Envío {formatCurrency(store.deliveryFee ?? 45)}</p>
+                <p className="text-stone-500 dark:text-stone-400 text-sm mt-auto pt-2 font-medium">{store.category} • Envío {formatCurrency(store.deliveryFee ?? 45)}</p>
             </div>
         </div>
     );
 });
 
-const ProductRow = React.memo(({ product, onAdd, onCustomize }: { product: Product; onAdd: () => void; onCustomize: () => void }) => (
-    <div className="flex gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 relative overflow-hidden">
-        <div className="flex-1 space-y-1 relative z-10">
-            <h4 className="font-bold text-slate-900 dark:text-white">{product.name}</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">{product.description}</p>
-            <p className="font-bold text-brand-600 dark:text-brand-400 mt-2">{formatCurrency(product.price)}</p>
+const ProductRow = React.memo(({ product, onAdd, onCustomize, accentColor }: { product: Product; onAdd: () => void; onCustomize: () => void; accentColor?: string }) => (
+    <div className="flex gap-4 p-4 rounded-[2rem] bg-white dark:bg-[#0A0A0A] border border-black/5 dark:border-white/5 relative overflow-hidden shadow-xl shadow-black/5 group hover:border-black/10 dark:hover:border-white/10 transition-colors duration-300">
+        <div className="flex-1 space-y-2 relative z-10 py-1">
+            <h4 className="font-bold text-lg text-stone-900 dark:text-white tracking-tight">{product.name}</h4>
+            <p className="text-sm text-stone-500 dark:text-stone-400 line-clamp-2 leading-relaxed">{product.description}</p>
+            <p className="font-bold text-lg mt-3" style={accentColor ? { color: accentColor } : { color: '#FACC15' }}>{formatCurrency(product.price)}</p>
         </div>
-        <div className="flex flex-col justify-between items-end gap-2 relative z-10">
-            <div className="w-24 h-24 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700 shadow-sm">
-                <LazyImage src={product.image} alt={product.name} className="w-full h-full" />
+        <div className="flex flex-col justify-between items-end gap-3 relative z-10">
+            <div className="w-28 h-28 rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-900 shadow-inner">
+                <LazyImage src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
             </div>
             <button 
                 onClick={(e) => {
@@ -96,10 +98,11 @@ const ProductRow = React.memo(({ product, onAdd, onCustomize }: { product: Produ
                         onAdd();
                     }
                 }}
-                className="absolute bottom-0 right-0 bg-slate-900 dark:bg-brand-600 text-white p-2 rounded-xl shadow-lg active:scale-90 transition-transform hover:bg-slate-800 dark:hover:bg-brand-500"
+                className="absolute bottom-0 right-0 bg-black dark:bg-white text-white dark:text-black p-3 rounded-xl shadow-2xl active:scale-90 transition-transform hover:scale-105"
+                style={accentColor ? { backgroundColor: accentColor, color: '#000' } : {}}
                 aria-label="Agregar"
             >
-                <Plus size={18} />
+                <Plus size={20} strokeWidth={3} />
             </button>
         </div>
     </div>
@@ -108,6 +111,7 @@ const ProductRow = React.memo(({ product, onAdd, onCustomize }: { product: Produ
 export const ClientView: React.FC = () => {
   // Consume Global State for navigation
   const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, cancelOrder, submitClaim } = useApp();
+  const { signOut } = useAuth();
   const { showToast } = useToast();
   
   // Modal State
@@ -217,18 +221,18 @@ export const ClientView: React.FC = () => {
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setClaimOrder(null)}></div>
-            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl p-6 relative animate-slide-up z-10">
-                <button onClick={() => setClaimOrder(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={20}/></button>
+            <div className="bg-white dark:bg-stone-900 w-full max-w-sm rounded-2xl shadow-2xl p-6 relative animate-slide-up z-10">
+                <button onClick={() => setClaimOrder(null)} className="absolute top-4 right-4 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"><X size={20}/></button>
                 
                 <div className="flex items-center gap-2 mb-4 text-amber-600 dark:text-amber-500">
                     <AlertTriangle size={24} />
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Iniciar Reclamo</h2>
+                    <h2 className="text-xl font-bold text-stone-900 dark:text-white">Iniciar Reclamo</h2>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Cuéntanos qué pasó con tu pedido de {claimOrder.storeName}. Te ayudaremos a resolverlo.</p>
+                <p className="text-sm text-stone-500 dark:text-stone-400 mb-6">Cuéntanos qué pasó con tu pedido de {claimOrder.storeName}. Te ayudaremos a resolverlo.</p>
 
                 <textarea 
                     placeholder="Describe el problema (ej: pedido incompleto, comida fría...)"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 mb-4 outline-none focus:border-brand-500 text-sm h-32 resize-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+                    className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 mb-4 outline-none focus:border-brand-500 text-sm h-32 resize-none text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     autoFocus
@@ -266,11 +270,11 @@ export const ClientView: React.FC = () => {
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setReviewOrder(null)}></div>
-            <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl p-6 relative animate-slide-up z-10 text-center">
-                <button onClick={() => setReviewOrder(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={20}/></button>
+            <div className="bg-white dark:bg-stone-900 w-full max-w-sm rounded-2xl shadow-2xl p-6 relative animate-slide-up z-10 text-center">
+                <button onClick={() => setReviewOrder(null)} className="absolute top-4 right-4 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"><X size={20}/></button>
                 
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Califica tu pedido</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{reviewOrder.storeName}</p>
+                <h2 className="text-xl font-bold text-stone-900 dark:text-white mb-1">Califica tu pedido</h2>
+                <p className="text-sm text-stone-500 dark:text-stone-400 mb-6">{reviewOrder.storeName}</p>
 
                 <div className="flex justify-center gap-2 mb-6">
                     {[1, 2, 3, 4, 5].map(star => (
@@ -281,7 +285,7 @@ export const ClientView: React.FC = () => {
                         >
                             <Star 
                                 size={32} 
-                                className={`${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
+                                className={`${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-stone-200'}`} 
                             />
                         </button>
                     ))}
@@ -289,7 +293,7 @@ export const ClientView: React.FC = () => {
 
                 <textarea 
                     placeholder="¿Qué te pareció la comida?"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 mb-4 outline-none focus:border-brand-500 text-sm h-24 resize-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+                    className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 mb-4 outline-none focus:border-brand-500 text-sm h-24 resize-none text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                 />
@@ -338,8 +342,8 @@ export const ClientView: React.FC = () => {
                 onClick={() => setProductToCustomize(null)}
             ></div>
             
-            <div className="bg-white dark:bg-slate-900 w-full max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh] rounded-t-[2rem] sm:rounded-2xl shadow-2xl flex flex-col pointer-events-auto animate-slide-up overflow-hidden">
-                 <div className="relative h-56 shrink-0 bg-slate-100 dark:bg-slate-800">
+            <div className="bg-white dark:bg-stone-900 w-full max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh] rounded-t-[2rem] sm:rounded-2xl shadow-2xl flex flex-col pointer-events-auto animate-slide-up overflow-hidden">
+                 <div className="relative h-56 shrink-0 bg-stone-100 dark:bg-stone-800">
                     <LazyImage src={productToCustomize.image} alt={productToCustomize.name} className="w-full h-full" />
                     <button 
                         onClick={() => setProductToCustomize(null)}
@@ -350,14 +354,14 @@ export const ClientView: React.FC = () => {
                  </div>
                  <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{productToCustomize.name}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mt-1">{productToCustomize.description}</p>
+                        <h2 className="text-2xl font-bold text-stone-900 dark:text-white">{productToCustomize.name}</h2>
+                        <p className="text-stone-500 dark:text-stone-400 mt-1">{productToCustomize.description}</p>
                     </div>
                     {productToCustomize.modifierGroups?.map(group => (
                         <div key={group.id} className="space-y-3">
-                            <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
-                                <h3 className="font-bold text-slate-800 dark:text-slate-200">{group.name}</h3>
-                                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-100 dark:border-slate-700">
+                            <div className="flex justify-between items-center bg-stone-50 dark:bg-stone-800/50 p-2 rounded-lg">
+                                <h3 className="font-bold text-stone-800 dark:text-stone-200">{group.name}</h3>
+                                <span className="text-xs font-medium text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-900 px-2 py-1 rounded border border-stone-100 dark:border-stone-700">
                                     {group.min > 0 ? 'Obligatorio' : 'Opcional'} • {group.max > 1 ? `Máx ${group.max}` : 'Elige 1'}
                                 </span>
                             </div>
@@ -368,16 +372,16 @@ export const ClientView: React.FC = () => {
                                         <div 
                                             key={option.id}
                                             onClick={() => handleModifierChange(group.id, option, group.max > 1)}
-                                            className={`flex justify-between items-center p-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}
+                                            className={`flex justify-between items-center p-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'}`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-5 h-5 rounded flex items-center justify-center border ${isSelected ? 'bg-brand-500 border-brand-500' : 'border-slate-300 dark:border-slate-600'}`}>
-                                                    {isSelected && <CheckCircle2 size={14} className="text-white" />}
+                                                <div className={`w-5 h-5 rounded flex items-center justify-center border ${isSelected ? 'bg-brand-500 border-brand-500' : 'border-stone-300 dark:border-stone-600'}`}>
+                                                    {isSelected && <CheckCircle2 size={14} className="text-brand-950" />}
                                                 </div>
-                                                <span className={`${isSelected ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{option.name}</span>
+                                                <span className={`${isSelected ? 'font-bold text-stone-900 dark:text-white' : 'text-stone-600 dark:text-stone-300'}`}>{option.name}</span>
                                             </div>
                                             {option.price > 0 && (
-                                                <span className="text-sm font-medium text-slate-500 dark:text-slate-400">+{formatCurrency(option.price)}</span>
+                                                <span className="text-sm font-medium text-stone-500 dark:text-stone-400">+{formatCurrency(option.price)}</span>
                                             )}
                                         </div>
                                     )
@@ -386,16 +390,16 @@ export const ClientView: React.FC = () => {
                         </div>
                     ))}
                  </div>
-                 <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 safe-pb">
+                 <div className="p-4 border-t border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900 safe-pb">
                     <div className="flex items-center gap-4 mb-4">
-                        <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-1 border border-slate-100 dark:border-slate-700">
-                            <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-3 bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-600 active:scale-95 transition-all"><Minus size={18} /></button>
+                        <div className="flex items-center gap-4 bg-stone-50 dark:bg-stone-800/50 rounded-xl p-1 border border-stone-100 dark:border-stone-700">
+                            <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-3 bg-white dark:bg-stone-700 shadow-sm border border-stone-200 dark:border-stone-600 rounded-lg text-stone-900 dark:text-white hover:bg-stone-50 dark:hover:bg-stone-600 active:scale-95 transition-all"><Minus size={18} /></button>
                             <span className="font-bold w-6 text-center text-lg dark:text-white">{quantity}</span>
-                            <button onClick={() => setQuantity(quantity + 1)} className="p-3 bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-600 active:scale-95 transition-all"><Plus size={18} /></button>
+                            <button onClick={() => setQuantity(quantity + 1)} className="p-3 bg-white dark:bg-stone-700 shadow-sm border border-stone-200 dark:border-stone-600 rounded-lg text-stone-900 dark:text-white hover:bg-stone-50 dark:hover:bg-stone-600 active:scale-95 transition-all"><Plus size={18} /></button>
                         </div>
                         <div className="flex-1 text-right">
-                             <span className="text-xs text-slate-400 font-bold uppercase block">Total</span>
-                             <span className="text-2xl font-bold text-brand-600">{formatCurrency(total)}</span>
+                             <span className="text-xs text-stone-400 font-bold uppercase block">Total</span>
+                             <span className="text-2xl font-bold text-brand-800">{formatCurrency(total)}</span>
                         </div>
                     </div>
                     <Button 
@@ -423,9 +427,9 @@ export const ClientView: React.FC = () => {
       return (
           <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4">
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowLocationSelector(false)}></div>
-              <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 relative animate-slide-up z-10">
-                  <div className="w-12 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-4 sm:hidden"></div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Selecciona tu ubicación</h3>
+              <div className="bg-white dark:bg-stone-900 w-full max-w-sm rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 relative animate-slide-up z-10">
+                  <div className="w-12 h-1 bg-stone-200 dark:bg-stone-700 rounded-full mx-auto mb-4 sm:hidden"></div>
+                  <h3 className="text-lg font-bold text-stone-900 dark:text-white mb-4">Selecciona tu ubicación</h3>
                   
                   <div className="space-y-2">
                       {user.addresses.map((addr, idx) => (
@@ -435,16 +439,16 @@ export const ClientView: React.FC = () => {
                                   showToast(`Ubicación actualizada: ${addr.split('(')[0]}`, 'success');
                                   setShowLocationSelector(false);
                               }}
-                              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
+                              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors text-left border border-transparent hover:border-stone-100 dark:hover:border-stone-700"
                           >
-                              <div className="w-8 h-8 rounded-full bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                              <div className="w-8 h-8 rounded-full bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-800 dark:text-brand-400">
                                   <MapPin size={16} />
                               </div>
                               <div>
-                                  <p className="font-bold text-slate-900 dark:text-white text-sm">{addr}</p>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400">Disponible para entrega</p>
+                                  <p className="font-bold text-stone-900 dark:text-white text-sm">{addr}</p>
+                                  <p className="text-xs text-stone-500 dark:text-stone-400">Disponible para entrega</p>
                               </div>
-                              {idx === 0 && <CheckCircle2 size={16} className="ml-auto text-brand-600 dark:text-brand-400" />}
+                              {idx === 0 && <CheckCircle2 size={16} className="ml-auto text-brand-800 dark:text-brand-400" />}
                           </button>
                       ))}
                       
@@ -457,7 +461,7 @@ export const ClientView: React.FC = () => {
                                   showToast('Dirección agregada', 'success');
                               }
                           }}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl text-brand-600 dark:text-brand-400 font-bold text-sm mt-2 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
+                          className="w-full flex items-center gap-3 p-3 rounded-xl text-brand-800 dark:text-brand-400 font-bold text-sm mt-2 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
                       >
                           <Plus size={18} /> Agregar nueva dirección
                       </button>
@@ -479,9 +483,9 @@ export const ClientView: React.FC = () => {
              <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" />
              <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex items-center p-6">
                  <div>
-                     <span className="bg-brand-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md mb-2 inline-block">PROMO</span>
+                     <span className="bg-brand-500 text-brand-950 text-[10px] font-bold px-2 py-0.5 rounded-md mb-2 inline-block">PROMO</span>
                      <h3 className="text-white text-xl font-bold leading-tight lg:text-3xl">20% OFF en<br/>Tu Primera Orden</h3>
-                     <p className="text-slate-200 text-xs mt-1 lg:text-sm">Toca para aplicar</p>
+                     <p className="text-stone-200 text-xs mt-1 lg:text-sm">Toca para aplicar</p>
                  </div>
              </div>
           </div>
@@ -497,7 +501,7 @@ export const ClientView: React.FC = () => {
                  <div>
                      <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md mb-2 inline-block">NUEVO</span>
                      <h3 className="text-white text-xl font-bold leading-tight lg:text-3xl">Festival de<br/>Pizza Artesanal</h3>
-                     <p className="text-slate-200 text-xs mt-1 lg:text-sm">Ver restaurantes</p>
+                     <p className="text-stone-200 text-xs mt-1 lg:text-sm">Ver restaurantes</p>
                  </div>
              </div>
           </div>
@@ -519,11 +523,11 @@ export const ClientView: React.FC = () => {
                     onClick={() => setSelectedCategory(cat === 'Todos' ? 'ALL' : cat)}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all shrink-0 border ${
                         isSelected
-                        ? 'bg-slate-900 dark:bg-brand-600 text-white border-slate-900 dark:border-brand-600 shadow-md' 
-                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-100 dark:border-slate-700 hover:border-slate-300'
+                        ? 'bg-stone-900 dark:bg-brand-500 text-white dark:text-brand-950 border-stone-900 dark:border-brand-500 shadow-md' 
+                        : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-100 dark:border-stone-700 hover:border-stone-300'
                     }`}
                 >
-                    {cat !== 'Todos' && <Icon size={14} className={isSelected ? "text-brand-400 dark:text-white" : "text-slate-400 dark:text-slate-500"} />}
+                    {cat !== 'Todos' && <Icon size={14} className={isSelected ? "text-brand-400 dark:text-white" : "text-stone-400 dark:text-stone-500"} />}
                     {cat}
                 </button>
               )
@@ -534,7 +538,7 @@ export const ClientView: React.FC = () => {
   const HorizontalSection = ({ title, icon, data }: { title: string, icon: React.ReactNode, data: Store[] }) => (
       <div className="mt-2">
          <div className="px-4 flex justify-between items-end mb-2">
-            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">{icon} {title}</h3>
+            <h3 className="font-bold text-stone-900 dark:text-white flex items-center gap-2">{icon} {title}</h3>
          </div>
          <div className="flex gap-4 overflow-x-auto px-4 pb-4 scrollbar-hide snap-x">
              {data.map((store, idx) => (
@@ -554,67 +558,85 @@ export const ClientView: React.FC = () => {
   );
 
   const StoreList = () => (
-    <div className="space-y-4 animate-fade-in pt-2 bg-slate-50 dark:bg-slate-900 lg:bg-transparent">
-      <div className="px-4 py-2 flex justify-between items-center bg-white dark:bg-slate-800 lg:bg-transparent lg:border-none sticky top-0 z-20 shadow-sm lg:shadow-none border-b border-slate-100 dark:border-slate-700">
-          <div onClick={() => setShowLocationSelector(true)} className="cursor-pointer active:opacity-70 transition-opacity lg:bg-white lg:dark:bg-slate-800 lg:px-4 lg:py-2 lg:rounded-xl lg:shadow-sm lg:border lg:border-slate-100 lg:dark:border-slate-700">
-              <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Ubicación</p>
-              <div className="flex items-center gap-1 text-slate-900 dark:text-white font-bold text-sm">
-                  <MapPin size={14} className="text-brand-600 dark:text-brand-400" />
-                  {user.addresses && user.addresses.length > 0 ? user.addresses[0].split('(')[0] : 'Sin dirección'}
-                  <ChevronDown size={14} className="text-slate-400 dark:text-slate-500" />
+    <div className="space-y-4 animate-fade-in pt-2 bg-transparent">
+      <div className="px-6 py-4 flex flex-col gap-5 sticky top-0 z-20 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-2xl border-b border-black/5 dark:border-white/5">
+          <div className="flex justify-between items-center">
+              <div onClick={() => setShowLocationSelector(true)} className="cursor-pointer group">
+                  <p className="text-stone-500 dark:text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-1">Entregar en</p>
+                  <div className="flex items-center gap-2 text-stone-900 dark:text-white font-bold text-base group-hover:opacity-70 transition-opacity">
+                      <MapPin size={16} className="text-brand-500" />
+                      {user.addresses && user.addresses.length > 0 ? user.addresses[0].split('(')[0] : 'Sin dirección'}
+                      <ChevronDown size={16} className="text-stone-400" />
+                  </div>
+              </div>
+              <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setClientViewState('HISTORY')}
+                    className="flex items-center gap-2 bg-black/5 dark:bg-white/5 backdrop-blur-md px-4 py-2.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                  >
+                      <History size={16} className="text-stone-900 dark:text-white" />
+                      <span className="font-bold text-sm text-stone-900 dark:text-white hidden sm:block">Pedidos</span>
+                  </button>
+                  <button 
+                    onClick={toggleSettings}
+                    className="w-10 h-10 bg-black/5 dark:bg-white/5 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors lg:hidden"
+                  >
+                      <span className="font-bold text-sm text-stone-900 dark:text-white">
+                          {user.name.split(' ').map(n => n[0]).join('').substring(0,2)}
+                      </span>
+                  </button>
               </div>
           </div>
-          <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setClientViewState('HISTORY')}
-                className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700 lg:bg-white lg:dark:bg-slate-800 px-3 py-1.5 lg:py-2 lg:px-4 rounded-full lg:rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 lg:shadow-sm lg:border lg:border-slate-100 lg:dark:border-slate-700 transition-colors"
-              >
-                  <History size={14} className="text-brand-600 dark:text-brand-400" />
-                  <span className="font-bold text-xs lg:text-sm text-slate-700 dark:text-slate-300">Pedidos</span>
-              </button>
-              <button 
-                onClick={toggleSettings}
-                className="w-8 h-8 lg:w-10 lg:h-10 bg-slate-100 dark:bg-slate-700 lg:bg-white lg:dark:bg-slate-800 rounded-full lg:rounded-xl flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 lg:shadow-sm lg:border lg:border-slate-100 lg:dark:border-slate-700 transition-colors lg:hidden"
-              >
-                  <span className="font-bold text-xs text-slate-600 dark:text-slate-300">
-                      {user.name.split(' ').map(n => n[0]).join('').substring(0,2)}
-                  </span>
-              </button>
+
+          <div className="w-full">
+             <div className="bg-black/5 dark:bg-white/5 backdrop-blur-xl p-1 rounded-2xl flex items-center gap-2 transition-all focus-within:bg-white dark:focus-within:bg-[#0A0A0A] focus-within:ring-2 focus-within:ring-brand-500/50 border border-transparent focus-within:border-brand-500/30 shadow-inner">
+                 <div className="p-3 bg-white dark:bg-[#141414] rounded-xl shadow-sm">
+                     <Search size={18} className="text-stone-900 dark:text-white" />
+                 </div>
+                 <input 
+                    placeholder="¿Qué vas a comer hoy?"
+                    className="flex-1 outline-none text-base p-2 bg-transparent text-stone-900 dark:text-white placeholder-stone-500 font-medium"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                 />
+             </div>
           </div>
-      </div>
-      <div className="px-4 mt-2 lg:max-w-2xl lg:mx-auto">
-         <div className="bg-white dark:bg-slate-800 p-2 lg:p-3 rounded-xl lg:rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-2 transition-all focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500">
-             <Search size={18} className="text-slate-400 dark:text-slate-500 ml-2" />
-             <input 
-                placeholder="¿Qué vas a comer hoy?"
-                className="flex-1 outline-none text-sm lg:text-base p-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-             />
-         </div>
       </div>
     </div>
   );
 
     const TrackingView = () => {
-    // Logic to show the just-finished order
-    let displayOrder = activeOrder;
-    
-    // If no active order, check if we just finished one or cancelled one
-    if (!displayOrder) {
-        // If we are in tracking view but order is gone from active (delivered/cancelled), show the last one
-        // But only if it was recent (e.g. top of the list)
-        displayOrder = pastOrders[0];
-    }
+        const { orders, cancelOrder, setClientViewState, stores, showToast } = useApp();
+        const activeOrder = orders.find(o => o.status !== OrderStatus.DELIVERED && o.status !== OrderStatus.CANCELLED);
+        const pastOrders = orders.filter(o => o.status === OrderStatus.DELIVERED || o.status === OrderStatus.CANCELLED);
 
-    if (!displayOrder) {
+        // Logic to show the just-finished order
+        let displayOrder = activeOrder;
+        
+        // If no active order, check if we just finished one or cancelled one
+        if (!displayOrder) {
+            displayOrder = pastOrders[0];
+        }
+
+        useEffect(() => {
+            if (displayOrder?.status === OrderStatus.DELIVERED) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#FACC15', '#F27D26', '#000000']
+                });
+            }
+        }, [displayOrder?.status]);
+
+        if (!displayOrder) {
         return (
-            <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-slate-50 dark:bg-slate-900 animate-fade-in">
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-full shadow-sm mb-6">
-                    <ShoppingBag size={48} className="text-slate-300 dark:text-slate-600" />
+            <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-brand-50 dark:bg-brand-900 animate-fade-in">
+                <div className="bg-white dark:bg-stone-800 p-6 rounded-full shadow-sm mb-6">
+                    <ShoppingBag size={48} className="text-stone-300 dark:text-stone-600" />
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No hay pedido activo</h2>
-                <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xs mx-auto">Explora los restaurantes y realiza tu primer pedido.</p>
+                <h2 className="text-xl font-bold text-stone-900 dark:text-white mb-2">No hay pedido activo</h2>
+                <p className="text-stone-500 dark:text-stone-400 mb-8 max-w-xs mx-auto">Explora los restaurantes y realiza tu primer pedido.</p>
                 <Button onClick={() => setClientViewState('BROWSE')}>Ir al Inicio</Button>
             </div>
         );
@@ -632,12 +654,12 @@ export const ClientView: React.FC = () => {
     // Handle Cancelled State
     if (displayOrder.status === OrderStatus.CANCELLED) {
          return (
-            <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-slate-50 dark:bg-slate-900 animate-fade-in">
+            <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-brand-50 dark:bg-brand-900 animate-fade-in">
                 <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-full shadow-sm mb-6 border border-red-100 dark:border-red-900/30">
                     <X size={48} className="text-red-500 dark:text-red-400" />
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Pedido Cancelado</h2>
-                <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xs mx-auto">El pedido ha sido cancelado.</p>
+                <h2 className="text-xl font-bold text-stone-900 dark:text-white mb-2">Pedido Cancelado</h2>
+                <p className="text-stone-500 dark:text-stone-400 mb-8 max-w-xs mx-auto">El pedido ha sido cancelado.</p>
                 <Button onClick={() => setClientViewState('BROWSE')}>Volver al Inicio</Button>
             </div>
         );
@@ -652,15 +674,15 @@ export const ClientView: React.FC = () => {
     const estimatedTime = orderStore ? `${orderStore.deliveryTimeMin}-${orderStore.deliveryTimeMax} min` : '15-20 min';
 
     return (
-        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-900 animate-slide-up">
-            <div className="bg-white dark:bg-slate-800 p-6 pb-8 rounded-b-[2.5rem] shadow-sm z-10">
+        <div className="h-full flex flex-col bg-brand-50 dark:bg-brand-900 animate-slide-up">
+            <div className="bg-white dark:bg-stone-800 p-6 pb-8 rounded-b-[2.5rem] shadow-sm z-10">
                 <div className="flex justify-between items-start mb-6">
-                    <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200">
                         <ArrowLeft size={24} />
                     </button>
                     <div className="text-right">
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Tiempo estimado</p>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                        <p className="text-xs text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider">Tiempo estimado</p>
+                        <p className="text-2xl font-bold text-stone-900 dark:text-white">
                             {displayOrder.status === OrderStatus.DELIVERED ? 'Entregado' : estimatedTime}
                         </p>
                     </div>
@@ -668,7 +690,7 @@ export const ClientView: React.FC = () => {
 
                 <div className="text-center mb-8">
                      <div className="relative w-20 h-20 mx-auto mb-4">
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${displayOrder.status === OrderStatus.DELIVERED ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 animate-pulse'}`}>
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${displayOrder.status === OrderStatus.DELIVERED ? 'bg-brand-500 text-brand-950' : 'bg-brand-50 dark:bg-brand-900/30 text-brand-950 dark:text-brand-400 animate-pulse'}`}>
                             {(() => {
                                 if (displayOrder.status === OrderStatus.DELIVERED) return <CheckCircle2 size={40} />;
                                 const Icon = steps[Math.min(safeIndex, steps.length-1)]?.icon || Bike;
@@ -681,12 +703,12 @@ export const ClientView: React.FC = () => {
                             </div>
                         )}
                      </div>
-                     <h2 className="text-xl font-bold text-slate-900 dark:text-white transition-all">
+                     <h2 className="text-xl font-bold text-stone-900 dark:text-white transition-all">
                         {displayOrder.isOfflinePending ? "Esperando conexión..." : 
                         (displayOrder.status === OrderStatus.DELIVERED ? "¡Disfruta tu comida!" : 
                          steps[safeIndex]?.label || "Procesando")}
                      </h2>
-                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{displayOrder.storeName}</p>
+                     <p className="text-stone-500 dark:text-stone-400 text-sm mt-1">{displayOrder.storeName}</p>
                      
                      {/* Emergency Cancel Button for Demo */}
                      {(displayOrder.status === OrderStatus.PENDING || displayOrder.status === OrderStatus.ACCEPTED) && (
@@ -715,58 +737,110 @@ export const ClientView: React.FC = () => {
                      )}
                      
                      {displayOrder.type === OrderType.PICKUP && (
-                         <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-xs font-bold text-slate-700 dark:text-slate-300">
+                         <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-stone-100 dark:bg-stone-700 rounded-full text-xs font-bold text-stone-700 dark:text-stone-300">
                              <StoreIcon size={12} /> Retiro en Local
                          </div>
                      )}
                 </div>
 
-                <div className="relative h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-2">
-                    <div className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-out rounded-full ${displayOrder.status === OrderStatus.DELIVERED ? 'bg-green-500' : displayOrder.isOfflinePending ? 'bg-slate-300 dark:bg-slate-500' : 'bg-brand-600'}`} style={{ width: getProgressWidth() }}></div>
+                <div className="relative h-2 bg-stone-100 dark:bg-stone-700 rounded-full overflow-hidden mb-2">
+                    <div className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-out rounded-full ${displayOrder.status === OrderStatus.DELIVERED ? 'bg-brand-500' : displayOrder.isOfflinePending ? 'bg-stone-300 dark:bg-stone-500' : 'bg-brand-500'}`} style={{ width: getProgressWidth() }}></div>
                 </div>
             </div>
 
-             {displayOrder.type === OrderType.DELIVERY && (displayOrder.status === OrderStatus.DRIVER_ASSIGNED || displayOrder.status === OrderStatus.PICKED_UP) && (
+            {displayOrder.type === OrderType.DELIVERY && (displayOrder.status === OrderStatus.DRIVER_ASSIGNED || displayOrder.status === OrderStatus.PICKED_UP) && (
                 <div className="px-6 mt-6 mb-2">
-                    <div className="h-48 rounded-2xl bg-slate-200 dark:bg-slate-800 overflow-hidden relative shadow-inner border border-slate-200 dark:border-slate-700">
-                        {/* Simulated Town Map */}
-                        <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800 opacity-60">
-                             <div className="w-full h-full" style={{backgroundImage: 'radial-gradient(var(--tw-colors-slate-400) 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
-                             <div className="absolute top-1/2 left-0 w-full h-2 bg-white dark:bg-slate-700 transform -rotate-12"></div>
-                             <div className="absolute top-0 left-1/3 w-2 h-full bg-white dark:bg-slate-700 transform"></div>
+                    <div className="h-56 rounded-3xl bg-stone-200 dark:bg-stone-800 overflow-hidden relative shadow-inner border border-stone-200 dark:border-stone-700">
+                        {/* Simulated Town Map with dynamic movement */}
+                        <div className="absolute inset-0 bg-stone-200 dark:bg-stone-800 opacity-60">
+                             <div className="w-full h-full" style={{backgroundImage: 'radial-gradient(var(--tw-colors-stone-400) 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
+                             <div className="absolute top-1/2 left-0 w-full h-2 bg-white dark:bg-stone-700 transform -rotate-12"></div>
+                             <div className="absolute top-0 left-1/3 w-2 h-full bg-white dark:bg-stone-700 transform"></div>
                         </div>
                         
-                        <div className="absolute top-1/3 left-1/4 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10">
-                            <div className="w-8 h-8 bg-brand-600 rounded-full border-4 border-white dark:border-slate-800 shadow-lg flex items-center justify-center"><Bike size={16} className="text-white" /></div>
-                            <div className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded text-[10px] font-bold shadow-sm mt-1 text-slate-900 dark:text-white">{displayOrder.driverName || 'Repartidor'}</div>
+                        <motion.div 
+                            animate={{ 
+                                x: displayOrder.status === OrderStatus.PICKED_UP ? [0, 20, 0, -20, 0] : 0,
+                                y: displayOrder.status === OrderStatus.PICKED_UP ? [0, -10, 0, 10, 0] : 0
+                            }}
+                            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                            className="absolute top-1/3 left-1/4 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10"
+                        >
+                            <div className="relative">
+                                <div className="absolute -inset-4 bg-brand-500/20 rounded-full animate-ping" />
+                                <div className="w-10 h-10 bg-brand-500 rounded-full border-4 border-white dark:border-stone-800 shadow-xl flex items-center justify-center z-10 relative">
+                                    <Bike size={20} className="text-brand-950" />
+                                </div>
+                            </div>
+                            <div className="bg-white dark:bg-stone-900 px-3 py-1 rounded-full text-[10px] font-bold shadow-lg mt-2 text-stone-900 dark:text-white border border-stone-100 dark:border-stone-800">
+                                {displayOrder.driverName || 'Repartidor'} está en camino
+                            </div>
+                        </motion.div>
+
+                        {/* Destination Marker */}
+                        <div className="absolute bottom-1/4 right-1/4 flex flex-col items-center">
+                            <div className="w-8 h-8 bg-zinc-900 dark:bg-white rounded-full border-4 border-white dark:border-zinc-800 shadow-lg flex items-center justify-center">
+                                <MapPin size={16} className="text-white dark:text-zinc-900" />
+                            </div>
+                            <div className="bg-zinc-900 dark:bg-white px-2 py-0.5 rounded text-[8px] font-bold text-white dark:text-zinc-900 mt-1">Tu Casa</div>
                         </div>
                     </div>
                 </div>
             )}
 
             <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-3 uppercase tracking-wider">Detalle del Pedido</h3>
-                    {displayOrder.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-700 last:border-0">
+                {/* Driver Info Card */}
+                {(displayOrder.status === OrderStatus.DRIVER_ASSIGNED || displayOrder.status === OrderStatus.PICKED_UP) && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white dark:bg-stone-800 p-4 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 flex items-center justify-between"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-stone-100 dark:bg-stone-700 rounded-2xl flex items-center justify-center">
+                                <User className="text-stone-400" size={24} />
+                            </div>
                             <div>
-                                <div className="flex gap-2">
-                                    <span className="font-bold text-slate-900 dark:text-white">{item.quantity}x</span> 
-                                    <span className="text-slate-700 dark:text-slate-300">{item.product.name}</span>
+                                <h4 className="font-bold text-stone-900 dark:text-white">{displayOrder.driverName || 'Repartidor'}</h4>
+                                <div className="flex items-center gap-1 text-amber-500">
+                                    <Star size={12} fill="currentColor" />
+                                    <span className="text-xs font-bold">4.9</span>
                                 </div>
                             </div>
-                            <span className="text-slate-600 dark:text-slate-400 font-medium">{formatCurrency(item.totalPrice * item.quantity)}</span>
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="p-3 bg-stone-100 dark:bg-stone-700 rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-stone-200 transition-colors">
+                                <MessageSquare size={20} />
+                            </button>
+                            <button className="p-3 bg-brand-500 rounded-2xl text-brand-950 hover:bg-brand-600 transition-colors">
+                                <Phone size={20} />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+
+                 <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
+                    <h3 className="font-bold text-sm text-stone-900 dark:text-white mb-3 uppercase tracking-wider">Detalle del Pedido</h3>
+                    {displayOrder.items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between text-sm py-2 border-b border-stone-100 dark:border-stone-700 last:border-0">
+                            <div>
+                                <div className="flex gap-2">
+                                    <span className="font-bold text-stone-900 dark:text-white">{item.quantity}x</span> 
+                                    <span className="text-stone-700 dark:text-stone-300">{item.product.name}</span>
+                                </div>
+                            </div>
+                            <span className="text-stone-600 dark:text-stone-400 font-medium">{formatCurrency(item.totalPrice * item.quantity)}</span>
                         </div>
                     ))}
-                    <div className="flex justify-between text-sm py-2 border-b border-slate-100 dark:border-slate-700">
-                        <span className="text-slate-600 dark:text-slate-400">Envío</span>
-                        <span className="text-slate-900 dark:text-white font-medium">
+                    <div className="flex justify-between text-sm py-2 border-b border-stone-100 dark:border-stone-700">
+                        <span className="text-stone-600 dark:text-stone-400">Envío</span>
+                        <span className="text-stone-900 dark:text-white font-medium">
                             {(displayOrder.type === OrderType.DELIVERY ? (displayOrder.deliveryFee ?? 45) : 0) > 0 
                                 ? formatCurrency(displayOrder.type === OrderType.DELIVERY ? (displayOrder.deliveryFee ?? 45) : 0) 
                                 : 'Gratis'}
                         </span>
                     </div>
-                    <div className="border-t border-slate-100 dark:border-slate-700 mt-3 pt-3 flex justify-between font-bold text-slate-900 dark:text-white">
+                    <div className="border-t border-stone-100 dark:border-stone-700 mt-3 pt-3 flex justify-between font-bold text-stone-900 dark:text-white">
                         <span>Total</span>
                         <span>{formatCurrency(displayOrder.total)}</span>
                     </div>
@@ -809,42 +883,42 @@ export const ClientView: React.FC = () => {
     };
 
     return (
-      <div className="h-full flex flex-col animate-fade-in bg-slate-50 dark:bg-slate-900 overflow-hidden">
-        <div className="flex items-center gap-4 bg-white dark:bg-slate-800 px-4 py-3 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10 shrink-0">
-          <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-slate-600 dark:text-slate-300" disabled={isProcessing}><ArrowLeft size={24} /></button>
+      <div className="h-full flex flex-col animate-fade-in bg-stone-50 dark:bg-stone-900 overflow-hidden">
+        <div className="flex items-center gap-4 bg-white dark:bg-stone-800 px-4 py-3 border-b border-stone-100 dark:border-stone-700 sticky top-0 z-10 shrink-0">
+          <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-stone-600 dark:text-stone-300" disabled={isProcessing}><ArrowLeft size={24} /></button>
           <h2 className="text-xl font-bold dark:text-white">Confirmar Pedido</h2>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <div className="bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex gap-2">
-             <button onClick={() => setOrderType(OrderType.DELIVERY)} className={`flex-1 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${orderType === OrderType.DELIVERY ? 'bg-slate-900 dark:bg-brand-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}><Bike size={18} /> Envío</button>
-             <button onClick={() => setOrderType(OrderType.PICKUP)} className={`flex-1 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${orderType === OrderType.PICKUP ? 'bg-slate-900 dark:bg-brand-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}><StoreIcon size={18} /> Retiro</button>
+          <div className="bg-white dark:bg-stone-800 p-2 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 flex gap-2">
+             <button onClick={() => setOrderType(OrderType.DELIVERY)} className={`flex-1 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${orderType === OrderType.DELIVERY ? 'bg-stone-900 dark:bg-brand-500 text-white dark:text-brand-950 shadow-md' : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/50'}`}><Bike size={18} /> Envío</button>
+             <button onClick={() => setOrderType(OrderType.PICKUP)} className={`flex-1 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all ${orderType === OrderType.PICKUP ? 'bg-stone-900 dark:bg-brand-500 text-white dark:text-brand-950 shadow-md' : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-800/50'}`}><StoreIcon size={18} /> Retiro</button>
           </div>
           {orderType === OrderType.DELIVERY && (
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm animate-slide-up">
-                <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-slate-900 dark:text-white">Dirección</h3><button className="text-brand-600 dark:text-brand-400 text-sm font-bold">Editar</button></div>
-                <div className="space-y-2">{addresses.map(addr => (<div key={addr} onClick={() => !isProcessing && setDeliveryAddr(addr)} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${deliveryAddr === addr ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-slate-100 dark:border-slate-700'} ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}><div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${deliveryAddr === addr ? 'border-brand-600' : 'border-slate-300 dark:border-slate-600'}`}>{deliveryAddr === addr && <div className="w-2.5 h-2.5 bg-brand-600 rounded-full"></div>}</div><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{addr}</span></div>))}</div>
+            <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm animate-slide-up">
+                <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-stone-900 dark:text-white">Dirección</h3><button className="text-brand-800 dark:text-brand-400 text-sm font-bold">Editar</button></div>
+                <div className="space-y-2">{addresses.map(addr => (<div key={addr} onClick={() => !isProcessing && setDeliveryAddr(addr)} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${deliveryAddr === addr ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-stone-100 dark:border-stone-700'} ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}><div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${deliveryAddr === addr ? 'border-brand-600' : 'border-stone-300 dark:border-stone-600'}`}>{deliveryAddr === addr && <div className="w-2.5 h-2.5 bg-brand-600 rounded-full"></div>}</div><span className="text-sm font-medium text-stone-700 dark:text-stone-300">{addr}</span></div>))}</div>
             </div>
           )}
-          <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm"><h3 className="font-bold text-slate-900 dark:text-white mb-3">Método de Pago</h3><div className="flex gap-3"><button onClick={() => setPaymentMethod(PaymentMethod.CARD)} disabled={isProcessing} className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.CARD ? 'border-brand-600 bg-brand-600 text-white shadow-md' : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'} ${isProcessing ? 'opacity-50' : ''}`}><CreditCard size={24} /><span className="text-xs font-bold">Tarjeta</span></button><button onClick={() => setPaymentMethod(PaymentMethod.CASH)} disabled={isProcessing} className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.CASH ? 'border-brand-600 bg-brand-600 text-white shadow-md' : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50'} ${isProcessing ? 'opacity-50' : ''}`}><Banknote size={24} /><span className="text-xs font-bold">Efectivo</span></button></div></div>
-           <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><Ticket size={16} className="text-brand-600 dark:text-brand-400" /> Cupón</h3>
-              {appliedCoupon ? (<div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 p-3 rounded-xl"><div className="flex items-center gap-2"><Tag size={16} className="text-green-600 dark:text-green-400" /><div><p className="font-bold text-green-800 dark:text-green-300 text-sm">{appliedCoupon.code}</p><p className="text-xs text-green-600 dark:text-green-400">{(appliedCoupon.discountPct * 100)}% descuento</p></div></div><button onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="p-1 hover:bg-green-100 dark:hover:bg-green-900/40 rounded-full text-green-700 dark:text-green-400"><X size={16} /></button></div>) : (<div className="flex gap-2"><input type="text" placeholder="Ej: BENVENUTO20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} disabled={isProcessing} className="flex-1 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white" /><Button size="sm" onClick={handleApplyCoupon} disabled={!couponCode || isProcessing} className="px-4">Aplicar</Button></div>)}
+          <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm"><h3 className="font-bold text-stone-900 dark:text-white mb-3">Método de Pago</h3><div className="flex gap-3"><button onClick={() => setPaymentMethod(PaymentMethod.CARD)} disabled={isProcessing} className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.CARD ? 'border-brand-500 bg-brand-500 text-brand-950 shadow-md' : 'border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/50'} ${isProcessing ? 'opacity-50' : ''}`}><CreditCard size={24} /><span className="text-xs font-bold">Tarjeta</span></button><button onClick={() => setPaymentMethod(PaymentMethod.CASH)} disabled={isProcessing} className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.CASH ? 'border-brand-500 bg-brand-500 text-brand-950 shadow-md' : 'border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/50'} ${isProcessing ? 'opacity-50' : ''}`}><Banknote size={24} /><span className="text-xs font-bold">Efectivo</span></button></div></div>
+           <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm">
+              <h3 className="font-bold text-stone-900 dark:text-white mb-2 flex items-center gap-2"><Ticket size={16} className="text-brand-800 dark:text-brand-400" /> Cupón</h3>
+              {appliedCoupon ? (<div className="flex justify-between items-center bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 p-3 rounded-xl"><div className="flex items-center gap-2"><Tag size={16} className="text-amber-600 dark:text-amber-400" /><div><p className="font-bold text-amber-800 dark:text-amber-300 text-sm">{appliedCoupon.code}</p><p className="text-xs text-amber-600 dark:text-amber-400">{(appliedCoupon.discountPct * 100)}% descuento</p></div></div><button onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-full text-amber-700 dark:text-amber-400"><X size={16} /></button></div>) : (<div className="flex gap-2"><input type="text" placeholder="Ej: BENVENUTO20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} disabled={isProcessing} className="flex-1 bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 text-stone-900 dark:text-white" /><Button size="sm" onClick={handleApplyCoupon} disabled={!couponCode || isProcessing} className="px-4">Aplicar</Button></div>)}
           </div>
-          <div id="order-summary" className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm">
-             <h3 className="font-bold text-slate-900 dark:text-white mb-3">Resumen</h3>
-             <div className="space-y-2 mb-3">{cart.map((item, idx) => (<div key={idx} className="flex justify-between text-sm"><span className="text-slate-600 dark:text-slate-400">{item.quantity}x {item.product.name}</span><span className="text-slate-900 dark:text-white font-medium">{formatCurrency(item.totalPrice * item.quantity)}</span></div>))}</div>
+          <div id="order-summary" className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm">
+             <h3 className="font-bold text-stone-900 dark:text-white mb-3">Resumen</h3>
+             <div className="space-y-2 mb-3">{cart.map((item, idx) => (<div key={idx} className="flex justify-between text-sm"><span className="text-stone-600 dark:text-stone-400">{item.quantity}x {item.product.name}</span><span className="text-stone-900 dark:text-white font-medium">{formatCurrency(item.totalPrice * item.quantity)}</span></div>))}</div>
              {orderType === OrderType.DELIVERY && (
-                 <div className="flex justify-between text-sm py-2 border-t border-dashed border-slate-200 dark:border-slate-700">
-                     <span className="text-slate-600 dark:text-slate-400">Costo de Envío</span>
-                     <span className="text-slate-900 dark:text-white font-medium">{formatCurrency(deliveryFee)}</span>
+                 <div className="flex justify-between text-sm py-2 border-t border-dashed border-stone-200 dark:border-stone-700">
+                     <span className="text-stone-600 dark:text-stone-400">Costo de Envío</span>
+                     <span className="text-stone-900 dark:text-white font-medium">{formatCurrency(deliveryFee)}</span>
                  </div>
              )}
-             {appliedCoupon && (<div className="flex justify-between items-center py-2 border-t border-dashed border-slate-200 dark:border-slate-700 text-green-600 dark:text-green-400"><span className="text-sm font-medium">Descuento</span><span className="font-bold">- {formatCurrency(discountAmount)}</span></div>)}
-             <div className="border-t border-slate-100 dark:border-slate-700 pt-3 flex justify-between items-center"><span className="font-bold text-slate-900 dark:text-white text-lg">Total</span><span className="font-bold text-brand-600 dark:text-brand-400 text-lg">{formatCurrency(total)}</span></div>
+             {appliedCoupon && (<div className="flex justify-between items-center py-2 border-t border-dashed border-stone-200 dark:border-stone-700 text-green-600 dark:text-green-400"><span className="text-sm font-medium">Descuento</span><span className="font-bold">- {formatCurrency(discountAmount)}</span></div>)}
+             <div className="border-t border-stone-100 dark:border-stone-700 pt-3 flex justify-between items-center"><span className="font-bold text-stone-900 dark:text-white text-lg">Total</span><span className="font-bold text-brand-800 dark:text-brand-400 text-lg">{formatCurrency(total)}</span></div>
           </div>
           <div className="h-20"></div>
         </div>
-        <div className="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 pb-safe shrink-0 absolute bottom-0 w-full shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-none z-20">
+        <div className="p-4 bg-white dark:bg-stone-800 border-t border-stone-100 dark:border-stone-700 pb-safe shrink-0 absolute bottom-0 w-full shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-none z-20">
           <Button fullWidth size="lg" disabled={cart.length === 0 || isProcessing} isLoading={isProcessing} onClick={handlePlaceOrder}>{isProcessing ? 'Procesando...' : `Confirmar - ${formatCurrency(total)}`}</Button>
         </div>
       </div>
@@ -852,25 +926,25 @@ export const ClientView: React.FC = () => {
   };
 
   const HistoryView = () => (
-      <div className="h-full bg-slate-50 dark:bg-slate-900 animate-fade-in flex flex-col">
-          <div className="flex items-center gap-4 bg-white dark:bg-slate-800 px-4 py-3 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10">
-              <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-slate-600 dark:text-slate-300"><ArrowLeft size={24} /></button>
+      <div className="h-full bg-stone-50 dark:bg-stone-900 animate-fade-in flex flex-col">
+          <div className="flex items-center gap-4 bg-white dark:bg-stone-800 px-4 py-3 border-b border-stone-100 dark:border-stone-700 sticky top-0 z-10">
+              <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-stone-600 dark:text-stone-300"><ArrowLeft size={24} /></button>
               <h2 className="text-xl font-bold dark:text-white">Mis Pedidos</h2>
           </div>
           
           <div className="p-4 space-y-4 flex-1 overflow-y-auto">
               {pastOrders.length === 0 ? (
                   <div className="text-center py-10 opacity-50">
-                      <History size={48} className="mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                      <p className="text-slate-500 dark:text-slate-400">No tienes historial aún.</p>
+                      <History size={48} className="mx-auto mb-2 text-stone-300 dark:text-stone-600" />
+                      <p className="text-stone-500 dark:text-stone-400">No tienes historial aún.</p>
                   </div>
               ) : (
                   pastOrders.map(order => (
-                      <div key={order.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+                      <div key={order.id} className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
                           <div className="flex justify-between items-center mb-2">
-                              <h3 className="font-bold text-slate-900 dark:text-white">{order.storeName}</h3>
+                              <h3 className="font-bold text-stone-900 dark:text-white">{order.storeName}</h3>
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                                  order.status === OrderStatus.DELIVERED ? 'bg-green-100 text-green-700' : 
+                                  order.status === OrderStatus.DELIVERED ? 'bg-brand-500 text-brand-950' : 
                                   order.status === OrderStatus.DISPUTED ? 'bg-amber-100 text-amber-700' :
                                   'bg-red-100 text-red-700'
                               }`}>
@@ -878,7 +952,7 @@ export const ClientView: React.FC = () => {
                                    order.status === OrderStatus.DISPUTED ? 'EN RECLAMO' : 'CANCELADO'}
                               </span>
                           </div>
-                          <p className="text-xs text-slate-500 mb-3">{new Date(order.createdAt).toLocaleDateString()} • {order.items.length} productos</p>
+                          <p className="text-xs text-stone-500 mb-3">{new Date(order.createdAt).toLocaleDateString()} • {order.items.length} productos</p>
                           
                           {/* Audit Info */}
                           {order.status === OrderStatus.CANCELLED && order.cancelledReason && (
@@ -891,8 +965,8 @@ export const ClientView: React.FC = () => {
                               </div>
                           )}
 
-                          <div className="flex justify-between items-center border-t border-slate-100 dark:border-slate-700 pt-3">
-                              <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(order.total)}</span>
+                          <div className="flex justify-between items-center border-t border-stone-100 dark:border-stone-700 pt-3">
+                              <span className="font-bold text-stone-900 dark:text-white">{formatCurrency(order.total)}</span>
                               
                               <div className="flex gap-2">
                                   {order.status === OrderStatus.DELIVERED && !order.isReviewed && (
@@ -913,7 +987,7 @@ export const ClientView: React.FC = () => {
                                   )}
                                   <button 
                                     onClick={() => handleViewReceipt(order)}
-                                    className="text-xs font-bold text-brand-600 flex items-center gap-1 active:opacity-60 transition-opacity"
+                                    className="text-xs font-bold text-brand-800 flex items-center gap-1 active:opacity-60 transition-opacity"
                                   >
                                       Ver Recibo <ChevronRight size={12} />
                                   </button>
@@ -925,6 +999,173 @@ export const ClientView: React.FC = () => {
           </div>
       </div>
   );
+
+  const FavoritesView = () => {
+    const favoriteStores = stores.filter(s => favorites.includes(s.id));
+
+    return (
+      <div className="h-full bg-stone-50 dark:bg-stone-900 animate-fade-in flex flex-col">
+          <div className="flex items-center gap-4 bg-white dark:bg-stone-800 px-4 py-3 border-b border-stone-100 dark:border-stone-700 sticky top-0 z-10">
+              <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-stone-600 dark:text-stone-300"><ArrowLeft size={24} /></button>
+              <h2 className="text-xl font-bold dark:text-white">Mis Favoritos</h2>
+          </div>
+          
+          <div className="p-4 flex-1 overflow-y-auto">
+              {favoriteStores.length === 0 ? (
+                  <div className="text-center py-20 opacity-50">
+                      <div className="w-20 h-20 bg-stone-100 dark:bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Heart size={40} className="text-stone-300 dark:text-stone-600" />
+                      </div>
+                      <h3 className="font-bold text-stone-900 dark:text-white text-lg">Aún no tienes favoritos</h3>
+                      <p className="text-stone-500 dark:text-stone-400 text-sm mt-1 max-w-[200px] mx-auto">Toca el corazón en tus restaurantes preferidos para verlos aquí.</p>
+                      <Button onClick={() => setClientViewState('BROWSE')} className="mt-6">Explorar Restaurantes</Button>
+                  </div>
+              ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {favoriteStores.map((store, idx) => (
+                          <StoreCard 
+                              key={store.id} 
+                              store={store} 
+                              onClick={setSelectedStore} 
+                              index={idx}
+                              isFavorite={true}
+                              onToggleFavorite={handleToggleFavorite}
+                          />
+                      ))}
+                  </div>
+              )}
+          </div>
+      </div>
+    );
+  };
+
+  const ProfileView = () => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [name, setName] = useState(user.name);
+    const [email, setEmail] = useState(user.email);
+
+    const handleSave = () => {
+        updateUser({ name, email });
+        setIsEditing(false);
+        showToast('Perfil actualizado', 'success');
+    };
+
+    return (
+      <div className="h-full bg-white dark:bg-[#050505] animate-fade-in flex flex-col">
+          <div className="flex items-center gap-4 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-2xl px-6 py-4 border-b border-black/5 dark:border-white/5 sticky top-0 z-10">
+              <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-stone-900 dark:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"><ArrowLeft size={24} /></button>
+              <h2 className="text-xl font-bold text-stone-900 dark:text-white tracking-tight">Mi Perfil</h2>
+          </div>
+          
+          <div className="p-6 space-y-8 flex-1 overflow-y-auto">
+              {/* Profile Header */}
+              <div className="flex flex-col items-center">
+                  <div className="relative">
+                    <div className="w-28 h-28 bg-brand-500 rounded-[2rem] flex items-center justify-center text-black text-4xl font-bold shadow-2xl shadow-brand-500/20 border-4 border-white dark:border-[#050505]">
+                        {user.name.split(' ').map(n => n[0]).join('').substring(0,2)}
+                    </div>
+                    <button className="absolute -bottom-2 -right-2 bg-black dark:bg-white p-3 rounded-2xl shadow-xl text-white dark:text-black hover:scale-105 active:scale-95 transition-transform">
+                        <Plus size={18} strokeWidth={3} />
+                    </button>
+                  </div>
+                  <h3 className="mt-6 font-bold text-2xl text-stone-900 dark:text-white tracking-tight">{user.name}</h3>
+                  <p className="text-stone-500 dark:text-stone-400 text-sm font-medium">{user.email}</p>
+              </div>
+
+              {/* Stats Card */}
+              <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-stone-50 dark:bg-[#0A0A0A] p-5 rounded-[2rem] text-center shadow-inner border border-black/5 dark:border-white/5">
+                      <p className="text-3xl font-bold text-stone-900 dark:text-white">{pastOrders.length}</p>
+                      <p className="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest mt-1">Pedidos</p>
+                  </div>
+                  <div className="bg-stone-50 dark:bg-[#0A0A0A] p-5 rounded-[2rem] text-center shadow-inner border border-black/5 dark:border-white/5">
+                      <p className="text-3xl font-bold text-stone-900 dark:text-white">{favorites.length}</p>
+                      <p className="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest mt-1">Favoritos</p>
+                  </div>
+                  <div className="bg-stone-50 dark:bg-[#0A0A0A] p-5 rounded-[2rem] text-center shadow-inner border border-black/5 dark:border-white/5">
+                      <p className="text-3xl font-bold text-stone-900 dark:text-white">{coupons.length}</p>
+                      <p className="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest mt-1">Cupones</p>
+                  </div>
+              </div>
+
+              {/* Edit Form */}
+              <div className="bg-stone-50 dark:bg-[#0A0A0A] p-6 rounded-[2rem] shadow-inner border border-black/5 dark:border-white/5 space-y-5">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-bold text-lg text-stone-900 dark:text-white tracking-tight">Información Personal</h4>
+                    {!isEditing && (
+                        <button onClick={() => setIsEditing(true)} className="text-brand-500 text-sm font-bold hover:opacity-80 transition-opacity">Editar</button>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                      <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Nombre Completo</label>
+                          <input 
+                            type="text" 
+                            value={name} 
+                            onChange={(e) => setName(e.target.value)}
+                            disabled={!isEditing}
+                            className={`w-full bg-white dark:bg-[#141414] border rounded-2xl px-4 py-3.5 text-sm outline-none transition-all ${isEditing ? 'border-brand-500 ring-4 ring-brand-500/10' : 'border-black/5 dark:border-white/5'} text-stone-900 dark:text-white font-medium`}
+                          />
+                      </div>
+                      <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Email</label>
+                          <input 
+                            type="email" 
+                            value={email} 
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={!isEditing}
+                            className={`w-full bg-white dark:bg-[#141414] border rounded-2xl px-4 py-3.5 text-sm outline-none transition-all ${isEditing ? 'border-brand-500 ring-4 ring-brand-500/10' : 'border-black/5 dark:border-white/5'} text-stone-900 dark:text-white font-medium`}
+                          />
+                      </div>
+                  </div>
+
+                  {isEditing && (
+                      <div className="flex gap-3 pt-4">
+                          <Button variant="outline" fullWidth onClick={() => { setIsEditing(false); setName(user.name); setEmail(user.email); }} className="border-black/10 dark:border-white/10">Cancelar</Button>
+                          <Button fullWidth onClick={handleSave} className="bg-black text-white dark:bg-white dark:text-black">Guardar</Button>
+                      </div>
+                  )}
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-3">
+                  <button onClick={() => setClientViewState('HISTORY')} className="w-full flex items-center justify-between p-4 bg-stone-50 dark:bg-[#0A0A0A] rounded-[2rem] shadow-inner border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                      <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-white dark:bg-[#141414] rounded-2xl flex items-center justify-center text-stone-900 dark:text-white shadow-sm group-hover:scale-110 transition-transform">
+                              <History size={20} />
+                          </div>
+                          <span className="font-bold text-stone-900 dark:text-white">Historial de Pedidos</span>
+                      </div>
+                      <ChevronRight size={20} className="text-stone-400 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                  <button onClick={() => setClientViewState('FAVORITES')} className="w-full flex items-center justify-between p-4 bg-stone-50 dark:bg-[#0A0A0A] rounded-[2rem] shadow-inner border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                      <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-red-50 dark:bg-red-900/30 rounded-xl flex items-center justify-center text-red-500 dark:text-red-400">
+                              <Heart size={20} />
+                          </div>
+                          <span className="font-bold text-stone-900 dark:text-white">Mis Favoritos</span>
+                      </div>
+                      <ChevronRight size={20} className="text-stone-300" />
+                  </button>
+                  <button onClick={toggleSettings} className="w-full flex items-center justify-between p-4 bg-white dark:bg-stone-800 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-700/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-stone-100 dark:bg-stone-700 rounded-xl flex items-center justify-center text-stone-500 dark:text-stone-400">
+                              <Settings size={20} />
+                          </div>
+                          <span className="font-bold text-stone-900 dark:text-white">Ajustes de la App</span>
+                      </div>
+                      <ChevronRight size={20} className="text-stone-300" />
+                  </button>
+              </div>
+
+              <div className="pt-4">
+                  <Button fullWidth variant="outline" className="text-red-500 border-red-100 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => signOut()}>Cerrar Sesión</Button>
+              </div>
+          </div>
+      </div>
+    );
+  };
 
   const ReceiptView = () => {
       if(!selectedReceiptOrder) return null;
@@ -962,49 +1203,49 @@ export const ClientView: React.FC = () => {
       };
       
       return (
-          <div className="h-full bg-slate-50 dark:bg-slate-900 animate-slide-up flex flex-col z-50">
-              <div className="flex items-center gap-4 bg-white dark:bg-slate-800 px-4 py-3 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-10 print:hidden">
-                  <button onClick={() => setClientViewState('HISTORY')} className="p-2 -ml-2 text-slate-600 dark:text-slate-300"><ArrowLeft size={24} /></button>
+          <div className="h-full bg-stone-50 dark:bg-stone-900 animate-slide-up flex flex-col z-50">
+              <div className="flex items-center gap-4 bg-white dark:bg-stone-800 px-4 py-3 border-b border-stone-100 dark:border-stone-700 sticky top-0 z-10 print:hidden">
+                  <button onClick={() => setClientViewState('HISTORY')} className="p-2 -ml-2 text-stone-600 dark:text-stone-300"><ArrowLeft size={24} /></button>
                   <h2 className="text-xl font-bold dark:text-white">Recibo</h2>
               </div>
               
               <div className="flex-1 overflow-y-auto p-4">
-                  <div id="receipt-content" className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 relative overflow-hidden">
+                  <div id="receipt-content" className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 relative overflow-hidden">
                       {/* Paper Top Jagged Edge Simulation (Optional/CSS) */}
                       
-                      <div className="text-center border-b border-slate-100 dark:border-slate-700 pb-4 mb-4">
-                          <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <div className="text-center border-b border-stone-100 dark:border-stone-700 pb-4 mb-4">
+                          <div className="w-12 h-12 bg-stone-100 dark:bg-stone-700 rounded-full flex items-center justify-center mx-auto mb-3">
                                <CheckCircle2 size={24} className="text-green-500" />
                           </div>
-                          <h3 className="font-bold text-lg text-slate-900 dark:text-white">Pago Exitoso</h3>
-                          <p className="text-slate-500 dark:text-slate-400 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
+                          <h3 className="font-bold text-lg text-stone-900 dark:text-white">Pago Exitoso</h3>
+                          <p className="text-stone-500 dark:text-stone-400 text-sm">{new Date(order.createdAt).toLocaleString()}</p>
                       </div>
 
                       <div className="space-y-4 mb-6">
                           {order.items.map((item, idx) => (
                               <div key={idx} className="flex justify-between text-sm">
-                                  <span className="text-slate-600 dark:text-slate-400"><span className="font-bold text-slate-900 dark:text-white">{item.quantity}x</span> {item.product.name}</span>
-                                  <span className="font-medium text-slate-900 dark:text-white">{formatCurrency(item.totalPrice * item.quantity)}</span>
+                                  <span className="text-stone-600 dark:text-stone-400"><span className="font-bold text-stone-900 dark:text-white">{item.quantity}x</span> {item.product.name}</span>
+                                  <span className="font-medium text-stone-900 dark:text-white">{formatCurrency(item.totalPrice * item.quantity)}</span>
                               </div>
                           ))}
                       </div>
 
-                      <div className="border-t border-dashed border-slate-200 dark:border-slate-700 py-4 space-y-2 text-sm">
-                          <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                      <div className="border-t border-dashed border-stone-200 dark:border-stone-700 py-4 space-y-2 text-sm">
+                          <div className="flex justify-between text-stone-600 dark:text-stone-400">
                               <span>Subtotal</span>
                               <span>{formatCurrency(order.total - (order.type === OrderType.DELIVERY ? (order.deliveryFee ?? 45) : 0))}</span>
                           </div>
-                          <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                          <div className="flex justify-between text-stone-600 dark:text-stone-400">
                               <span>Envío</span>
                               <span>{formatCurrency(order.type === OrderType.DELIVERY ? (order.deliveryFee ?? 45) : 0)}</span>
                           </div>
-                          <div className="flex justify-between text-slate-900 dark:text-white font-bold text-lg pt-2">
+                          <div className="flex justify-between text-stone-900 dark:text-white font-bold text-lg pt-2">
                               <span>Total</span>
                               <span>{formatCurrency(order.total)}</span>
                           </div>
                       </div>
                       
-                      <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg text-xs text-slate-500 dark:text-slate-400 font-mono break-all text-center">
+                      <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-lg text-xs text-stone-500 dark:text-stone-400 font-mono break-all text-center">
                           ID: {order.id}
                       </div>
                   </div>
@@ -1019,9 +1260,15 @@ export const ClientView: React.FC = () => {
       )
   };
 
-  const StoreDetail = () => (
-      <div className="animate-fade-in relative pb-32 bg-white dark:bg-slate-900 min-h-screen">
-      <div className="relative h-56 w-full bg-slate-800 lg:h-80 lg:rounded-b-3xl overflow-hidden lg:max-w-7xl lg:mx-auto lg:mt-4 lg:rounded-t-3xl">
+  const StoreDetail = () => {
+    const storeStyle = {
+      fontFamily: selectedStore?.customFont || 'inherit',
+    };
+    const accentColor = selectedStore?.customColor || '#FACC15';
+
+    return (
+      <div className="animate-fade-in relative pb-32 bg-white dark:bg-stone-900 min-h-screen" style={storeStyle}>
+      <div className="relative h-56 w-full bg-stone-800 lg:h-80 lg:rounded-b-3xl overflow-hidden lg:max-w-7xl lg:mx-auto lg:mt-4 lg:rounded-t-3xl">
          <LazyImage src={selectedStore?.image} alt={selectedStore?.name} className="w-full h-full lg:object-cover" />
          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent"></div>
          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -1031,34 +1278,42 @@ export const ClientView: React.FC = () => {
          </div>
       </div>
       <div className="px-4 -mt-10 relative z-10 lg:max-w-4xl lg:mx-auto lg:-mt-16">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg border border-slate-100 dark:border-slate-700">
-            <h2 className="font-bold text-2xl text-slate-900 dark:text-white lg:text-4xl">{selectedStore?.name}</h2>
-            <div className="flex items-center gap-2 mt-2 text-slate-500 dark:text-slate-400 text-sm lg:text-base"><Clock size={14} /> <span>{selectedStore?.deliveryTimeMin}-{selectedStore?.deliveryTimeMax} min</span><span>•</span><Star size={14} className="text-amber-400 fill-amber-400" /> <span>{selectedStore?.rating}</span> <span className="text-xs text-slate-400 dark:text-slate-500">({selectedStore?.reviewsCount} reviews)</span></div>
+        <div className="bg-white dark:bg-stone-800 rounded-2xl p-5 shadow-lg border border-stone-100 dark:border-stone-700">
+            <h2 className="font-bold text-2xl text-stone-900 dark:text-white lg:text-4xl" style={{ color: accentColor }}>{selectedStore?.name}</h2>
+            <div className="flex items-center gap-2 mt-2 text-stone-500 dark:text-stone-400 text-sm lg:text-base"><Clock size={14} /> <span>{selectedStore?.deliveryTimeMin}-{selectedStore?.deliveryTimeMax} min</span><span>•</span><Star size={14} className="text-amber-400 fill-amber-400" /> <span>{selectedStore?.rating}</span> <span className="text-xs text-stone-400 dark:text-stone-500">({selectedStore?.reviewsCount} reviews)</span></div>
         </div>
       </div>
       <div className="p-4 space-y-6 lg:max-w-4xl lg:mx-auto lg:p-8">
         <div>
-            <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-3">Más vendidos</h3>
+            <h3 className="font-bold text-stone-900 dark:text-white text-lg mb-3">Más vendidos</h3>
             <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
-                {selectedStore?.products.map(product => (<ProductRow key={product.id} product={product} onAdd={() => { if(selectedStore) { addToCart(product, 1, [], selectedStore.id); showToast('Agregado al carrito', 'success'); } }} onCustomize={() => setProductToCustomize(product)} />))}
+                {selectedStore?.products.map(product => (
+                    <ProductRow 
+                        key={product.id} 
+                        product={product} 
+                        onAdd={() => { if(selectedStore) { addToCart(product, 1, [], selectedStore.id); showToast('Agregado al carrito', 'success'); } }} 
+                        onCustomize={() => setProductToCustomize(product)} 
+                        accentColor={accentColor}
+                    />
+                ))}
             </div>
         </div>
         
         {selectedStore && reviews.filter(r => r.storeId === selectedStore.id).length > 0 && (
             <div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-3">Reseñas</h3>
+                <h3 className="font-bold text-stone-900 dark:text-white text-lg mb-3">Reseñas</h3>
                 <div className="space-y-3">
                     {reviews.filter(r => r.storeId === selectedStore.id).map(review => (
-                        <div key={review.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+                        <div key={review.id} className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
                             <div className="flex justify-between items-center mb-2">
-                                <span className="font-bold text-sm text-slate-900 dark:text-white">{review.userName}</span>
+                                <span className="font-bold text-sm text-stone-900 dark:text-white">{review.userName}</span>
                                 <div className="flex items-center gap-1">
                                     <Star size={12} className="text-amber-400 fill-amber-400" />
-                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{review.rating}</span>
+                                    <span className="text-xs font-bold text-stone-700 dark:text-stone-300">{review.rating}</span>
                                 </div>
                             </div>
-                            {review.comment && <p className="text-sm text-slate-600 dark:text-slate-400">{review.comment}</p>}
-                            <p className="text-[10px] text-slate-400 mt-2">{new Date(review.createdAt).toLocaleDateString()}</p>
+                            {review.comment && <p className="text-sm text-stone-600 dark:text-stone-400">{review.comment}</p>}
+                            <p className="text-[10px] text-stone-400 mt-2">{new Date(review.createdAt).toLocaleDateString()}</p>
                         </div>
                     ))}
                 </div>
@@ -1066,13 +1321,14 @@ export const ClientView: React.FC = () => {
         )}
       </div>
       {cart.length > 0 && (
-        <div className="fixed bottom-24 left-0 w-full px-4 flex justify-center z-50 pointer-events-none"><div className="w-full max-w-md animate-slide-up pointer-events-auto"><Button fullWidth size="lg" onClick={() => setClientViewState('CHECKOUT')} className="flex justify-between items-center px-6 shadow-xl shadow-brand-500/30 border border-white/20 dark:border-slate-700"><div className="flex items-center gap-3"><span className="bg-white/20 px-2.5 py-0.5 rounded-lg text-sm font-bold">{cart.reduce((a, b) => a + b.quantity, 0)}</span><span>Ver pedido</span></div><span className="font-bold text-lg">{formatCurrency(cart.reduce((a, b) => a + (b.totalPrice * b.quantity), 0))}</span></Button></div></div>
+        <div className="fixed bottom-24 left-0 w-full px-4 flex justify-center z-50 pointer-events-none"><div className="w-full max-w-md animate-slide-up pointer-events-auto"><Button fullWidth size="lg" onClick={() => setClientViewState('CHECKOUT')} className="flex justify-between items-center px-6 shadow-xl shadow-brand-500/30 border border-white/20 dark:border-stone-700"><div className="flex items-center gap-3"><span className="bg-white/20 px-2.5 py-0.5 rounded-lg text-sm font-bold">{cart.reduce((a, b) => a + b.quantity, 0)}</span><span>Ver pedido</span></div><span className="font-bold text-lg">{formatCurrency(cart.reduce((a, b) => a + (b.totalPrice * b.quantity), 0))}</span></Button></div></div>
       )}
     </div>
-  );
+    );
+  };
 
   return (
-      <div className="bg-slate-50 dark:bg-slate-900 h-full transition-colors duration-300 flex flex-col">
+      <div className="bg-white dark:bg-[#050505] h-full transition-colors duration-300 flex flex-col">
         {showLocationSelector && <LocationModal />}
         {productToCustomize && <ProductModal />}
         {reviewOrder && <ReviewModal />}
@@ -1081,21 +1337,21 @@ export const ClientView: React.FC = () => {
         {activeOrder && clientViewState !== 'TRACKING' && !productToCustomize && clientViewState !== 'HISTORY' && clientViewState !== 'RECEIPT' && (
             <div 
                 onClick={() => setClientViewState('TRACKING')}
-                className="w-full bg-slate-900 text-white p-3 flex justify-between items-center cursor-pointer shrink-0 z-50 shadow-md animate-slide-down"
+                className="w-full bg-brand-500 text-black p-3 flex justify-between items-center cursor-pointer shrink-0 z-50 shadow-xl animate-slide-down border-b border-black/10"
             >
                 <div className="flex items-center gap-3">
                      {activeOrder.isOfflinePending ? (
-                        <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                        <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
                      ) : (
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <div className="w-2 h-2 bg-black rounded-full animate-pulse"></div>
                      )}
                      <div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase">Pedido en curso</p>
-                        <p className="font-bold text-sm">{activeOrder.storeName}</p>
+                        <p className="text-[10px] text-black/70 font-bold uppercase tracking-widest">Pedido en curso</p>
+                        <p className="font-bold text-sm tracking-tight">{activeOrder.storeName}</p>
                      </div>
                 </div>
                 {activeOrder.isOfflinePending ? (
-                    <span className="text-xs font-bold bg-white/10 px-2 py-1 rounded text-white flex items-center gap-1">
+                    <span className="text-xs font-bold bg-black/10 px-2 py-1 rounded-xl text-black flex items-center gap-1">
                         <WifiOff size={10} /> Esperando red
                     </span>
                 ) : (
@@ -1109,33 +1365,35 @@ export const ClientView: React.FC = () => {
          clientViewState === 'TRACKING' ? <TrackingView /> : 
          clientViewState === 'CHECKOUT' ? <CheckoutView /> : 
          clientViewState === 'HISTORY' ? <HistoryView /> :
+         clientViewState === 'FAVORITES' ? <FavoritesView /> :
+         clientViewState === 'PROFILE' ? <ProfileView /> :
          selectedStore ? <StoreDetail /> : (
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col lg:max-w-7xl lg:mx-auto lg:w-full">
                 <StoreList />
                 <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
                     <BannerCarousel />
                     <CategoryPills />
-                    <HorizontalSection title="Cerca de ti" icon={<MapPin size={18} className="text-brand-600" />} data={recommendedStores} />
+                    <HorizontalSection title="Cerca de ti" icon={<MapPin size={18} className="text-brand-800" />} data={recommendedStores} />
                     <HorizontalSection title="Nuevos" icon={<Sparkles size={18} className="text-amber-500" />} data={stores.filter(s => isNewStore(s.createdAt))} />
                     <HorizontalSection title="Más Rápidos" icon={<Zap size={18} className="text-amber-500" />} data={fastestStores} />
                     
                     {/* Main Feed with "History" Link */}
                     <div className="px-4 space-y-4 mt-2 lg:px-8 lg:mt-8">
                         <div className="flex justify-between items-end">
-                            <h3 className="font-bold text-slate-900 dark:text-white text-lg lg:text-2xl">
+                            <h3 className="font-bold text-stone-900 dark:text-white text-lg lg:text-2xl">
                                 {selectedCategory !== 'ALL' ? selectedCategory : 'Todos los Restaurantes'}
                             </h3>
                         </div>
 
                         {filteredStores.length === 0 ? (
-                            <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 mx-4 lg:mx-0">
-                                <div className="mx-auto w-12 h-12 bg-slate-50 dark:bg-slate-700/50 rounded-full flex items-center justify-center mb-3">
-                                    <Search size={20} className="text-slate-300 dark:text-slate-500" />
+                            <div className="text-center py-12 bg-white dark:bg-stone-800 rounded-2xl border border-dashed border-stone-200 dark:border-stone-700 mx-4 lg:mx-0">
+                                <div className="mx-auto w-12 h-12 bg-stone-50 dark:bg-stone-700/50 rounded-full flex items-center justify-center mb-3">
+                                    <Search size={20} className="text-stone-300 dark:text-stone-500" />
                                 </div>
-                                <p className="text-slate-600 dark:text-slate-400 font-bold">No encontramos resultados</p>
+                                <p className="text-stone-600 dark:text-stone-400 font-bold">No encontramos resultados</p>
                                 <button 
                                     onClick={() => {setSearchQuery(''); setSelectedCategory('ALL');}}
-                                    className="text-brand-600 dark:text-brand-400 font-bold text-sm bg-brand-50 dark:bg-brand-900/20 px-4 py-2 rounded-lg mt-2"
+                                    className="text-brand-800 dark:text-brand-400 font-bold text-sm bg-brand-50 dark:bg-brand-900/20 px-4 py-2 rounded-lg mt-2"
                                 >
                                     Ver todo
                                 </button>
@@ -1173,5 +1431,5 @@ const BadgeStatus: React.FC<{ status: OrderStatus }> = ({ status }) => {
         [OrderStatus.PICKED_UP]: 'En camino',
         [OrderStatus.DELIVERED]: 'Entregado'
     };
-    return <span className="text-xs font-bold bg-white/10 px-2 py-1 rounded text-white">{labels[status]}</span>;
+    return <span className="text-xs font-bold bg-black/10 px-3 py-1.5 rounded-xl text-black shadow-sm border border-black/5">{labels[status]}</span>;
 }

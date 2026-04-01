@@ -9,7 +9,7 @@ import { Button } from '../components/ui/Button';
 import { 
   TrendingUp, Users, Store as StoreIcon, Activity, 
   DollarSign, Shield, Search, 
-  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail
+  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail, Settings
 } from 'lucide-react';
 
 interface KpiCardProps {
@@ -21,22 +21,21 @@ interface KpiCardProps {
 }
 
 const KpiCard = ({ title, value, sub, icon: Icon, color }: KpiCardProps) => (
-  <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
+  <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex items-start justify-between">
     <div>
-      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{title}</p>
-      <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
+      <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">{title}</p>
+      <h3 className="text-2xl font-bold text-stone-900">{value}</h3>
       <p className={`text-xs font-bold mt-1 ${color}`}>{sub}</p>
     </div>
-    <div className={`p-2 rounded-lg bg-slate-50 ${color.replace('text-', 'text-opacity-80 text-')}`}>
+    <div className={`p-2 rounded-lg bg-stone-50 ${color.replace('text-', 'text-opacity-80 text-')}`}>
       <Icon size={20} />
     </div>
   </div>
 );
 
 export const AdminView: React.FC = () => {
-  const { orders, stores, assignDriver, drivers, resolveClaim } = useApp();
+  const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState } = useApp();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'DISPATCH' | 'STORES' | 'USERS' | 'DISPUTES'>('DASHBOARD');
   
   // Local drill-down state
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
@@ -64,20 +63,19 @@ export const AdminView: React.FC = () => {
       .slice(0, 10);
   }, [orders]);
 
-  // Derive unique users from orders for the Users list (MVP approach)
+  // Derive unique users from users collection for the Users list
   const userList = useMemo(() => {
-      const uniqueNames = Array.from(new Set(orders.map(o => o.customerName)));
-      return uniqueNames.map(name => {
-          const userOrders = orders.filter(o => o.customerName === name);
+      return users.map(u => {
+          const userOrders = orders.filter(o => o.customerName === u.name || o.uid === u.uid);
           const totalSpent = userOrders.reduce((sum, o) => sum + o.total, 0);
           return {
-              name,
+              ...u,
               totalOrders: userOrders.length,
               totalSpent,
               lastActive: userOrders[0]?.createdAt || new Date()
           };
       });
-  }, [orders]);
+  }, [orders, users]);
 
   // --- SUB-COMPONENTS ---
 
@@ -89,49 +87,49 @@ export const AdminView: React.FC = () => {
           value={formatCurrency(kpis.totalSales)}
           sub="+12% vs ayer"
           icon={DollarSign}
-          color="text-emerald-600"
+          color="text-brand-950"
         />
         <KpiCard 
           title="Comisiones (15%)" 
           value={formatCurrency(kpis.platformCommission)}
           sub="Ganancia Neta"
           icon={TrendingUp}
-          color="text-brand-600"
+          color="text-brand-950"
         />
         <KpiCard 
           title="Tiendas Activas" 
           value={kpis.totalStores}
           sub="2 pendientes"
           icon={StoreIcon}
-          color="text-blue-600"
+          color="text-amber-700"
         />
         <KpiCard 
           title="Usuarios Online" 
           value="142"
           sub="Estimado"
           icon={Users}
-          color="text-purple-600"
+          color="text-orange-700"
         />
       </div>
 
       <div className="px-4 lg:max-w-7xl lg:mx-auto lg:w-full">
-        <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-          <Activity size={18} className="text-brand-600" /> Actividad en Vivo
+        <h3 className="font-bold text-stone-900 mb-3 flex items-center gap-2">
+          <Activity size={18} className="text-brand-800" /> Actividad en Vivo
         </h3>
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50 overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0 lg:gap-4 lg:p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 divide-y divide-stone-50 overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0 lg:gap-4 lg:p-4">
           {recentActivity.map(order => (
-            <div key={order.id} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors lg:rounded-xl lg:border lg:border-slate-100">
+            <div key={order.id} className="p-3 flex items-center justify-between hover:bg-stone-50 transition-colors lg:rounded-xl lg:border lg:border-stone-100">
               <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-500">
+                 <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center font-bold text-xs text-stone-500">
                     {order.customerName.charAt(0)}
                  </div>
                  <div>
-                    <p className="text-sm font-bold text-slate-900 leading-none mb-1">
+                    <p className="text-sm font-bold text-stone-900 leading-none mb-1">
                       {order.storeName}
-                      <span className="text-slate-400 font-normal"> vendió </span> 
+                      <span className="text-stone-400 font-normal"> vendió </span> 
                       {formatCurrency(order.total)}
                     </p>
-                    <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                    <p className="text-[10px] text-stone-400 flex items-center gap-1">
                       Hace 2 min • {order.items.length} items
                     </p>
                  </div>
@@ -164,31 +162,31 @@ export const AdminView: React.FC = () => {
                </div>
 
                {dispatchableOrders.length === 0 ? (
-                   <div className="text-center py-12 bg-white rounded-2xl border border-slate-100">
-                       <Truck size={40} className="mx-auto text-slate-300 mb-2" />
-                       <p className="text-slate-500 font-bold">Sin pedidos para despachar</p>
+                   <div className="text-center py-12 bg-white rounded-2xl border border-stone-100">
+                       <Truck size={40} className="mx-auto text-stone-300 mb-2" />
+                       <p className="text-stone-500 font-bold">Sin pedidos para despachar</p>
                    </div>
                ) : (
                    <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
                    {dispatchableOrders.map(order => (
-                       <div key={order.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-full flex flex-col">
-                           <div className="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                                <span className="text-xs font-mono font-bold text-slate-500">{order.id.slice(-6)}</span>
+                       <div key={order.id} className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden h-full flex flex-col">
+                           <div className="p-3 bg-stone-50 border-b border-stone-100 flex justify-between items-center">
+                                <span className="text-xs font-mono font-bold text-stone-500">{order.id.slice(-6)}</span>
                                 <Badge status={order.status} />
                            </div>
                            <div className="p-4">
                                <div className="flex justify-between items-start mb-4">
                                    <div>
-                                       <h4 className="font-bold text-slate-900">{order.storeName}</h4>
-                                       <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                                       <h4 className="font-bold text-stone-900">{order.storeName}</h4>
+                                       <div className="flex items-center gap-1 text-xs text-stone-500 mt-1">
                                            <MapPin size={12} /> {order.address}
                                        </div>
                                    </div>
-                                   <span className="font-bold text-slate-900">{formatCurrency(order.total)}</span>
+                                   <span className="font-bold text-stone-900">{formatCurrency(order.total)}</span>
                                </div>
 
                                <div className="space-y-2">
-                                   <p className="text-xs font-bold text-slate-400 uppercase">Asignar Repartidor:</p>
+                                   <p className="text-xs font-bold text-stone-400 uppercase">Asignar Repartidor:</p>
                                    <div className="grid grid-cols-2 gap-2">
                                        {drivers.map(driver => (
                                            <button 
@@ -197,7 +195,7 @@ export const AdminView: React.FC = () => {
                                                     assignDriver(order.id, driver.id);
                                                     showToast(`Asignado a ${driver.name}`, 'success');
                                                 }}
-                                                className={`p-2 rounded-lg text-xs font-bold border transition-all ${order.driverId === driver.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+                                                className={`p-2 rounded-lg text-xs font-bold border transition-all ${order.driverId === driver.id ? 'bg-brand-500 text-brand-950 border-brand-500' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-300'}`}
                                            >
                                                {driver.name}
                                            </button>
@@ -219,42 +217,42 @@ export const AdminView: React.FC = () => {
       const totalRevenue = storeStats.reduce((sum, o) => sum + o.total, 0);
 
       return (
-          <div className="bg-slate-50 h-full animate-slide-in-right flex flex-col">
-              <div className="bg-white p-4 border-b border-slate-100 flex gap-3 items-center sticky top-0 z-10">
-                  <button onClick={() => setSelectedStore(null)} className="p-2 -ml-2 hover:bg-slate-50 rounded-full"><ArrowLeft size={20} /></button>
+          <div className="bg-stone-50 h-full animate-slide-in-right flex flex-col">
+              <div className="bg-white p-4 border-b border-stone-100 flex gap-3 items-center sticky top-0 z-10">
+                  <button onClick={() => setSelectedStore(null)} className="p-2 -ml-2 hover:bg-stone-50 rounded-full"><ArrowLeft size={20} /></button>
                   <h2 className="font-bold text-lg">{selectedStore.name}</h2>
               </div>
               <div className="p-4 space-y-6 overflow-y-auto">
-                  <div className="flex gap-4 items-center bg-white p-4 rounded-xl border border-slate-100">
-                      <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden">
+                  <div className="flex gap-4 items-center bg-white p-4 rounded-xl border border-stone-100">
+                      <div className="w-16 h-16 bg-stone-100 rounded-lg overflow-hidden">
                           <LazyImage src={selectedStore.image} alt={selectedStore.name} className="w-full h-full" />
                       </div>
                       <div>
-                          <p className="text-slate-500 text-sm">{selectedStore.category}</p>
-                          <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                          <p className="text-stone-500 text-sm">{selectedStore.category}</p>
+                          <div className="flex items-center gap-2 text-sm font-bold text-stone-900">
                               <StoreIcon size={14} /> ID: {selectedStore.id}
                           </div>
                       </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white p-4 rounded-xl border border-slate-100 text-center">
-                          <p className="text-xs font-bold text-slate-400 uppercase">Ventas Totales</p>
-                          <p className="text-xl font-bold text-slate-900">{formatCurrency(totalRevenue)}</p>
+                      <div className="bg-white p-4 rounded-xl border border-stone-100 text-center">
+                          <p className="text-xs font-bold text-stone-400 uppercase">Ventas Totales</p>
+                          <p className="text-xl font-bold text-stone-900">{formatCurrency(totalRevenue)}</p>
                       </div>
-                      <div className="bg-white p-4 rounded-xl border border-slate-100 text-center">
-                          <p className="text-xs font-bold text-slate-400 uppercase">Pedidos</p>
-                          <p className="text-xl font-bold text-slate-900">{storeStats.length}</p>
+                      <div className="bg-white p-4 rounded-xl border border-stone-100 text-center">
+                          <p className="text-xs font-bold text-stone-400 uppercase">Pedidos</p>
+                          <p className="text-xl font-bold text-stone-900">{storeStats.length}</p>
                       </div>
                   </div>
 
                   <div>
-                      <h3 className="font-bold text-slate-900 mb-2">Productos ({selectedStore.products.length})</h3>
-                      <div className="bg-white rounded-xl border border-slate-100 divide-y divide-slate-50">
+                      <h3 className="font-bold text-stone-900 mb-2">Productos ({selectedStore.products.length})</h3>
+                      <div className="bg-white rounded-xl border border-stone-100 divide-y divide-stone-50">
                           {selectedStore.products.map(p => (
                               <div key={p.id} className="p-3 flex justify-between items-center">
                                   <span className="text-sm font-medium">{p.name}</span>
-                                  <span className="text-sm text-slate-500">{formatCurrency(p.price)}</span>
+                                  <span className="text-sm text-stone-500">{formatCurrency(p.price)}</span>
                               </div>
                           ))}
                       </div>
@@ -266,8 +264,8 @@ export const AdminView: React.FC = () => {
 
   const renderStoresTab = () => (
     <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
-      <div className="bg-white p-2 rounded-xl border border-slate-200 flex items-center gap-2 lg:max-w-md">
-         <Search size={18} className="text-slate-400 ml-2" />
+      <div className="bg-white p-2 rounded-xl border border-stone-200 flex items-center gap-2 lg:max-w-md">
+         <Search size={18} className="text-stone-400 ml-2" />
          <input placeholder="Buscar comercio..." className="flex-1 outline-none text-sm" />
       </div>
 
@@ -276,20 +274,20 @@ export const AdminView: React.FC = () => {
         <div 
             key={store.id} 
             onClick={() => setSelectedStore(store)}
-            className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex gap-4 items-center active:scale-[0.99] transition-transform cursor-pointer h-full"
+            className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex gap-4 items-center active:scale-[0.99] transition-transform cursor-pointer h-full"
         >
-           <div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden shrink-0">
+           <div className="w-12 h-12 bg-stone-100 rounded-lg overflow-hidden shrink-0">
               <LazyImage src={store.image} alt={store.name} className="w-full h-full" />
            </div>
            <div className="flex-1">
-              <h4 className="font-bold text-slate-900">{store.name}</h4>
-              <p className="text-xs text-slate-500">{store.category} • {store.createdAt ? 'Nuevo' : 'Veterano'}</p>
+              <h4 className="font-bold text-stone-900">{store.name}</h4>
+              <p className="text-xs text-stone-500">{store.category} • {store.createdAt ? 'Nuevo' : 'Veterano'}</p>
               <div className="flex items-center gap-3 mt-1">
-                 <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">Activo</span>
-                 <span className="text-[10px] text-slate-400">ID: {store.id}</span>
+                 <span className="text-[10px] bg-brand-500 text-brand-950 px-1.5 py-0.5 rounded font-bold">Activo</span>
+                 <span className="text-[10px] text-stone-400">ID: {store.id}</span>
               </div>
            </div>
-           <ChevronRight size={18} className="text-slate-300" />
+           <ChevronRight size={18} className="text-stone-300" />
         </div>
       ))}
       </div>
@@ -298,44 +296,52 @@ export const AdminView: React.FC = () => {
 
   const renderUserDetail = () => {
       if(!selectedUser) return null;
-      const userOrders = orders.filter(o => o.customerName === selectedUser);
+      const userProfile = users.find(u => u.name === selectedUser || u.uid === selectedUser);
+      const userOrders = orders.filter(o => o.customerName === selectedUser || o.uid === selectedUser);
       const totalSpent = userOrders.reduce((acc, o) => acc + o.total, 0);
 
       return (
-          <div className="bg-slate-50 h-full animate-slide-in-right flex flex-col">
-               <div className="bg-white p-4 border-b border-slate-100 flex gap-3 items-center sticky top-0 z-10">
-                  <button onClick={() => setSelectedUser(null)} className="p-2 -ml-2 hover:bg-slate-50 rounded-full"><ArrowLeft size={20} /></button>
+          <div className="bg-stone-50 h-full animate-slide-in-right flex flex-col">
+               <div className="bg-white p-4 border-b border-stone-100 flex gap-3 items-center sticky top-0 z-10">
+                  <button onClick={() => setSelectedUser(null)} className="p-2 -ml-2 hover:bg-stone-50 rounded-full"><ArrowLeft size={20} /></button>
                   <h2 className="font-bold text-lg">Perfil de Usuario</h2>
               </div>
               <div className="p-4 space-y-6 overflow-y-auto">
-                  <div className="text-center py-6 bg-white rounded-2xl border border-slate-100">
-                      <div className="w-20 h-20 bg-slate-200 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-slate-500">
-                          {selectedUser.charAt(0)}
+                  <div className="text-center py-6 bg-white rounded-2xl border border-stone-100">
+                      <div className="w-20 h-20 bg-stone-200 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-stone-500">
+                          {userProfile?.name?.charAt(0) || selectedUser.charAt(0)}
                       </div>
-                      <h2 className="text-xl font-bold text-slate-900">{selectedUser}</h2>
-                      <div className="flex items-center justify-center gap-2 mt-2 text-sm text-slate-500">
-                          <Mail size={14} /> <span>usuario@demo.com</span>
+                      <h2 className="text-xl font-bold text-stone-900">{userProfile?.name || selectedUser}</h2>
+                      <div className="flex items-center justify-center gap-2 mt-2 text-sm text-stone-500">
+                          <Mail size={14} /> <span>{userProfile?.email || 'usuario@demo.com'}</span>
                       </div>
                       <div className="flex items-center justify-center gap-4 mt-4">
                           <div className="text-center">
-                              <p className="text-xl font-bold text-slate-900">{userOrders.length}</p>
-                              <p className="text-[10px] uppercase font-bold text-slate-400">Pedidos</p>
+                              <p className="text-xl font-bold text-stone-900">{userOrders.length}</p>
+                              <p className="text-[10px] uppercase font-bold text-stone-400">Pedidos</p>
                           </div>
                            <div className="text-center">
-                              <p className="text-xl font-bold text-slate-900">{formatCurrency(totalSpent)}</p>
-                              <p className="text-[10px] uppercase font-bold text-slate-400">Total Gastado</p>
+                              <p className="text-xl font-bold text-stone-900">{formatCurrency(totalSpent)}</p>
+                              <p className="text-[10px] uppercase font-bold text-stone-400">Total Gastado</p>
                           </div>
                       </div>
+                      {userProfile?.role && (
+                        <div className="mt-4">
+                          <span className="px-2 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-bold uppercase">
+                            Rol: {userProfile.role}
+                          </span>
+                        </div>
+                      )}
                   </div>
 
                   <div>
-                      <h3 className="font-bold text-slate-900 mb-3 ml-1">Historial de Pedidos</h3>
+                      <h3 className="font-bold text-stone-900 mb-3 ml-1">Historial de Pedidos</h3>
                       <div className="space-y-3">
                           {userOrders.map(order => (
-                              <div key={order.id} className="bg-white p-3 rounded-xl border border-slate-100 flex justify-between items-center">
+                              <div key={order.id} className="bg-white p-3 rounded-xl border border-stone-100 flex justify-between items-center">
                                   <div>
-                                      <p className="font-bold text-sm text-slate-900">{order.storeName}</p>
-                                      <p className="text-xs text-slate-500">{new Date(order.createdAt).toLocaleDateString()} • {formatCurrency(order.total)}</p>
+                                      <p className="font-bold text-sm text-stone-900">{order.storeName}</p>
+                                      <p className="text-xs text-stone-500">{new Date(order.createdAt).toLocaleDateString()} • {formatCurrency(order.total)}</p>
                                   </div>
                                   <Badge status={order.status} />
                               </div>
@@ -350,31 +356,31 @@ export const AdminView: React.FC = () => {
   const renderUsersTab = () => (
     <div className="px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
        <div className="text-center py-8">
-            <Shield size={40} className="mx-auto text-slate-200 mb-2" />
-            <h3 className="font-bold text-slate-900">Base de Usuarios</h3>
-            <p className="text-xs text-slate-500">Clientes generados dinámicamente</p>
+            <Shield size={40} className="mx-auto text-stone-200 mb-2" />
+            <h3 className="font-bold text-stone-900">Base de Usuarios</h3>
+            <p className="text-xs text-stone-500">Clientes generados dinámicamente</p>
        </div>
        
-       <div className="bg-white rounded-xl shadow-sm border border-slate-100 text-left overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:bg-transparent lg:shadow-none lg:border-0">
-           <div className="p-3 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center lg:hidden">
-              <span className="text-xs font-bold text-slate-500 uppercase">Lista de Clientes ({userList.length})</span>
+       <div className="bg-white rounded-xl shadow-sm border border-stone-100 text-left overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:bg-transparent lg:shadow-none lg:border-0">
+           <div className="p-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center lg:hidden">
+              <span className="text-xs font-bold text-stone-500 uppercase">Lista de Clientes ({userList.length})</span>
            </div>
            {userList.map((u, i) => (
                <div 
-                    key={i} 
-                    onClick={() => setSelectedUser(u.name)}
-                    className="p-3 flex justify-between items-center border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer active:bg-slate-100 transition-colors lg:bg-white lg:rounded-xl lg:border lg:border-slate-100 lg:shadow-sm"
+                    key={u.uid || i} 
+                    onClick={() => setSelectedUser(u.uid || u.name)}
+                    className="p-3 flex justify-between items-center border-b border-stone-50 last:border-0 hover:bg-stone-50 cursor-pointer active:bg-stone-100 transition-colors lg:bg-white lg:rounded-xl lg:border lg:border-stone-100 lg:shadow-sm"
                 >
                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
-                           {u.name.charAt(0)}
+                       <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-xs font-bold text-stone-600">
+                           {u.name?.charAt(0) || '?'}
                        </div>
                        <div>
-                           <p className="text-sm font-bold text-slate-900">{u.name}</p>
-                           <p className="text-[10px] text-slate-500">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>
+                           <p className="text-sm font-bold text-stone-900">{u.name || 'Sin nombre'}</p>
+                           <p className="text-[10px] text-stone-500">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>
                        </div>
                    </div>
-                   <ChevronRight size={16} className="text-slate-300" />
+                   <ChevronRight size={16} className="text-stone-300" />
                </div>
            ))}
        </div>
@@ -392,9 +398,9 @@ export const AdminView: React.FC = () => {
     return (
         <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
             {disputedOrders.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-2xl border border-slate-100">
-                    <Shield size={40} className="mx-auto text-slate-300 mb-2" />
-                    <p className="text-slate-500 font-bold">No hay reclamos activos</p>
+                <div className="text-center py-12 bg-white rounded-2xl border border-stone-100">
+                    <Shield size={40} className="mx-auto text-stone-300 mb-2" />
+                    <p className="text-stone-500 font-bold">No hay reclamos activos</p>
                 </div>
             ) : (
                 <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
@@ -408,13 +414,13 @@ export const AdminView: React.FC = () => {
                             <span className="bg-amber-200 text-amber-800 text-[10px] font-bold px-2 py-1 rounded uppercase">En Revisión</span>
                         </div>
                         <div className="bg-white p-3 rounded-lg border border-amber-100 mb-4">
-                            <p className="text-sm font-medium text-slate-800">"{order.claimReason}"</p>
+                            <p className="text-sm font-medium text-stone-800">"{order.claimReason}"</p>
                         </div>
                         <div className="flex gap-2">
                             <Button variant="secondary" fullWidth className="bg-white text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleResolveDispute(order.id, 'REJECTED')}>
                                 Rechazar
                             </Button>
-                            <Button fullWidth className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleResolveDispute(order.id, 'RESOLVED')}>
+                            <Button fullWidth className="bg-brand-500 text-brand-950 hover:bg-brand-600" onClick={() => handleResolveDispute(order.id, 'RESOLVED')}>
                                 Reembolsar
                             </Button>
                         </div>
@@ -427,12 +433,12 @@ export const AdminView: React.FC = () => {
   };
 
   return (
-    <div className="h-full bg-slate-50 flex flex-col">
+    <div className="h-full bg-stone-50 flex flex-col">
        {/* Drill-down Views */}
        {selectedStore ? renderStoreDetail() :
         selectedUser ? renderUserDetail() : (
             <>
-                <div className="bg-slate-900 text-white p-4 pt- safe-pt shadow-md z-10 sticky top-0">
+                <div className="bg-stone-900 text-white p-4 pt- safe-pt shadow-md z-10 sticky top-0">
                     <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
                         <div className="flex justify-between items-center mb-4">
                             <div>
@@ -440,41 +446,41 @@ export const AdminView: React.FC = () => {
                                 <Shield size={20} className="text-brand-400" />
                                 Admin Panel
                                 </h1>
-                                <p className="text-xs text-slate-400">Vista de Propietario</p>
+                                <p className="text-xs text-stone-400">Vista de Propietario</p>
                             </div>
-                            <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-700">
+                            <div className="w-8 h-8 bg-stone-800 rounded-full flex items-center justify-center border border-stone-700">
                                 <span className="font-bold text-xs">OP</span>
                             </div>
                         </div>
 
-                        <div className="flex bg-slate-800/50 p-1 rounded-xl overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-3xl lg:mx-auto">
+                        <div className="flex bg-stone-800/50 p-1 rounded-xl overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-3xl lg:mx-auto">
                         <button 
-                            onClick={() => setActiveTab('DASHBOARD')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'DASHBOARD' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            onClick={() => setAdminViewState('DASHBOARD')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'DASHBOARD' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Resumen
                         </button>
                         <button 
-                            onClick={() => setActiveTab('DISPATCH')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'DISPATCH' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            onClick={() => setAdminViewState('FLEET')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'FLEET' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Logística
                         </button>
                         <button 
-                            onClick={() => setActiveTab('STORES')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'STORES' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            onClick={() => setAdminViewState('STORES')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'STORES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Comercios
                         </button>
                         <button 
-                            onClick={() => setActiveTab('USERS')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'USERS' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            onClick={() => setAdminViewState('USERS')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'USERS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Usuarios
                         </button>
                         <button 
-                            onClick={() => setActiveTab('DISPUTES')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'DISPUTES' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                            onClick={() => setAdminViewState('DISPUTES')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'DISPUTES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Reclamos
                         </button>
@@ -483,11 +489,18 @@ export const AdminView: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    {activeTab === 'DASHBOARD' && renderDashboardTab()}
-                    {activeTab === 'DISPATCH' && renderDispatchTab()}
-                    {activeTab === 'STORES' && renderStoresTab()}
-                    {activeTab === 'USERS' && renderUsersTab()}
-                    {activeTab === 'DISPUTES' && renderDisputesTab()}
+                    {adminViewState === 'DASHBOARD' && renderDashboardTab()}
+                    {adminViewState === 'FLEET' && renderDispatchTab()}
+                    {adminViewState === 'STORES' && renderStoresTab()}
+                    {adminViewState === 'USERS' && renderUsersTab()}
+                    {adminViewState === 'DISPUTES' && renderDisputesTab()}
+                    {adminViewState === 'SETTINGS' && (
+                        <div className="p-8 text-center">
+                            <Settings size={48} className="mx-auto text-stone-300 mb-4" />
+                            <h3 className="text-lg font-bold text-stone-900">Configuración del Sistema</h3>
+                            <p className="text-sm text-stone-500">Ajustes globales de la plataforma</p>
+                        </div>
+                    )}
                 </div>
             </>
         )}

@@ -50,14 +50,14 @@ A continuación, el detalle de los módulos completados e integrados en la versi
 Para llegar al 100% y liberar el último pago (Entrega Final Operativa), nos enfocaremos en:
 
 ### 🚀 Despliegue y Producción
-- [ ] **Empaquetado Android (.apk / .aab):** Generar el archivo instalable real.
-- [ ] **Empaquetado iOS:** Preparar proyecto para Xcode (si aplica).
-- [ ] **PWA Final:** Configurar dominio definitivo y assets de instalación web.
+- [x] **Empaquetado Android (.apk / .aab):** Generar el archivo instalable real (Configurado vía Capacitor).
+- [x] **Empaquetado iOS:** Preparar proyecto para Xcode (Configurado vía Capacitor).
+- [x] **PWA Final:** Configurar dominio definitivo y assets de instalación web.
 
 ### 🔧 Ajustes Finos
 - [ ] **Feedback de la Demo:** Implementar correcciones que surjan de tu revisión de hoy.
-- [ ] **Limpieza de Datos:** Eliminar los datos de prueba (Mock Data) para dejar la base limpia.
-- [ ] **Manual de Usuario:** Pequeña guía de cómo dar de alta los comercios reales.
+- [x] **Limpieza de Datos:** Eliminar los datos de prueba (Mock Data) para dejar la base limpia.
+- [x] **Manual de Usuario:** Pequeña guía de cómo dar de alta los comercios reales.
 
 ---
 

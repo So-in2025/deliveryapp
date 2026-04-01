@@ -72,8 +72,6 @@ export const loadStores = (): Store[] => {
     if (!stored) return MOCK_STORES;
     
     const parsed = JSON.parse(stored);
-    // CRITICAL FIX: If array is empty, force return MOCK_STORES to avoid empty app state
-    if (Array.isArray(parsed) && parsed.length === 0) return MOCK_STORES;
     
     return parsed; 
   } catch (e) {

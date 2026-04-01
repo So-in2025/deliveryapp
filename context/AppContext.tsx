@@ -1,10 +1,11 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { UserRole, Order, Store, Product, OrderStatus, CartItem, Modifier, PaymentMethod, OrderType, Coupon, UserProfile, ViewState, Review } from '../types';
-import { INITIAL_ORDERS } from '../constants';
-import { updateOrderStatus, createOrder, loadOrders, loadCart, saveCart, saveOrders, loadStores, saveStores, loadReviews, saveReviews } from '../services/dataService';
-import { useConnectivity } from './ConnectivityContext';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { soundService } from '../services/soundService';
+import { UserRole, Order, Store, Product, OrderStatus, CartItem, Modifier, PaymentMethod, OrderType, Coupon, UserProfile, ViewState, Review, MerchantViewState, DriverViewState, AdminViewState, AppNotification } from '../types';
+import { loadCart, saveCart } from '../services/dataService';
 import { useToast } from './ToastContext';
+import { useAuth } from './AuthContext';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, OperationType, handleFirestoreError } from '../firebase';
 
 // Mock Drivers for Manual Dispatch
 const MOCK_DRIVERS = [
@@ -17,6 +18,7 @@ interface AppContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
   user: UserProfile; 
+  users: UserProfile[];
   updateUser: (data: Partial<UserProfile>) => void;
   createStore: (store: Store) => void;
   orders: Order[];
@@ -44,18 +46,37 @@ interface AppContextType {
   toggleCoupon: (id: string) => void;
   addReview: (review: Review) => void;
   reviews: Review[];
+  updateStore: (storeId: string, data: Partial<Store>) => void;
   
   isDriverOnline: boolean;
   toggleDriverStatus: () => void;
   // Lifted Client State for Global Navigation
   clientViewState: ViewState;
   setClientViewState: (view: ViewState) => void;
+  // Lifted Merchant State
+  merchantViewState: MerchantViewState;
+  setMerchantViewState: (view: MerchantViewState) => void;
+  // Lifted Driver State
+  driverViewState: DriverViewState;
+  setDriverViewState: (view: DriverViewState) => void;
+  // Lifted Admin State
+  adminViewState: AdminViewState;
+  setAdminViewState: (view: AdminViewState) => void;
+  
   selectedStore: Store | null;
   setSelectedStore: (store: Store | null) => void;
   cartStoreId: string | null;
   resetOrders: () => void; // New: For forcing a reset of orders
   darkMode: boolean;
   toggleDarkMode: () => void;
+  soundEnabled: boolean;
+  toggleSound: () => void;
+  notifications: AppNotification[];
+  isNotificationsOpen: boolean;
+  setIsNotificationsOpen: (open: boolean) => void;
+  addNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => void;
+  markNotificationAsRead: (id: string) => void;
+  clearNotifications: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -67,32 +88,171 @@ const DEFAULT_COUPONS: Coupon[] = [
 ];
 
 const DEFAULT_USER: UserProfile = {
-    name: 'Juan Pérez',
-    email: 'juan.perez@demo.com',
+    uid: 'guest',
+    name: 'Invitado',
+    email: 'invitado@demo.com',
+    role: UserRole.NONE,
     avatar: undefined,
     isDriver: false,
     ownedStoreId: undefined,
-    addresses: ['Mi Ubicación Actual', 'Casa (Av. Libertador 1234)', 'Trabajo (Centro)']
+    addresses: ['Mi Ubicación Actual']
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isOnline } = useConnectivity();
   const { showToast } = useToast();
+  const { user: authUser, profile: authProfile, isAuthReady } = useAuth();
 
-  const [role, setRole] = useState<UserRole>(UserRole.CLIENT);
+  const [role, setRoleState] = useState<UserRole>(UserRole.NONE);
+
+  const setRole = useCallback(async (newRole: UserRole) => {
+    setRoleState(newRole);
+    if (authUser) {
+      try {
+        await updateDoc(doc(db, 'users', authUser.uid), { role: newRole });
+      } catch (error) {
+        console.error('Error updating role:', error);
+      }
+    }
+  }, [authUser]);
   
-  const [user, setUser] = useState<UserProfile>(() => {
-      const saved = localStorage.getItem('codex_user_v1');
-      return saved ? JSON.parse(saved) : DEFAULT_USER;
-  });
+  const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
 
-  const [stores, setStores] = useState<Store[]>(() => loadStores());
-  const [orders, setOrders] = useState<Order[]>(() => loadOrders() || INITIAL_ORDERS);
-  const [reviews, setReviews] = useState<Review[]>(() => loadReviews());
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [coupons, setCoupons] = useState<Coupon[]>(DEFAULT_COUPONS);
   const [drivers] = useState(MOCK_DRIVERS);
   const [isDriverOnline, setIsDriverOnline] = useState(false); // Session state
+
+  // Sync User Profile from AuthContext
+  useEffect(() => {
+    if (authProfile) {
+      setUser(authProfile);
+      setRoleState(authProfile.role);
+    } else {
+      setUser(DEFAULT_USER);
+      setRoleState(UserRole.NONE);
+    }
+  }, [authProfile]);
+
+  // Real-time Firestore Listeners
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    // Listen to Stores (Optimized by role)
+    let storesQuery;
+    if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+      // Merchants only need their own store data for management
+      storesQuery = query(collection(db, 'stores'), where('id', '==', authProfile.ownedStoreId));
+    } else {
+      // Clients and Admins need all stores
+      storesQuery = collection(db, 'stores');
+    }
+
+    const unsubscribeStores = onSnapshot(storesQuery, (snapshot) => {
+      const storesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Store));
+      setStores(storesData);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'stores');
+    });
+
+    // Listen to Orders (Filtered by role)
+    let ordersQuery;
+    if (authProfile?.role === 'ADMIN') {
+      ordersQuery = collection(db, 'orders');
+    } else if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+      ordersQuery = query(collection(db, 'orders'), where('storeId', '==', authProfile.ownedStoreId));
+    } else if (authProfile?.role === 'DRIVER' && authUser?.uid) {
+      ordersQuery = query(collection(db, 'orders'), where('driverId', '==', authUser.uid));
+    } else if (authUser?.uid) {
+      // Default to CLIENT
+      ordersQuery = query(collection(db, 'orders'), where('customerId', '==', authUser.uid));
+    }
+
+    let unsubscribeOrders = () => {};
+    if (ordersQuery) {
+      unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
+        const ordersData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return { 
+            id: doc.id, 
+            ...data, 
+            createdAt: (data.createdAt as Timestamp)?.toDate() || new Date() 
+          } as Order;
+        });
+
+        // Sound feedback for new orders or status changes
+        if (!initialLoadRef.current.orders) {
+          snapshot.docChanges().forEach(change => {
+            if (change.type === 'added') {
+              soundService.play('NEW_ORDER');
+              addNotification({
+                title: 'Nuevo Pedido',
+                message: `Has recibido un nuevo pedido (#${change.doc.id.slice(-4)})`,
+                type: 'ORDER',
+                orderId: change.doc.id
+              });
+            } else if (change.type === 'modified') {
+              const newData = change.doc.data() as Order;
+              soundService.play('NOTIFICATION');
+              addNotification({
+                title: 'Actualización de Pedido',
+                message: `El pedido #${change.doc.id.slice(-4)} ahora está ${newData.status}`,
+                type: 'ORDER',
+                orderId: change.doc.id
+              });
+            }
+          });
+        }
+
+        setOrders(ordersData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+        initialLoadRef.current.orders = false;
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'orders');
+      });
+    }
+
+    // Listen to Users (Admin only)
+    let unsubscribeUsers = () => {};
+    if (authProfile?.role === 'ADMIN') {
+      unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+        setUsers(usersData);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'users');
+      });
+    }
+
+    // Listen to Reviews (Optimized by role)
+    let reviewsQuery;
+    if (authProfile?.role === 'ADMIN') {
+      reviewsQuery = collection(db, 'reviews');
+    } else if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+      reviewsQuery = query(collection(db, 'reviews'), where('storeId', '==', authProfile.ownedStoreId));
+    } else if (authUser?.uid) {
+      // Clients see reviews for stores (could be limited later)
+      reviewsQuery = collection(db, 'reviews');
+    }
+
+    let unsubscribeReviews = () => {};
+    if (reviewsQuery) {
+      unsubscribeReviews = onSnapshot(reviewsQuery, (snapshot) => {
+        const reviewsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
+        setReviews(reviewsData);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'reviews');
+      });
+    }
+
+    return () => {
+      unsubscribeStores();
+      unsubscribeOrders();
+      unsubscribeUsers();
+      unsubscribeReviews();
+    };
+  }, [isAuthReady, authProfile]);
   
   // Theme State
   const [darkMode, setDarkMode] = useState(() => {
@@ -116,6 +276,55 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Lifted State
   const [clientViewState, setClientViewState] = useState<ViewState>('BROWSE');
+  const [merchantViewState, setMerchantViewState] = useState<MerchantViewState>('ORDERS');
+  const [driverViewState, setDriverViewState] = useState<DriverViewState>('MAP');
+  const [adminViewState, setAdminViewState] = useState<AdminViewState>('DASHBOARD');
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+    try {
+      const stored = localStorage.getItem('codex_notifications_v1');
+      if (!stored) return [];
+      return JSON.parse(stored).map((n: any) => ({ ...n, timestamp: new Date(n.timestamp) }));
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('codex_notifications_v1', JSON.stringify(notifications));
+  }, [notifications]);
+
+  const addNotification = useCallback((notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
+    const newNotif: AppNotification = {
+      ...notif,
+      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date(),
+      read: false
+    };
+    setNotifications(prev => [newNotif, ...prev].slice(0, 50)); // Keep last 50
+  }, []);
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const clearNotifications = () => setNotifications([]);
+
+  const toggleSound = () => {
+    setSoundEnabled(prev => {
+      const next = !prev;
+      soundService.setEnabled(next);
+      return next;
+    });
+  };
+
+  const initialLoadRef = React.useRef({
+    orders: true,
+    stores: true,
+    users: true,
+    reviews: true
+  });
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -149,59 +358,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.setItem('codex_favorites_v1', JSON.stringify(favorites));
   }, [favorites]);
 
-  useEffect(() => {
-    saveStores(stores);
-  }, [stores]);
-  
-  useEffect(() => {
-      saveReviews(reviews);
-  }, [reviews]);
-
-  useEffect(() => {
-      localStorage.setItem('codex_user_v1', JSON.stringify(user));
-  }, [user]);
-
-  // Sync Logic
-  useEffect(() => {
-    if (!isOnline) return;
-
-    // Wrap in setTimeout to avoid "synchronous setState in effect" warning
-    const timer = setTimeout(() => {
-        setOrders(prevOrders => {
-            const pendingOrders = prevOrders.filter(o => o.isOfflinePending);
-            const hasStale = prevOrders.some(o => o.id === 'ord-001' && o.status === OrderStatus.PREPARING);
-
-            if (pendingOrders.length === 0 && !hasStale) {
-                return prevOrders;
-            }
-
-            const updatedOrders = prevOrders.map(o => {
-                let newOrder = o;
-                // Fix stale
-                if (o.id === 'ord-001' && o.status === OrderStatus.PREPARING) {
-                    newOrder = { ...o, status: OrderStatus.DELIVERED };
-                }
-                // Fix pending
-                if (o.isOfflinePending) {
-                    newOrder = { ...newOrder, isOfflinePending: false };
-                }
-                return newOrder;
-            });
-
-            saveOrders(updatedOrders);
-            
-            if (pendingOrders.length > 0) {
-                // We are already in a timeout, so we can just show toast
-                showToast(`Conexión restaurada. ${pendingOrders.length} pedido(s) enviado(s).`, 'success');
-            }
-
-            return updatedOrders;
-        });
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, [isOnline, showToast]);
-
   const toggleSettings = () => setIsSettingsOpen(prev => !prev);
   
   const toggleDriverStatus = () => {
@@ -209,13 +365,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       showToast(isDriverOnline ? 'Desconectado' : 'Ahora estás en línea', 'info');
   };
 
-  const updateUser = (data: Partial<UserProfile>) => {
+  const updateUser = async (data: Partial<UserProfile>) => {
       setUser(prev => ({ ...prev, ...data }));
+      if (authUser) {
+        try {
+          await updateDoc(doc(db, 'users', authUser.uid), data);
+        } catch (error) {
+          console.error('Error updating user:', error);
+        }
+      }
   };
 
-  const createStore = (newStore: Store) => {
-      setStores(prev => [newStore, ...prev]);
-      updateUser({ ownedStoreId: newStore.id });
+  const createStore = async (newStore: Store) => {
+      try {
+        await setDoc(doc(db, 'stores', newStore.id), {
+          ...newStore,
+          createdAt: serverTimestamp()
+        });
+        await updateUser({ ownedStoreId: newStore.id });
+        showToast('Tienda creada con éxito', 'success');
+      } catch (error) {
+        console.error('Error creating store:', error);
+        showToast('Error al crear la tienda', 'error');
+      }
   };
 
   const addToCart = (product: Product, quantity: number, modifiers: Modifier[], storeId: string) => {
@@ -262,9 +434,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const resetOrders = () => {
-      setOrders(INITIAL_ORDERS);
-      saveOrders(INITIAL_ORDERS);
-      showToast('Pedidos reiniciados a estado Demo.', 'success');
+      // For demo purposes, we could clear local state, but Firestore is the source of truth
+      showToast('Los pedidos se gestionan en tiempo real desde la nube.', 'info');
   };
 
   const toggleFavorite = (storeId: string) => {
@@ -277,7 +448,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   };
 
-  const placeOrder = (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount: number = 0) => {
+  const placeOrder = async (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount: number = 0) => {
     const subtotal = cart.reduce((sum, item) => sum + (item.totalPrice * item.quantity), 0);
     
     // Dynamic Delivery Fee Logic
@@ -286,134 +457,138 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     const total = Math.max(0, subtotal + deliveryFee - discount);
     
-    const newOrder: Order = {
-      id: `ord-${Date.now()}`,
+    const orderId = `ord-${Date.now()}`;
+    const newOrder: any = {
       storeId,
       storeName,
       total,
       deliveryFee,
       status: OrderStatus.PENDING,
       items: cart,
-      createdAt: new Date(),
+      createdAt: serverTimestamp(),
       address: type === OrderType.PICKUP ? 'Retiro en Local' : address,
       customerName: user.name,
+      customerId: authUser?.uid,
       paymentMethod,
       notes,
       type,
-      isOfflinePending: !isOnline,
       isReviewed: false
     };
     
-    setOrders(prev => createOrder(prev, newOrder));
-    clearCart();
-    setSelectedStore(null); // Clear selection to return to home on back
-
-    if (!isOnline) {
-        showToast('Guardado Offline. Se enviará al conectar.', 'info');
+    try {
+      await setDoc(doc(db, 'orders', orderId), newOrder);
+      clearCart();
+      setSelectedStore(null);
+      showToast('Pedido realizado con éxito', 'success');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      showToast('Error al realizar el pedido', 'error');
     }
   };
 
-  const updateOrder = (orderId: string, status: OrderStatus) => {
-    setOrders(prev => {
-        const updated = updateOrderStatus(prev, orderId, status);
-        // If delivered, set deliveredAt
-        if (status === OrderStatus.DELIVERED) {
-            return updated.map(o => o.id === orderId ? { ...o, deliveredAt: new Date() } : o);
-        }
-        return updated;
-    });
+  const updateOrder = async (orderId: string, status: OrderStatus) => {
+    try {
+      const updateData: any = { status };
+      if (status === OrderStatus.DELIVERED) {
+        updateData.deliveredAt = serverTimestamp();
+      }
+      await updateDoc(doc(db, 'orders', orderId), updateData);
+    } catch (error) {
+      console.error('Error updating order:', error);
+    }
   };
 
-  const cancelOrder = (orderId: string, reason: string) => {
-      const updatedOrders = orders.map(o => {
-          if (o.id !== orderId) return o;
-          return {
-              ...o,
-              status: OrderStatus.CANCELLED,
-              cancelledReason: reason,
-              cancelledAt: new Date()
-          };
+  const cancelOrder = async (orderId: string, reason: string) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        status: OrderStatus.CANCELLED,
+        cancelledReason: reason,
+        cancelledAt: serverTimestamp()
       });
-      setOrders(updatedOrders);
-      saveOrders(updatedOrders);
       showToast('Pedido cancelado', 'error');
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+    }
   };
 
-  const submitClaim = (orderId: string, reason: string) => {
-      setOrders(prev => {
-          const updated = prev.map(o => {
-              if (o.id !== orderId) return o;
-              return {
-                  ...o,
-                  status: OrderStatus.DISPUTED,
-                  claimReason: reason,
-                  claimStatus: 'OPEN'
-              };
-          });
-          saveOrders(updated);
-          return updated;
+  const submitClaim = async (orderId: string, reason: string) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        status: OrderStatus.DISPUTED,
+        claimReason: reason,
+        claimStatus: 'OPEN'
       });
       showToast('Reclamo enviado. Nos contactaremos pronto.', 'info');
+    } catch (error) {
+      console.error('Error submitting claim:', error);
+    }
   };
 
-  const resolveClaim = (orderId: string, resolution: 'RESOLVED' | 'REJECTED') => {
-      setOrders(prev => {
-          const updated = prev.map(o => {
-              if (o.id !== orderId) return o;
-              return {
-                  ...o,
-                  status: resolution === 'RESOLVED' ? OrderStatus.CANCELLED : OrderStatus.DELIVERED,
-                  claimStatus: resolution,
-                  cancelledReason: resolution === 'RESOLVED' ? 'Reembolso por reclamo' : undefined,
-                  cancelledAt: resolution === 'RESOLVED' ? new Date() : undefined
-              };
-          });
-          saveOrders(updated);
-          return updated;
+  const resolveClaim = async (orderId: string, resolution: 'RESOLVED' | 'REJECTED') => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        status: resolution === 'RESOLVED' ? OrderStatus.CANCELLED : OrderStatus.DELIVERED,
+        claimStatus: resolution,
+        cancelledReason: resolution === 'RESOLVED' ? 'Reembolso por reclamo' : undefined,
+        cancelledAt: resolution === 'RESOLVED' ? serverTimestamp() : undefined
       });
+    } catch (error) {
+      console.error('Error resolving claim:', error);
+    }
   };
 
-  const assignDriver = (orderId: string, driverId: string) => {
-      const driver = drivers.find(d => d.id === driverId);
-      if(!driver) return;
+  const assignDriver = async (orderId: string, driverId: string) => {
+    const driver = drivers.find(d => d.id === driverId);
+    if (!driver) return;
 
-      setOrders(prev => prev.map(o => {
-          if(o.id !== orderId) return o;
-          return {
-              ...o,
-              status: OrderStatus.DRIVER_ASSIGNED,
-              driverId: driver.id,
-              driverName: driver.name
-          };
-      }));
-      saveOrders(orders); // Sync
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        status: OrderStatus.DRIVER_ASSIGNED,
+        driverId: driver.id,
+        driverName: driver.name
+      });
+    } catch (error) {
+      console.error('Error assigning driver:', error);
+    }
   };
 
-  const addProduct = (storeId: string, product: Product) => {
-    setStores(prevStores => prevStores.map(store => {
-      if (store.id !== storeId) return store;
-      return { ...store, products: [...store.products, product] };
-    }));
+  const addProduct = async (storeId: string, product: Product) => {
+    const store = stores.find(s => s.id === storeId);
+    if (!store) return;
+    
+    try {
+      await updateDoc(doc(db, 'stores', storeId), {
+        products: [...store.products, product]
+      });
+    } catch (error) {
+      console.error('Error adding product:', error);
+    }
   };
 
-  const updateProduct = (storeId: string, updatedProduct: Product) => {
-    setStores(prevStores => prevStores.map(store => {
-      if (store.id !== storeId) return store;
-      return {
-        ...store,
+  const updateProduct = async (storeId: string, updatedProduct: Product) => {
+    const store = stores.find(s => s.id === storeId);
+    if (!store) return;
+
+    try {
+      await updateDoc(doc(db, 'stores', storeId), {
         products: store.products.map(p => p.id === updatedProduct.id ? updatedProduct : p)
-      };
-    }));
+      });
+    } catch (error) {
+      console.error('Error updating product:', error);
+    }
   };
 
-  const deleteProduct = (storeId: string, productId: string) => {
-    setStores(prevStores => prevStores.map(store => {
-      if (store.id !== storeId) return store;
-      return {
-        ...store,
+  const deleteProduct = async (storeId: string, productId: string) => {
+    const store = stores.find(s => s.id === storeId);
+    if (!store) return;
+
+    try {
+      await updateDoc(doc(db, 'stores', storeId), {
         products: store.products.filter(p => p.id !== productId)
-      };
-    }));
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
   };
 
   const addCoupon = (coupon: Coupon) => {
@@ -428,32 +603,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setCoupons(prev => prev.map(c => c.id === id ? { ...c, active: !c.active } : c));
   };
 
-  const addReview = (review: Review) => {
+  const addReview = async (review: Review) => {
+    try {
       // 1. Save Review
-      setReviews(prev => [...prev, review]);
+      await addDoc(collection(db, 'reviews'), {
+        ...review,
+        createdAt: serverTimestamp()
+      });
       
       // 2. Mark Order as Reviewed
-      setOrders(prev => {
-          const updated = prev.map(o => o.id === review.orderId ? { ...o, isReviewed: true } : o);
-          saveOrders(updated);
-          return updated;
+      await updateDoc(doc(db, 'orders', review.orderId), {
+        isReviewed: true
       });
 
       // 3. Update Store Rating (Weighted Average)
-      setStores(prev => prev.map(store => {
-          if (store.id !== review.storeId) return store;
-          
-          const newCount = store.reviewsCount + 1;
-          // Formula: (OldRating * OldCount + NewRating) / NewCount
-          const oldTotal = store.rating * store.reviewsCount;
-          const newRating = (oldTotal + review.rating) / newCount;
-          
-          return {
-              ...store,
-              rating: Number(newRating.toFixed(1)), // Keep it to 1 decimal
-              reviewsCount: newCount
-          };
-      }));
+      const store = stores.find(s => s.id === review.storeId);
+      if (store) {
+        const newCount = store.reviewsCount + 1;
+        const oldTotal = store.rating * store.reviewsCount;
+        const newRating = (oldTotal + review.rating) / newCount;
+        
+        await updateDoc(doc(db, 'stores', review.storeId), {
+          rating: Number(newRating.toFixed(1)),
+          reviewsCount: newCount
+        });
+      }
+      
+      showToast('Reseña enviada con éxito', 'success');
+    } catch (error) {
+      console.error('Error adding review:', error);
+    }
+  };
+
+  const updateStore = async (storeId: string, data: Partial<Store>) => {
+    try {
+      await updateDoc(doc(db, 'stores', storeId), data);
+    } catch (error) {
+      console.error('Error updating store:', error);
+    }
   };
 
   return (
@@ -461,6 +648,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       role, 
       setRole,
       user,
+      users,
       updateUser,
       createStore,
       orders, 
@@ -488,8 +676,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       toggleCoupon,
       addReview,
       reviews,
+      updateStore,
       clientViewState,
       setClientViewState,
+      merchantViewState,
+      setMerchantViewState,
+      driverViewState,
+      setDriverViewState,
+      adminViewState,
+      setAdminViewState,
       selectedStore,
       setSelectedStore,
       isDriverOnline,
@@ -497,7 +692,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       cartStoreId,
       resetOrders,
       darkMode,
-      toggleDarkMode
+      toggleDarkMode,
+      soundEnabled,
+      toggleSound,
+      notifications,
+      isNotificationsOpen,
+      setIsNotificationsOpen,
+      addNotification,
+      markNotificationAsRead,
+      clearNotifications
     }}>
       {children}
     </AppContext.Provider>

@@ -23,9 +23,9 @@ export const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
   }, [toast.id, onClose]);
 
   const styles = {
-    success: 'bg-slate-900 text-white border-slate-800',
+    success: 'bg-stone-900 text-white border-stone-800',
     error: 'bg-red-500 text-white border-red-600',
-    info: 'bg-blue-600 text-white border-blue-700'
+    info: 'bg-amber-600 text-white border-amber-700'
   };
 
   const icons = {

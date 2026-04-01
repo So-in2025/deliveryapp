@@ -10,12 +10,12 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Mazamitla" />
+    <meta name="apple-mobile-web-app-title" content="Te lo Llevo" />
     
     <!-- iOS Icon -->
-    <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/lucide-icons/lucide/icons/palmtree.svg" />
+    <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/lucide-icons/lucide/icons/bike.svg" />
     
-    <title>Mazamitla</title>
+    <title>Te lo Llevo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -24,11 +24,22 @@
           extend: {
             colors: {
               brand: {
-                50: '#f5f3ff',
-                100: '#ede9fe',
-                500: '#6366f1',
-                600: '#4f46e5',
-                900: '#312e81',
+                50: '#fffde6',
+                100: '#fffbba',
+                200: '#fff88a',
+                300: '#fff45a',
+                400: '#fff12a',
+                500: '#ffed00', // Exact Yellow from logo
+                600: '#e6d500',
+                700: '#bfb200',
+                800: '#998e00',
+                900: '#736b00',
+                950: '#4d4800',
+              },
+              accent: {
+                red: '#e63946',
+                green: '#2a9d8f',
+                orange: '#f4a261'
               }
             },
             fontFamily: {
@@ -84,19 +95,18 @@
 
       html { 
         -webkit-tap-highlight-color: transparent; 
-        background-color: #0f172a; /* Match slate-900 for dev background */
+        background-color: #ffffff;
       }
       
       body { 
-        background-color: #f8fafc; 
+        background-color: #ffffff;
         overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
         transition: background-color 0.3s ease;
       }
 
       /* Dark Mode Global Overrides */
-      html.dark body {
-        background-color: #0f172a;
-        color: #f8fafc;
+      html.dark, html.dark body {
+        background-color: #020617; /* Very dark slate */
       }
       
       /* Hide Scrollbar for cleaner UI */

@@ -1,13 +1,15 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
 import { OrderStatus, Order, PaymentMethod, OrderType, Product, ModifierGroup, Modifier, Store } from '../types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
-import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight } from 'lucide-react';
+import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight, Upload, Download, FileText, Image as ImageIcon } from 'lucide-react';
 import { formatCurrency } from '../constants';
+import { extractProductsFromMenu } from '../services/geminiService';
+import * as XLSX from 'xlsx';
 
 const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
   const { updateOrder, cancelOrder } = useApp();
@@ -55,16 +57,16 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden animate-slide-up">
-      <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+    <div className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 overflow-hidden animate-slide-up">
+      <div className="p-4 border-b border-stone-100 dark:border-stone-700 flex justify-between items-center bg-stone-50/50 dark:bg-stone-800/50">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400">#{order.id.slice(-6)}</span>
+          <span className="font-mono text-xs font-bold text-stone-500 dark:text-stone-400">#{order.id.slice(-6)}</span>
           {order.type === OrderType.PICKUP ? (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 dark:bg-slate-700 text-white text-[10px] font-bold uppercase shadow-sm">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-stone-800 dark:bg-stone-700 text-white text-[10px] font-bold uppercase shadow-sm">
               <StoreIcon size={10} /> Retiro
             </span>
           ) : (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-brand-600 text-white text-[10px] font-bold uppercase shadow-sm">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-brand-500 text-brand-950 text-[10px] font-bold uppercase shadow-sm">
               <Bike size={10} /> Delivery
             </span>
           )}
@@ -73,17 +75,17 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
       </div>
 
       <div className="p-4">
-        <div className="flex gap-4 mb-4 pb-4 border-b border-slate-100 dark:border-slate-700">
+        <div className="flex gap-4 mb-4 pb-4 border-b border-stone-100 dark:border-stone-700">
           <div className="flex-1">
-            <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1">Cliente</p>
-            <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
-              <User size={16} className="text-slate-400 dark:text-slate-500" />
+            <p className="text-[10px] uppercase font-bold text-stone-400 dark:text-stone-500 mb-1">Cliente</p>
+            <div className="flex items-center gap-2 text-stone-900 dark:text-white font-bold text-sm">
+              <User size={16} className="text-stone-400 dark:text-stone-500" />
               {order.customerName}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 mb-1">Pago</p>
-            <div className={`flex items-center gap-2 text-sm font-bold justify-end ${order.paymentMethod === PaymentMethod.CASH ? 'text-amber-600 dark:text-amber-500' : 'text-slate-700 dark:text-slate-300'}`}>
+            <p className="text-[10px] uppercase font-bold text-stone-400 dark:text-stone-500 mb-1">Pago</p>
+            <div className={`flex items-center gap-2 text-sm font-bold justify-end ${order.paymentMethod === PaymentMethod.CASH ? 'text-amber-600 dark:text-amber-500' : 'text-stone-700 dark:text-stone-300'}`}>
               {order.paymentMethod === PaymentMethod.CARD ? <CreditCard size={16} /> : <Banknote size={16} />}
               {order.paymentMethod === PaymentMethod.CARD ? 'Tarjeta' : 'Efectivo'}
             </div>
@@ -100,13 +102,13 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
         <div className="space-y-2 mb-4">
           {order.items.map((item, idx) => (
             <div key={idx} className="flex gap-3 text-sm">
-              <div className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-900 dark:text-white font-bold text-xs h-fit border border-slate-200 dark:border-slate-600">
+              <div className="bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded text-stone-900 dark:text-white font-bold text-xs h-fit border border-stone-200 dark:border-stone-600">
                 {item.quantity}x
               </div>
               <div className="flex-1">
-                <p className="text-slate-900 dark:text-white font-medium leading-tight">{item.product.name}</p>
+                <p className="text-stone-900 dark:text-white font-medium leading-tight">{item.product.name}</p>
                 {item.selectedModifiers.length > 0 && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
                     {item.selectedModifiers.map(m => m.name).join(', ')}
                   </p>
                 )}
@@ -116,32 +118,32 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
         </div>
 
         <div className="flex justify-between items-center text-sm pt-2">
-          <span className="text-slate-500 dark:text-slate-400 font-medium">Total del pedido</span>
-          <span className="font-bold text-xl text-slate-900 dark:text-white">{formatCurrency(order.total)}</span>
+          <span className="text-stone-500 dark:text-stone-400 font-medium">Total del pedido</span>
+          <span className="font-bold text-xl text-stone-900 dark:text-white">{formatCurrency(order.total)}</span>
         </div>
 
         {order.type === OrderType.DELIVERY && order.status === OrderStatus.DRIVER_ASSIGNED && (
-          <div className="mt-4 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 p-2.5 rounded-lg flex items-center gap-3 text-sm text-brand-800 dark:text-brand-300">
-            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm">
-              <Bike size={16} className="text-brand-600 dark:text-brand-400" />
+          <div className="mt-4 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 p-2.5 rounded-lg flex items-center gap-3 text-sm text-brand-950 dark:text-brand-300">
+            <div className="bg-white dark:bg-stone-800 p-1.5 rounded-full shadow-sm">
+              <Bike size={16} className="text-brand-800 dark:text-brand-400" />
             </div>
             <span className="font-medium">Repartidor en camino al local</span>
           </div>
         )}
 
         {order.type === OrderType.DELIVERY && order.status === OrderStatus.PICKED_UP && (
-          <div className="mt-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/30 p-2.5 rounded-lg flex items-center gap-3 text-sm text-green-800 dark:text-green-300">
-            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm">
-              <CheckCircle size={16} className="text-green-600 dark:text-green-400" />
+          <div className="mt-4 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 p-2.5 rounded-lg flex items-center gap-3 text-sm text-brand-950 dark:text-brand-300">
+            <div className="bg-white dark:bg-stone-800 p-1.5 rounded-full shadow-sm">
+              <CheckCircle size={16} className="text-brand-800 dark:text-brand-400" />
             </div>
             <span className="font-medium">Pedido retirado - En camino al cliente</span>
           </div>
         )}
 
         {order.type === OrderType.PICKUP && order.status === OrderStatus.READY && (
-          <div className="mt-4 bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 p-2.5 rounded-lg flex items-center gap-3 text-sm text-slate-800 dark:text-slate-200">
-            <div className="bg-white dark:bg-slate-800 p-1.5 rounded-full shadow-sm">
-              <ShoppingBag size={16} className="text-slate-600 dark:text-slate-400" />
+          <div className="mt-4 bg-stone-100 dark:bg-stone-700/50 border border-stone-200 dark:border-stone-600 p-2.5 rounded-lg flex items-center gap-3 text-sm text-stone-800 dark:text-stone-200">
+            <div className="bg-white dark:bg-stone-800 p-1.5 rounded-full shadow-sm">
+              <ShoppingBag size={16} className="text-stone-600 dark:text-stone-400" />
             </div>
             <span className="font-medium">Esperando retiro del cliente</span>
           </div>
@@ -150,7 +152,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
 
       {/* Logic Update: Only show button if action is available for Merchant */}
       {!(order.status === OrderStatus.READY && order.type === OrderType.DELIVERY) && order.status !== OrderStatus.PICKED_UP && order.status !== OrderStatus.DRIVER_ASSIGNED && order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.DISPUTED && (
-        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-700 flex gap-2">
+        <div className="p-3 bg-stone-50 dark:bg-stone-800/50 border-t border-stone-100 dark:border-stone-700 flex gap-2">
           {order.status === OrderStatus.PENDING && (
               <button 
                   onClick={handleCancel}
@@ -163,7 +165,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
             fullWidth
             variant={order.status === OrderStatus.PENDING ? 'primary' : 'secondary'}
             onClick={handleAction}
-            className={order.status === OrderStatus.PENDING ? 'bg-brand-600 hover:bg-brand-700 flex-1' : 'flex-1'}
+            className="flex-1"
           >
             {order.status === OrderStatus.PENDING && <CheckCircle size={18} className="mr-2" />}
             {getButtonText()}
@@ -210,13 +212,13 @@ const CouponManager: React.FC = () => {
 
     return (
         <div className="pb-24">
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
-                <h3 className="font-bold text-slate-900 dark:text-white mb-4">Crear Nuevo Cupón</h3>
+            <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 mb-6">
+                <h3 className="font-bold text-stone-900 dark:text-white mb-4">Crear Nuevo Cupón</h3>
                 <div className="space-y-3">
                     <div>
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Código</label>
+                        <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase">Código</label>
                         <input 
-                            className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-mono uppercase font-bold text-slate-900 dark:text-white"
+                            className="w-full bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 font-mono uppercase font-bold text-stone-900 dark:text-white"
                             placeholder="Ej: VERANO20"
                             value={newCode}
                             onChange={e => setNewCode(e.target.value)}
@@ -224,19 +226,19 @@ const CouponManager: React.FC = () => {
                     </div>
                     <div className="flex gap-3">
                         <div className="w-1/3">
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Descuento %</label>
+                            <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase">Descuento %</label>
                             <input 
                                 type="number"
-                                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 font-bold text-slate-900 dark:text-white"
+                                className="w-full bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 font-bold text-stone-900 dark:text-white"
                                 placeholder="20"
                                 value={newDiscount}
                                 onChange={e => setNewDiscount(e.target.value)}
                             />
                         </div>
                         <div className="flex-1">
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Descripción</label>
+                            <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase">Descripción</label>
                             <input 
-                                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                                className="w-full bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
                                 placeholder="Para nuevos clientes"
                                 value={newDesc}
                                 onChange={e => setNewDesc(e.target.value)}
@@ -247,25 +249,25 @@ const CouponManager: React.FC = () => {
                 </div>
             </div>
 
-            <h3 className="font-bold text-slate-900 dark:text-white mb-3 px-1">Cupones Activos</h3>
+            <h3 className="font-bold text-stone-900 dark:text-white mb-3 px-1">Cupones Activos</h3>
             <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-                {coupons.length === 0 && <p className="text-slate-400 dark:text-slate-500 text-center py-4 lg:col-span-2">No hay cupones creados.</p>}
+                {coupons.length === 0 && <p className="text-stone-400 dark:text-stone-500 text-center py-4 lg:col-span-2">No hay cupones creados.</p>}
                 {coupons.map(coupon => (
-                    <div key={coupon.id} className={`bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border flex justify-between items-center ${coupon.active ? 'border-brand-200 dark:border-brand-900/30' : 'border-slate-200 dark:border-slate-700 opacity-60'}`}>
+                    <div key={coupon.id} className={`bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border flex justify-between items-center ${coupon.active ? 'border-brand-200 dark:border-brand-900/30' : 'border-stone-200 dark:border-stone-700 opacity-60'}`}>
                         <div>
                             <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-lg text-slate-900 dark:text-white">{coupon.code}</span>
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded ${coupon.active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
+                                <span className="font-mono font-bold text-lg text-stone-900 dark:text-white">{coupon.code}</span>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded ${coupon.active ? 'bg-brand-500 text-brand-950' : 'bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}>
                                     {coupon.active ? 'ACTIVO' : 'INACTIVO'}
                                 </span>
                             </div>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">{coupon.discountPct * 100}% OFF • {coupon.description}</p>
+                            <p className="text-stone-500 dark:text-stone-400 text-sm">{coupon.discountPct * 100}% OFF • {coupon.description}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => toggleCoupon(coupon.id)} className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400">
-                                {coupon.active ? <ToggleRight size={24} className="text-brand-600 dark:text-brand-400" /> : <ToggleLeft size={24} />}
+                            <button onClick={() => toggleCoupon(coupon.id)} className="p-2 text-stone-400 dark:text-stone-500 hover:text-brand-800 dark:hover:text-brand-400">
+                                {coupon.active ? <ToggleRight size={24} className="text-brand-800 dark:text-brand-400" /> : <ToggleLeft size={24} />}
                             </button>
-                            <button onClick={() => deleteCoupon(coupon.id)} className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400">
+                            <button onClick={() => deleteCoupon(coupon.id)} className="p-2 text-stone-400 dark:text-stone-500 hover:text-red-500 dark:hover:text-red-400">
                                 <Trash2 size={20} />
                             </button>
                         </div>
@@ -274,6 +276,139 @@ const CouponManager: React.FC = () => {
             </div>
         </div>
     )
+};
+
+const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
+  const { addProduct } = useApp();
+  const { showToast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const downloadTemplate = () => {
+    const ws = XLSX.utils.json_to_sheet([
+      { Nombre: 'Hamburguesa Clásica', Descripcion: 'Carne, queso, lechuga', Precio: 1200, ImagenURL: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd' },
+      { Nombre: 'Papas Fritas', Descripcion: 'Porción grande', Precio: 600, ImagenURL: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877' }
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Productos");
+    XLSX.writeFile(wb, "plantilla_productos.xlsx");
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws) as any[];
+
+        let count = 0;
+        data.forEach(item => {
+          if (item.Nombre && item.Precio) {
+            const newProduct: Product = {
+              id: `prod-bulk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              name: String(item.Nombre),
+              description: String(item.Descripcion || ''),
+              price: Number(item.Precio),
+              image: String(item.ImagenURL || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'),
+              modifierGroups: []
+            };
+            addProduct(storeId, newProduct);
+            count++;
+          }
+        });
+
+        showToast(`${count} productos cargados con éxito`, 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Error al procesar el archivo', 'error');
+      } finally {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  const handleAIScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    showToast(`Escaneando ${file.type.includes('pdf') ? 'PDF' : 'imagen'} con IA...`, 'info');
+
+    try {
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      const base64Data = await base64Promise;
+      const products = await extractProductsFromMenu(base64Data);
+
+      let count = 0;
+      products.forEach((p: Product) => {
+        addProduct(storeId, p);
+        count++;
+      });
+
+      showToast(`${count} productos extraídos con IA`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Error al escanear el archivo', 'error');
+    } finally {
+      setIsUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 p-4 rounded-xl mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="font-bold text-brand-900 dark:text-brand-100 flex items-center gap-2">
+            <Upload size={18} /> Carga Automática
+          </h3>
+          <p className="text-xs text-brand-900 dark:text-brand-300 mt-1">Sube tu catálogo desde Excel o escanea un PDF/Foto del menú</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={downloadTemplate} className="bg-white dark:bg-stone-800">
+            <Download size={14} className="mr-1" /> Plantilla
+          </Button>
+          
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            accept=".xlsx, .xls, .csv" 
+            className="hidden" 
+          />
+          <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} isLoading={isUploading}>
+            <FileText size={14} className="mr-1" /> Excel
+          </Button>
+
+          <input 
+            type="file" 
+            ref={imageInputRef} 
+            onChange={handleAIScan} 
+            accept="image/*, application/pdf" 
+            className="hidden" 
+          />
+          <Button size="sm" onClick={() => imageInputRef.current?.click()} isLoading={isUploading}>
+            <ImageIcon size={14} className="mr-1" /> Escanear PDF/Foto
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
@@ -348,8 +483,9 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
 
   return (
     <div className="pb-24">
+      <BulkProductUpload storeId={myStore.id} />
       <div className="flex justify-between items-center mb-6">
-        <p className="text-slate-500 dark:text-slate-400 text-sm">Gestiona tu catálogo ({myStore.products.length} productos)</p>
+        <p className="text-stone-500 dark:text-stone-400 text-sm">Gestiona tu catálogo ({myStore.products.length} productos)</p>
         <Button size="sm" onClick={() => handleOpenEdit()}>
           <Plus size={16} className="mr-1" /> Nuevo
         </Button>
@@ -357,23 +493,23 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
 
       <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
         {myStore.products.length === 0 && (
-            <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl lg:col-span-2">
-                <p className="text-slate-400 dark:text-slate-500 text-sm">Aún no tienes productos.</p>
+            <div className="text-center py-8 bg-stone-50 dark:bg-stone-800/50 border border-dashed border-stone-200 dark:border-stone-700 rounded-xl lg:col-span-2">
+                <p className="text-stone-400 dark:text-stone-500 text-sm">Aún no tienes productos.</p>
             </div>
         )}
         {myStore.products.map((product: Product) => (
-          <div key={product.id} className="bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 items-center">
-            <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden shrink-0">
+          <div key={product.id} className="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 flex gap-4 items-center">
+            <div className="w-16 h-16 rounded-lg bg-stone-100 dark:bg-stone-700 overflow-hidden shrink-0">
               <LazyImage src={product.image} alt={product.name} className="w-full h-full" />
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-slate-900 dark:text-white text-sm">{product.name}</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{product.description}</p>
+              <h4 className="font-bold text-stone-900 dark:text-white text-sm">{product.name}</h4>
+              <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-1">{product.description}</p>
               <div className="flex items-center gap-2 mt-1">
-                  <p className="font-bold text-brand-600 dark:text-brand-400 text-sm">{formatCurrency(product.price)}</p>
+                  <p className="font-bold text-brand-800 dark:text-brand-400 text-sm">{formatCurrency(product.price)}</p>
               </div>
             </div>
-            <button onClick={() => handleOpenEdit(product)} className="p-2 text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400">
+            <button onClick={() => handleOpenEdit(product)} className="p-2 text-stone-400 dark:text-stone-500 hover:text-brand-800 dark:hover:text-brand-400">
               <Pencil size={18} />
             </button>
           </div>
@@ -382,42 +518,42 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
 
       {editingProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-           <div className="bg-white dark:bg-slate-900 w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
-               <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+           <div className="bg-white dark:bg-stone-900 w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+               <div className="p-4 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-stone-50 dark:bg-stone-800/50">
                   <h3 className="font-bold dark:text-white">Editar Producto</h3>
                   <button onClick={() => setEditingProduct(null)} className="dark:text-white"><X size={20}/></button>
                </div>
                <div className="p-4 overflow-y-auto space-y-4 flex-1">
-                   <input className="w-full border dark:border-slate-700 p-2 rounded dark:bg-slate-800 dark:text-white" placeholder="Nombre" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                   <input className="w-full border dark:border-slate-700 p-2 rounded dark:bg-slate-800 dark:text-white" placeholder="Precio" type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
-                   <textarea className="w-full border dark:border-slate-700 p-2 rounded dark:bg-slate-800 dark:text-white" placeholder="Descripción" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                   <input className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Nombre" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                   <input className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Precio" type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
+                   <textarea className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Descripción" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                    
-                   <div className="border-t dark:border-slate-700 pt-4">
+                   <div className="border-t dark:border-stone-700 pt-4">
                        <div className="flex justify-between mb-2">
                            <h4 className="font-bold text-sm dark:text-white">Opciones (Modifiers)</h4>
-                           <button onClick={_addModifierGroup} className="text-xs text-brand-600 dark:text-brand-400 font-bold">+ Grupo</button>
+                           <button onClick={_addModifierGroup} className="text-xs text-brand-800 dark:text-brand-400 font-bold">+ Grupo</button>
                        </div>
                        {formData.modifierGroups?.map(g => (
-                           <div key={g.id} className="bg-slate-50 dark:bg-slate-800/50 p-2 mb-2 rounded border dark:border-slate-700">
+                           <div key={g.id} className="bg-stone-50 dark:bg-stone-800/50 p-2 mb-2 rounded border dark:border-stone-700">
                                <div className="flex justify-between mb-2">
                                    <input value={g.name} onChange={e => _updateGroup(g.id, 'name', e.target.value)} className="text-xs font-bold bg-transparent dark:text-white" />
                                    <button onClick={() => _removeModifierGroup(g.id)} className="dark:text-white"><Trash2 size={12} /></button>
                                </div>
-                               <div className="pl-2 border-l-2 dark:border-slate-600">
+                               <div className="pl-2 border-l-2 dark:border-stone-600">
                                    {g.options.map(o => (
                                        <div key={o.id} className="flex gap-2 mb-1">
-                                           <input value={o.name} onChange={e => _updateOption(g.id, o.id, 'name', e.target.value)} className="text-xs border dark:border-slate-600 rounded p-1 flex-1 dark:bg-slate-700 dark:text-white" />
-                                           <input type="number" value={o.price} onChange={e => _updateOption(g.id, o.id, 'price', Number(e.target.value))} className="text-xs border dark:border-slate-600 rounded p-1 w-12 dark:bg-slate-700 dark:text-white" />
+                                           <input value={o.name} onChange={e => _updateOption(g.id, o.id, 'name', e.target.value)} className="text-xs border dark:border-stone-600 rounded p-1 flex-1 dark:bg-stone-700 dark:text-white" />
+                                           <input type="number" value={o.price} onChange={e => _updateOption(g.id, o.id, 'price', Number(e.target.value))} className="text-xs border dark:border-stone-600 rounded p-1 w-12 dark:bg-stone-700 dark:text-white" />
                                            <button onClick={() => _removeOption(g.id, o.id)} className="dark:text-white"><X size={12}/></button>
                                        </div>
                                    ))}
-                                   <button onClick={() => _addOptionToGroup(g.id)} className="text-[10px] text-brand-600 dark:text-brand-400 font-bold">+ Opción</button>
+                                   <button onClick={() => _addOptionToGroup(g.id)} className="text-[10px] text-brand-800 dark:text-brand-400 font-bold">+ Opción</button>
                                </div>
                            </div>
                        ))}
                    </div>
                </div>
-               <div className="p-4 border-t dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex gap-2">
+               <div className="p-4 border-t dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 flex gap-2">
                    {editingProduct !== 'NEW' && <Button variant="danger" onClick={() => handleDelete((editingProduct as Product).id)}>Eliminar</Button>}
                    <Button fullWidth onClick={handleSave}>Guardar</Button>
                </div>
@@ -428,9 +564,79 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
   );
 };
 
+const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
+    const { updateStore } = useApp();
+    const { showToast } = useToast();
+    const [font, setFont] = useState(store.customFont || 'Inter');
+    const [color, setColor] = useState(store.customColor || '#FACC15'); // Default brand yellow
+
+    const fonts = ['Inter', 'Roboto', 'Montserrat', 'Playfair Display', 'Courier New', 'Georgia'];
+
+    const handleSave = () => {
+        updateStore(store.id, { customFont: font, customColor: color });
+        showToast('Configuración guardada', 'success');
+    };
+
+    return (
+        <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 max-w-2xl mx-auto animate-slide-up">
+            <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-6 flex items-center gap-2">
+                <StoreIcon size={24} className="text-brand-800" /> Personalización de Tienda
+            </h3>
+
+            <div className="space-y-6">
+                <div>
+                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Fuente de la Tienda</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {fonts.map(f => (
+                            <button 
+                                key={f}
+                                onClick={() => setFont(f)}
+                                className={`p-3 rounded-xl border text-sm transition-all ${font === f ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20 text-brand-900 dark:text-brand-100 ring-2 ring-brand-500/20' : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:border-brand-300'}`}
+                                style={{ fontFamily: f }}
+                            >
+                                {f}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Color de Marca</label>
+                    <div className="flex items-center gap-4">
+                        <input 
+                            type="color" 
+                            value={color}
+                            onChange={e => setColor(e.target.value)}
+                            className="w-16 h-16 rounded-xl cursor-pointer border-4 border-white dark:border-stone-700 shadow-lg"
+                        />
+                        <div className="flex-1">
+                            <p className="text-sm text-stone-500 dark:text-stone-400">Este color se usará para botones y acentos cuando los clientes vean tu tienda.</p>
+                            <p className="font-mono text-xs mt-1 font-bold text-stone-400 uppercase">{color}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="pt-4">
+                    <div className="p-4 rounded-xl border border-dashed border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 mb-6">
+                        <p className="text-xs font-bold text-stone-400 uppercase mb-3">Vista Previa</p>
+                        <div className="p-4 bg-white dark:bg-stone-800 rounded-lg shadow-sm border border-stone-100 dark:border-stone-700" style={{ fontFamily: font }}>
+                            <h4 className="font-bold text-lg mb-1" style={{ color }}>{store.name}</h4>
+                            <p className="text-sm text-stone-500 mb-4">Ejemplo de descripción de tu tienda con la fuente seleccionada.</p>
+                            <button className="px-4 py-2 rounded-lg text-white font-bold text-sm shadow-lg" style={{ backgroundColor: color }}>
+                                Botón de Ejemplo
+                            </button>
+                        </div>
+                    </div>
+                    <Button fullWidth onClick={handleSave} size="lg">Guardar Cambios</Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export const MerchantView: React.FC = () => {
-  const { user, orders, stores, toggleSettings } = useApp();
-  const [activeTab, setActiveTab] = useState<'ORDERS' | 'MENU' | 'COUPONS' | 'HISTORY'>('ORDERS');
+  const { user, orders, stores, merchantViewState, setMerchantViewState } = useApp();
+  const { showToast } = useToast();
 
   // IDENTITY INTEGRATION:
   // If user owns a store, use it. If not, show "No Store" state.
@@ -438,13 +644,59 @@ export const MerchantView: React.FC = () => {
 
   if (!myStore) {
       return (
-          <div className="h-full flex flex-col items-center justify-center p-6 text-center bg-slate-50 dark:bg-slate-900 animate-fade-in">
-              <div className="bg-white dark:bg-slate-800 p-6 rounded-full shadow-sm mb-6">
-                  <StoreIcon size={48} className="text-slate-300 dark:text-slate-600" />
+          <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-50 dark:bg-stone-900 animate-fade-in">
+              <div className="bg-brand-100 dark:bg-brand-900/30 p-6 rounded-full shadow-inner mb-6">
+                  <StoreIcon size={48} className="text-brand-600 dark:text-brand-400" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No tienes una tienda asignada</h2>
-              <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xs mx-auto">Contacta al administrador o crea tu tienda en el panel de desarrollador para comenzar a vender.</p>
-              <Button onClick={() => toggleSettings()} variant="outline">Ir a Configuración</Button>
+              <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Crea tu Tienda</h2>
+              <p className="text-stone-500 dark:text-stone-400 mb-8 max-w-xs mx-auto">Comienza a vender hoy mismo. Solo necesitas un nombre y una imagen para tu local.</p>
+              
+              <div className="w-full max-w-sm space-y-4 bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-xl border border-stone-100 dark:border-stone-700">
+                  <div className="space-y-1 text-left">
+                      <label className="text-[10px] font-bold text-stone-400 uppercase ml-1">Nombre del Comercio</label>
+                      <input 
+                          id="new-store-name"
+                          className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                          placeholder="Ej: Pizzería Don Juan"
+                      />
+                  </div>
+                  <div className="space-y-1 text-left">
+                      <label className="text-[10px] font-bold text-stone-400 uppercase ml-1">Categoría</label>
+                      <select 
+                          id="new-store-category"
+                          className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                      >
+                          <option value="Comida">Comida</option>
+                          <option value="Farmacia">Farmacia</option>
+                          <option value="Abarrotes">Abarrotes</option>
+                          <option value="Vinos y Licores">Vinos y Licores</option>
+                      </select>
+                  </div>
+                  <Button 
+                      fullWidth 
+                      onClick={() => {
+                          const name = (document.getElementById('new-store-name') as HTMLInputElement).value;
+                          const category = (document.getElementById('new-store-category') as HTMLSelectElement).value;
+                          if (name) {
+                              createStore({
+                                  id: '', // Will be set by Firestore
+                                  name,
+                                  category,
+                                  image: 'https://picsum.photos/seed/store/400/400',
+                                  rating: 5.0,
+                                  reviewsCount: 0,
+                                  products: [],
+                                  ownerId: user.uid
+                              });
+                              showToast('Tienda creada con éxito', 'success');
+                          } else {
+                              showToast('Por favor ingresa un nombre', 'error');
+                          }
+                      }}
+                  >
+                      Crear Mi Tienda
+                  </Button>
+              </div>
           </div>
       );
   }
@@ -469,59 +721,72 @@ export const MerchantView: React.FC = () => {
   const totalRevenue = historyOrders.filter(o => o.status === OrderStatus.DELIVERED).reduce((sum, o) => sum + o.total, 0);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 animate-fade-in">
+    <div className="flex flex-col h-full bg-stone-50 dark:bg-stone-900 animate-fade-in">
       {/* Merchant Header with Tabs */}
-      <div className="bg-white dark:bg-slate-800 shadow-sm z-10 sticky top-0">
-        <div className="p-4 flex justify-between items-end border-b border-slate-50 dark:border-slate-700">
+      <div className="bg-white dark:bg-stone-800 shadow-sm z-10 sticky top-0">
+        <div className="p-4 flex justify-between items-end border-b border-stone-50 dark:border-stone-700">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{myStore.name}</h2>
+            <h2 className="text-2xl font-bold text-stone-900 dark:text-white">{myStore.name}</h2>
             <div className="flex items-center gap-2 mt-1">
-              <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              <div className="bg-brand-500 text-brand-950 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-950 animate-pulse"></span>
                 ONLINE
               </div>
-              <span className="text-xs text-slate-400 dark:text-slate-500">| {activeOrders.length} pedidos activos</span>
+              <span className="text-xs text-stone-400 dark:text-stone-500">| {activeOrders.length} pedidos activos</span>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 overflow-hidden">
                 <LazyImage src={myStore.image} alt="Logo" className="w-full h-full" />
               </div>
           </div>
         </div>
 
-        <div className="flex p-1 mx-4 mb-2 mt-2 bg-slate-100 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-2xl lg:mx-auto">
+        <div className="flex p-1 mx-4 mb-2 mt-2 bg-stone-100 dark:bg-stone-700/50 rounded-xl border border-stone-200 dark:border-stone-700 overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-2xl lg:mx-auto">
           <button
-            onClick={() => setActiveTab('ORDERS')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'ORDERS' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            onClick={() => setMerchantViewState('ORDERS')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap relative ${merchantViewState === 'ORDERS' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
           >
-            <LayoutDashboard size={16} /> Pedidos
+            <LayoutDashboard size={16} /> 
+            Pedidos
+            {activeOrders.some(o => o.status === OrderStatus.PENDING) && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+            )}
           </button>
           <button
-            onClick={() => setActiveTab('MENU')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'MENU' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            onClick={() => setMerchantViewState('MENU')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'MENU' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
           >
             <UtensilsCrossed size={16} /> Mi Menú
           </button>
           <button
-            onClick={() => setActiveTab('COUPONS')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'COUPONS' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            onClick={() => setMerchantViewState('COUPONS')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'COUPONS' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
           >
             <Ticket size={16} /> Cupones
           </button>
           <button
-            onClick={() => setActiveTab('HISTORY')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'HISTORY' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            onClick={() => setMerchantViewState('HISTORY')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'HISTORY' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
           >
             <Clock size={16} /> Historial
+          </button>
+          <button
+            onClick={() => setMerchantViewState('SETTINGS')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'SETTINGS' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
+          >
+            <Pencil size={16} /> Ajustes
           </button>
         </div>
       </div>
 
       <div className="p-4 space-y-4 flex-1 overflow-y-auto lg:max-w-7xl lg:mx-auto lg:w-full lg:p-8">
-        {activeTab === 'ORDERS' ? (
+        {merchantViewState === 'ORDERS' ? (
           activeOrders.length === 0 ? (
-            <div className="text-center py-20 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+            <div className="text-center py-20 text-stone-400 dark:text-stone-500 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl">
               <Clock size={40} className="mx-auto mb-2 opacity-30" />
               <p>Sin pedidos pendientes</p>
             </div>
@@ -530,24 +795,26 @@ export const MerchantView: React.FC = () => {
                 {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
             </div>
           )
-        ) : activeTab === 'MENU' ? (
+        ) : merchantViewState === 'MENU' ? (
           <ProductEditor store={myStore} />
-        ) : activeTab === 'COUPONS' ? (
+        ) : merchantViewState === 'COUPONS' ? (
           <CouponManager />
+        ) : merchantViewState === 'SETTINGS' ? (
+          <StoreSettings store={myStore} />
         ) : (
           <div className="space-y-4">
-              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex justify-between items-center lg:max-w-md lg:mx-auto lg:mb-8">
+              <div className="bg-white dark:bg-stone-800 p-4 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm flex justify-between items-center lg:max-w-md lg:mx-auto lg:mb-8">
                   <div>
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Ventas Totales</p>
-                      <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalRevenue)}</p>
+                      <p className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase">Ventas Totales</p>
+                      <p className="text-2xl font-bold text-brand-950 dark:text-brand-400">{formatCurrency(totalRevenue)}</p>
                   </div>
                   <div className="text-right">
-                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Pedidos Completados</p>
-                      <p className="text-xl font-bold text-slate-900 dark:text-white">{historyOrders.filter(o => o.status === OrderStatus.DELIVERED).length}</p>
+                      <p className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase">Pedidos Completados</p>
+                      <p className="text-xl font-bold text-stone-900 dark:text-white">{historyOrders.filter(o => o.status === OrderStatus.DELIVERED).length}</p>
                   </div>
               </div>
               {historyOrders.length === 0 ? (
-                  <div className="text-center py-20 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                  <div className="text-center py-20 text-stone-400 dark:text-stone-500 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl">
                       <p>No hay historial de pedidos</p>
                   </div>
               ) : (

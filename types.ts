@@ -11,8 +11,10 @@ export enum UserRole {
 }
 
 export interface UserProfile {
+  uid: string;
   name: string;
   email: string;
+  role: UserRole;
   avatar?: string; // URL or base64 placeholder
   isDriver?: boolean; // Has completed driver onboarding
   ownedStoreId?: string; // Has completed merchant onboarding
@@ -76,6 +78,8 @@ export interface Store {
   image: string;
   products: Product[];
   createdAt: string; // New: ISO Date string for "New" badge
+  customFont?: string; // New: Store customization
+  customColor?: string; // New: Store customization
 }
 
 export interface CartItem {
@@ -130,5 +134,18 @@ export interface Coupon {
     description: string;
 }
 
+export interface AppNotification {
+    id: string;
+    title: string;
+    message: string;
+    type: 'ORDER' | 'SYSTEM' | 'PROMO';
+    timestamp: Date;
+    read: boolean;
+    orderId?: string;
+}
+
 // UI State Types - Standardized
-export type ViewState = 'BROWSE' | 'CHECKOUT' | 'TRACKING' | 'HISTORY' | 'RECEIPT';
+export type ViewState = 'BROWSE' | 'CHECKOUT' | 'TRACKING' | 'HISTORY' | 'RECEIPT' | 'FAVORITES' | 'PROFILE';
+export type MerchantViewState = 'ORDERS' | 'MENU' | 'COUPONS' | 'HISTORY' | 'SETTINGS';
+export type DriverViewState = 'MAP' | 'DELIVERIES' | 'HISTORY' | 'PROFILE';
+export type AdminViewState = 'DASHBOARD' | 'USERS' | 'STORES' | 'FLEET' | 'DISPUTES' | 'SETTINGS';

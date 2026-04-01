@@ -35,15 +35,15 @@ export const LazyImage: React.FC<LazyImageProps> = ({ src, alt, className = '', 
     <div className={`relative overflow-hidden ${className}`}>
       {/* Placeholder Skeleton */}
       <div 
-        className={`absolute inset-0 bg-slate-200 flex items-center justify-center transition-opacity duration-500 ${isLoaded ? 'opacity-0' : 'opacity-100'} ${isLoaded ? 'pointer-events-none' : ''}`}
+        className={`absolute inset-0 bg-stone-200 flex items-center justify-center transition-opacity duration-500 ${isLoaded ? 'opacity-0' : 'opacity-100'} ${isLoaded ? 'pointer-events-none' : ''}`}
       >
          {error ? (
-             <span className="text-slate-400 text-xs flex flex-col items-center gap-1">
+             <span className="text-stone-400 text-xs flex flex-col items-center gap-1">
                  <ImageIcon size={20} />
                  Error
              </span>
          ) : (
-            <div className="w-full h-full bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 animate-pulse" style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite linear' }}></div>
+            <div className="w-full h-full bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200 animate-pulse" style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite linear' }}></div>
          )}
       </div>
 

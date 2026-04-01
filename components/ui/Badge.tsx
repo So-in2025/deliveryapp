@@ -8,12 +8,12 @@ interface BadgeProps {
 export const Badge: React.FC<BadgeProps> = ({ status }) => {
   const styles: Record<OrderStatus, string> = {
     [OrderStatus.PENDING]: 'bg-amber-100 text-amber-700 border-amber-200',
-    [OrderStatus.ACCEPTED]: 'bg-blue-100 text-blue-700 border-blue-200',
-    [OrderStatus.PREPARING]: 'bg-purple-100 text-purple-700 border-purple-200',
-    [OrderStatus.READY]: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-    [OrderStatus.DRIVER_ASSIGNED]: 'bg-pink-100 text-pink-700 border-pink-200',
-    [OrderStatus.PICKED_UP]: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-    [OrderStatus.DELIVERED]: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    [OrderStatus.ACCEPTED]: 'bg-amber-100 text-amber-700 border-amber-200',
+    [OrderStatus.PREPARING]: 'bg-orange-100 text-orange-700 border-orange-200',
+    [OrderStatus.READY]: 'bg-brand-100 text-brand-950 border-brand-200',
+    [OrderStatus.DRIVER_ASSIGNED]: 'bg-stone-100 text-stone-700 border-stone-200',
+    [OrderStatus.PICKED_UP]: 'bg-stone-100 text-stone-700 border-stone-200',
+    [OrderStatus.DELIVERED]: 'bg-brand-500 text-brand-950 border-brand-600',
     [OrderStatus.CANCELLED]: 'bg-red-100 text-red-700 border-red-200',
   };
 

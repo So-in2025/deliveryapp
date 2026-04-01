@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "User's full name" },
+        "email": { "type": "string", "format": "email", "description": "User's email address" },
+        "avatar": { "type": "string", "description": "URL to user's avatar image" },
+        "isDriver": { "type": "boolean", "description": "Whether the user is a driver" },
+        "ownedStoreId": { "type": "string", "description": "ID of the store owned by the user" },
+        "addresses": { "type": "array", "items": { "type": "string" }, "description": "Saved delivery addresses" },
+        "role": { "type": "string", "enum": ["CLIENT", "MERCHANT", "DRIVER", "ADMIN"], "description": "User's role in the platform" }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "Store": {
+      "title": "Store",
+      "description": "Merchant store information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Store name" },
+        "category": { "type": "string", "description": "Store category (e.g., Restaurant, Pharmacy)" },
+        "rating": { "type": "number", "description": "Average rating" },
+        "reviewsCount": { "type": "integer", "description": "Number of reviews" },
+        "deliveryTimeMin": { "type": "integer", "description": "Minimum delivery time in minutes" },
+        "deliveryTimeMax": { "type": "integer", "description": "Maximum delivery time in minutes" },
+        "deliveryFee": { "type": "number", "description": "Base delivery fee" },
+        "image": { "type": "string", "description": "URL to store image" },
+        "ownerId": { "type": "string", "description": "UID of the store owner" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the store was created" },
+        "customFont": { "type": "string", "description": "Custom font for store UI" },
+        "customColor": { "type": "string", "description": "Custom color for store UI" }
+      },
+      "required": ["name", "category", "ownerId", "createdAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product in a store",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Product name" },
+        "description": { "type": "string", "description": "Product description" },
+        "price": { "type": "number", "description": "Product price" },
+        "image": { "type": "string", "description": "URL to product image" },
+        "storeId": { "type": "string", "description": "ID of the store this product belongs to" }
+      },
+      "required": ["name", "price", "storeId"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order information",
+      "type": "object",
+      "properties": {
+        "storeId": { "type": "string", "description": "ID of the store" },
+        "storeName": { "type": "string", "description": "Name of the store" },
+        "total": { "type": "number", "description": "Total order amount" },
+        "deliveryFee": { "type": "number", "description": "Delivery fee paid" },
+        "status": { "type": "string", "description": "Current status of the order" },
+        "type": { "type": "string", "enum": ["DELIVERY", "PICKUP"], "description": "Order type" },
+        "customerId": { "type": "string", "description": "UID of the customer" },
+        "customerName": { "type": "string", "description": "Name of the customer" },
+        "driverId": { "type": "string", "description": "UID of the assigned driver" },
+        "driverName": { "type": "string", "description": "Name of the assigned driver" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the order was placed" },
+        "address": { "type": "string", "description": "Delivery address" },
+        "paymentMethod": { "type": "string", "enum": ["CASH", "CARD"], "description": "Payment method used" },
+        "items": { "type": "array", "description": "List of items in the order" }
+      },
+      "required": ["storeId", "total", "status", "customerId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents"
+    },
+    "/stores/{storeId}": {
+      "schema": "Store",
+      "description": "Store documents"
+    },
+    "/stores/{storeId}/products/{productId}": {
+      "schema": "Product",
+      "description": "Products within a store"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Order documents"
+    }
+  }
+}
