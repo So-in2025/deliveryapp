@@ -153,7 +153,7 @@ export const AuthView: React.FC = () => {
       </div>
 
       {/* RIGHT SIDE: ACTIONS (Mobile & Desktop Overlay) */}
-      <div className="relative z-10 w-full lg:w-[40%] lg:ml-auto h-full bg-white/90 dark:bg-stone-950/80 backdrop-blur-2xl overflow-y-auto scrollbar-hide border-l border-white/10">
+      <div className="relative z-10 w-full lg:w-[40%] lg:ml-auto h-full bg-white dark:bg-stone-950 overflow-y-auto scrollbar-hide border-l border-stone-800">
         {/* Subtle Background Grid for Right Side */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] z-0" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
@@ -168,9 +168,6 @@ export const AuthView: React.FC = () => {
             {/* Architectural Grid Overlay */}
             <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.5) 1px, transparent 0)', backgroundSize: '24px 24px' }} />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/95 to-white dark:via-stone-950/95 dark:to-stone-950" />
-            
-            {/* Encapsulating Bottom Line */}
-            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-stone-200 dark:via-stone-800 to-transparent opacity-50" />
         </div>
 
         <div className="flex-1 flex flex-col justify-center px-6 lg:px-12 py-12 relative z-10 max-w-md lg:max-w-lg mx-auto w-full">
