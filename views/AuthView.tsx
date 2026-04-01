@@ -57,8 +57,8 @@ export const AuthView: React.FC = () => {
           />
       </div>
 
-      {/* LEFT SIDE: BRANDING (Desktop Only) */}
-      <div className="hidden lg:flex lg:w-1/2 h-full relative bg-stone-950 p-6">
+      {/* LEFT SIDE: BRANDING (Desktop Only - Becomes Background) */}
+      <div className="hidden lg:block absolute inset-0 z-0 p-6">
         {/* Encapsulated Premium Frame */}
         <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col justify-between group">
             
@@ -152,8 +152,8 @@ export const AuthView: React.FC = () => {
       </div>
       </div>
 
-      {/* RIGHT SIDE: ACTIONS (Mobile & Desktop) */}
-      <div className="flex-1 h-full relative flex flex-col bg-white dark:bg-stone-950 overflow-y-auto scrollbar-hide">
+      {/* RIGHT SIDE: ACTIONS (Mobile & Desktop Overlay) */}
+      <div className="relative z-10 w-full lg:w-[40%] lg:ml-auto h-full bg-white/90 dark:bg-stone-950/80 backdrop-blur-2xl overflow-y-auto scrollbar-hide border-l border-white/10">
         {/* Subtle Background Grid for Right Side */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] z-0" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
