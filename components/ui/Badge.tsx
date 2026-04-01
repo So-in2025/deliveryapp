@@ -15,6 +15,7 @@ export const Badge: React.FC<BadgeProps> = ({ status }) => {
     [OrderStatus.PICKED_UP]: 'bg-stone-100 text-stone-700 border-stone-200',
     [OrderStatus.DELIVERED]: 'bg-brand-500 text-brand-950 border-brand-600',
     [OrderStatus.CANCELLED]: 'bg-red-100 text-red-700 border-red-200',
+    [OrderStatus.DISPUTED]: 'bg-purple-100 text-purple-700 border-purple-200',
   };
 
   const labels: Record<OrderStatus, string> = {
@@ -26,6 +27,7 @@ export const Badge: React.FC<BadgeProps> = ({ status }) => {
     [OrderStatus.PICKED_UP]: 'En Camino',
     [OrderStatus.DELIVERED]: 'Entregado',
     [OrderStatus.CANCELLED]: 'Cancelado',
+    [OrderStatus.DISPUTED]: 'En Disputa',
   };
 
   return (

@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, BarChart3, Bell } from 'lucide-react';
+import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, BarChart3, Bell, Utensils, Tag } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -39,8 +39,8 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
           
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             <DesktopNavItem icon={<LayoutDashboard />} label="Pedidos Activos" active={merchantViewState === 'ORDERS'} onClick={() => setMerchantViewState('ORDERS')} />
-            <DesktopNavItem icon={<UtensilsCrossed />} label="Mi Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} />
-            <DesktopNavItem icon={<Ticket />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
+            <DesktopNavItem icon={<Utensils />} label="Mi Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} />
+            <DesktopNavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
             <DesktopNavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
             <DesktopNavItem icon={<Settings />} label="Ajustes Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
           </nav>
@@ -86,8 +86,8 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
           {/* Mobile Bottom Navigation */}
           <nav className="lg:hidden shrink-0 w-full bg-stone-950 border-t border-stone-800 pb-safe pt-2 px-6 flex justify-between items-center z-40 relative">
              <NavItem icon={<LayoutDashboard />} label="Pedidos" active={merchantViewState === 'ORDERS'} onClick={() => setMerchantViewState('ORDERS')} />
-             <NavItem icon={<UtensilsCrossed />} label="Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} />
-             <NavItem icon={<Ticket />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
+             <NavItem icon={<Utensils />} label="Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} />
+             <NavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
              <NavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
              <NavItem icon={<Settings />} label="Ajustes" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
           </nav>
