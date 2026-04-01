@@ -308,9 +308,9 @@ interface RoleButtonProps {
 
 const RoleButton: React.FC<RoleButtonProps> = ({ icon, title, subtitle, variant, onClick, delay }) => {
     const variants = {
-        primary: "bg-brand-500 text-brand-950 hover:bg-brand-400 shadow-[0_8px_20px_rgba(255,237,0,0.2)] border border-brand-400",
-        secondary: "bg-white dark:bg-stone-900 text-stone-900 dark:text-white hover:bg-stone-50 dark:hover:bg-stone-800 border border-stone-200 dark:border-stone-800 shadow-sm",
-        dark: "bg-stone-950 text-white hover:bg-black border border-stone-800 shadow-lg"
+        primary: "bg-stone-900 border border-brand-500/30 text-white hover:border-brand-500/60 shadow-[0_0_20px_rgba(255,237,0,0.05)]",
+        secondary: "bg-stone-900/50 border border-stone-800 text-stone-300 hover:border-stone-700 hover:bg-stone-800/50",
+        dark: "bg-stone-950 border border-stone-800 text-white hover:border-stone-700"
     };
 
     return (
@@ -321,17 +321,17 @@ const RoleButton: React.FC<RoleButtonProps> = ({ icon, title, subtitle, variant,
             onClick={onClick}
             className={`w-full p-5 rounded-3xl flex flex-col items-start gap-4 group transition-all active:scale-[0.98] ${variants[variant]}`}
         >
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3 ${variant === 'primary' ? 'bg-brand-950/10' : 'bg-brand-500/10 text-brand-600 dark:text-brand-400'}`}>
-                {React.cloneElement(icon as React.ReactElement<any>, { size: 24, strokeWidth: 2.5 })}
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 ${variant === 'primary' ? 'bg-brand-500/10 text-brand-500' : 'bg-stone-800 text-stone-400 group-hover:text-white'}`}>
+                {React.cloneElement(icon as React.ReactElement<any>, { size: 24, strokeWidth: 2 })}
             </div>
             <div className="w-full flex justify-between items-end">
                 <div className="text-left">
-                    <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${variant === 'primary' ? 'text-brand-950/60' : 'text-stone-500 dark:text-stone-400'}`}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1">
                         {subtitle}
                     </p>
-                    <h4 className="font-black text-lg tracking-tight leading-none">{title}</h4>
+                    <h4 className="font-black text-lg tracking-tight leading-none text-white">{title}</h4>
                 </div>
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all group-hover:translate-x-1 ${variant === 'primary' ? 'bg-brand-950/10' : 'bg-stone-100 dark:bg-stone-800'}`}>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center transition-all group-hover:translate-x-1 bg-stone-800/50 text-stone-400">
                     <ArrowRight size={16} />
                 </div>
             </div>
