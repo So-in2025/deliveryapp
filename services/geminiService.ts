@@ -1,10 +1,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Product } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAiInstance(): GoogleGenAI {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY environment variable is required');
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export const extractProductsFromMenu = async (base64Image: string): Promise<Product[]> => {
   try {
+    const ai = getAiInstance();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [
