@@ -32,7 +32,7 @@ export const AuthView: React.FC = () => {
   };
 
   return (
-    <div className="h-full w-full bg-white dark:bg-stone-950 relative flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-screen w-full bg-white dark:bg-stone-950 relative flex flex-col lg:flex-row overflow-hidden">
       <DemoGuideModal />
       
       {/* FLOATING DECORATIVE ELEMENTS */}
