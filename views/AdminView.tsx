@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
-import { OrderStatus, Store, OrderType } from '../types';
+import { OrderStatus, Store, OrderType, UserRole, Order } from '../types';
 import { formatCurrency } from '../constants';
 import { Badge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
@@ -9,7 +9,7 @@ import { Button } from '../components/ui/Button';
 import { 
   TrendingUp, Users, Store as StoreIcon, Activity, 
   DollarSign, Shield, Search, 
-  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail, Settings
+  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail
 } from 'lucide-react';
 
 interface KpiCardProps {
@@ -33,18 +33,74 @@ const KpiCard = ({ title, value, sub, icon: Icon, color }: KpiCardProps) => (
   </div>
 );
 
+const OrdersTab = ({ orders }: { orders: Order[] }) => {
+    const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
+    
+    const filteredOrders = useMemo(() => {
+        if (statusFilter === 'ALL') return orders;
+        return orders.filter(o => o.status === statusFilter);
+    }, [orders, statusFilter]);
+
+    return (
+        <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                <button 
+                    onClick={() => setStatusFilter('ALL')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${statusFilter === 'ALL' ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
+                >
+                    Todos
+                </button>
+                {Object.values(OrderStatus).map(status => (
+                    <button 
+                        key={status}
+                        onClick={() => setStatusFilter(status)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${statusFilter === status ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
+                    >
+                        {status}
+                    </button>
+                ))}
+            </div>
+
+            <div className="space-y-3">
+                {filteredOrders.map(order => (
+                    <div key={order.id} className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-stone-50 flex items-center justify-center">
+                                <Activity size={20} className="text-stone-400" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-stone-900 text-sm">{order.storeName}</p>
+                                <p className="text-[10px] text-stone-500">#{order.id.slice(-6)} • {order.customerName}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-bold text-stone-900 text-sm">{formatCurrency(order.total)}</p>
+                            <Badge status={order.status} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 export const AdminView: React.FC = () => {
-  const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState } = useApp();
+  const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState, updateAnyUser, updateStore, config, updateConfig } = useApp();
   const { showToast } = useToast();
+  
+  // Local settings state for the form
+  const [localConfig, setLocalConfig] = useState(config);
   
   // Local drill-down state
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null); // storing customerName for simplicity in MVP
+  const [storeSearch, setStoreSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
 
   // --- ANALYTICS LOGIC ---
   const kpis = useMemo(() => {
     const totalSales = orders.reduce((acc, o) => acc + o.total, 0);
-    const platformCommission = totalSales * 0.15; // 15% fee simulation
+    const platformCommission = totalSales * (config.platformCommission / 100);
     const activeOrders = orders.filter(o => o.status !== OrderStatus.DELIVERED && o.status !== OrderStatus.CANCELLED).length;
     const completedOrders = orders.filter(o => o.status === OrderStatus.DELIVERED).length;
 
@@ -55,7 +111,7 @@ export const AdminView: React.FC = () => {
       completedOrders,
       totalStores: stores.length
     };
-  }, [orders, stores]);
+  }, [orders, stores, config.platformCommission]);
 
   const recentActivity = useMemo(() => {
     return [...orders]
@@ -65,7 +121,7 @@ export const AdminView: React.FC = () => {
 
   // Derive unique users from users collection for the Users list
   const userList = useMemo(() => {
-      return users.map(u => {
+      const list = users.map(u => {
           const userOrders = orders.filter(o => o.customerName === u.name || o.uid === u.uid);
           const totalSpent = userOrders.reduce((sum, o) => sum + o.total, 0);
           return {
@@ -75,7 +131,21 @@ export const AdminView: React.FC = () => {
               lastActive: userOrders[0]?.createdAt || new Date()
           };
       });
-  }, [orders, users]);
+
+      if (!userSearch) return list;
+      return list.filter(u => 
+        u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
+        u.email?.toLowerCase().includes(userSearch.toLowerCase())
+      );
+  }, [orders, users, userSearch]);
+
+  const filteredStores = useMemo(() => {
+    if (!storeSearch) return stores;
+    return stores.filter(s => 
+      s.name.toLowerCase().includes(storeSearch.toLowerCase()) ||
+      s.category.toLowerCase().includes(storeSearch.toLowerCase())
+    );
+  }, [stores, storeSearch]);
 
   // --- SUB-COMPONENTS ---
 
@@ -246,6 +316,33 @@ export const AdminView: React.FC = () => {
                       </div>
                   </div>
 
+                  <div className="bg-white p-4 rounded-xl border border-stone-100 space-y-3">
+                      <h3 className="font-bold text-stone-900 text-sm">Estado del Comercio</h3>
+                      <div className="flex gap-2">
+                          <Button 
+                            variant="secondary" 
+                            fullWidth 
+                            className="bg-red-50 text-red-600 border-red-100"
+                            onClick={() => {
+                                updateStore(selectedStore.id, { isActive: false });
+                                showToast('Comercio Suspendido', 'info');
+                            }}
+                          >
+                              Suspender
+                          </Button>
+                          <Button 
+                            fullWidth 
+                            className="bg-brand-500 text-brand-950"
+                            onClick={() => {
+                                updateStore(selectedStore.id, { isActive: true });
+                                showToast('Comercio Aprobado', 'success');
+                            }}
+                          >
+                              Aprobar
+                          </Button>
+                      </div>
+                  </div>
+
                   <div>
                       <h3 className="font-bold text-stone-900 mb-2">Productos ({selectedStore.products.length})</h3>
                       <div className="bg-white rounded-xl border border-stone-100 divide-y divide-stone-50">
@@ -266,11 +363,16 @@ export const AdminView: React.FC = () => {
     <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
       <div className="bg-white p-2 rounded-xl border border-stone-200 flex items-center gap-2 lg:max-w-md">
          <Search size={18} className="text-stone-400 ml-2" />
-         <input placeholder="Buscar comercio..." className="flex-1 outline-none text-sm" />
+         <input 
+            placeholder="Buscar comercio..." 
+            className="flex-1 outline-none text-sm" 
+            value={storeSearch}
+            onChange={(e) => setStoreSearch(e.target.value)}
+         />
       </div>
 
       <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
-      {stores.map(store => (
+      {filteredStores.map(store => (
         <div 
             key={store.id} 
             onClick={() => setSelectedStore(store)}
@@ -325,11 +427,24 @@ export const AdminView: React.FC = () => {
                               <p className="text-[10px] uppercase font-bold text-stone-400">Total Gastado</p>
                           </div>
                       </div>
-                      {userProfile?.role && (
-                        <div className="mt-4">
-                          <span className="px-2 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-bold uppercase">
-                            Rol: {userProfile.role}
-                          </span>
+                      
+                      {userProfile && (
+                        <div className="mt-6 pt-6 border-t border-stone-100">
+                          <p className="text-xs font-bold text-stone-400 uppercase mb-3">Gestión de Rol</p>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {Object.values(UserRole).map(role => (
+                              <button
+                                key={role}
+                                onClick={() => {
+                                  updateAnyUser(userProfile.uid, { role });
+                                  showToast(`Rol actualizado a ${role}`, 'success');
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border ${userProfile.role === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-500 border-stone-200 hover:border-stone-400'}`}
+                              >
+                                {role}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                   </div>
@@ -355,11 +470,15 @@ export const AdminView: React.FC = () => {
 
   const renderUsersTab = () => (
     <div className="px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
-       <div className="text-center py-8">
-            <Shield size={40} className="mx-auto text-stone-200 mb-2" />
-            <h3 className="font-bold text-stone-900">Base de Usuarios</h3>
-            <p className="text-xs text-stone-500">Clientes generados dinámicamente</p>
-       </div>
+       <div className="bg-white p-2 rounded-xl border border-stone-200 flex items-center gap-2 lg:max-w-md mb-6">
+         <Search size={18} className="text-stone-400 ml-2" />
+         <input 
+            placeholder="Buscar usuario..." 
+            className="flex-1 outline-none text-sm" 
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+         />
+      </div>
        
        <div className="bg-white rounded-xl shadow-sm border border-stone-100 text-left overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:bg-transparent lg:shadow-none lg:border-0">
            <div className="p-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center lg:hidden">
@@ -386,6 +505,7 @@ export const AdminView: React.FC = () => {
        </div>
     </div>
   );
+
 
   const renderDisputesTab = () => {
     const disputedOrders = orders.filter(o => o.status === OrderStatus.DISPUTED);
@@ -467,6 +587,12 @@ export const AdminView: React.FC = () => {
                             Logística
                         </button>
                         <button 
+                            onClick={() => setAdminViewState('ORDERS')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'ORDERS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
+                        >
+                            Pedidos
+                        </button>
+                        <button 
                             onClick={() => setAdminViewState('STORES')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'STORES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
@@ -491,14 +617,101 @@ export const AdminView: React.FC = () => {
                 <div className="flex-1 overflow-y-auto">
                     {adminViewState === 'DASHBOARD' && renderDashboardTab()}
                     {adminViewState === 'FLEET' && renderDispatchTab()}
+                    {adminViewState === 'ORDERS' && <OrdersTab orders={orders} />}
                     {adminViewState === 'STORES' && renderStoresTab()}
                     {adminViewState === 'USERS' && renderUsersTab()}
                     {adminViewState === 'DISPUTES' && renderDisputesTab()}
                     {adminViewState === 'SETTINGS' && (
-                        <div className="p-8 text-center">
-                            <Settings size={48} className="mx-auto text-stone-300 mb-4" />
-                            <h3 className="text-lg font-bold text-stone-900">Configuración del Sistema</h3>
-                            <p className="text-sm text-stone-500">Ajustes globales de la plataforma</p>
+                        <div className="p-4 space-y-6 animate-fade-in pb-20 lg:max-w-4xl lg:mx-auto">
+                            <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden divide-y divide-stone-50">
+                                <div className="p-4">
+                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
+                                        <DollarSign size={18} className="text-brand-800" /> Parámetros Financieros
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-bold text-stone-800">Comisión de Plataforma</p>
+                                                <p className="text-xs text-stone-500">Porcentaje cobrado a los comercios</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    value={localConfig.platformCommission} 
+                                                    onChange={(e) => setLocalConfig({...localConfig, platformCommission: Number(e.target.value)})}
+                                                    className="w-16 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
+                                                />
+                                                <span className="font-bold text-stone-400">%</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-bold text-stone-800">Costo de Envío Base</p>
+                                                <p className="text-xs text-stone-500">Tarifa mínima para el driver</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-stone-400">$</span>
+                                                <input 
+                                                    type="number" 
+                                                    value={localConfig.baseDeliveryFee} 
+                                                    onChange={(e) => setLocalConfig({...localConfig, baseDeliveryFee: Number(e.target.value)})}
+                                                    className="w-20 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-4">
+                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
+                                        <Shield size={18} className="text-brand-800" /> Seguridad y Soporte
+                                    </h3>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-bold text-stone-800">Email de Soporte</p>
+                                                <p className="text-xs text-stone-500">Para reclamos y ayuda</p>
+                                            </div>
+                                            <input 
+                                                type="email" 
+                                                value={localConfig.supportEmail} 
+                                                onChange={(e) => setLocalConfig({...localConfig, supportEmail: e.target.value})}
+                                                className="w-48 p-2 bg-stone-50 border border-stone-200 rounded-lg text-right text-sm" 
+                                            />
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-bold text-stone-800">Modo Mantenimiento</p>
+                                                <p className="text-xs text-stone-500">Desactiva pedidos temporalmente</p>
+                                            </div>
+                                            <div 
+                                                onClick={() => setLocalConfig({...localConfig, maintenanceMode: !localConfig.maintenanceMode})}
+                                                className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localConfig.maintenanceMode ? 'bg-red-500' : 'bg-stone-200'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${localConfig.maintenanceMode ? 'left-7' : 'left-1'}`}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-stone-50">
+                                    <Button fullWidth onClick={() => {
+                                        updateConfig(localConfig);
+                                        showToast('Configuración guardada', 'success');
+                                    }}>
+                                        Guardar Cambios Globales
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="bg-red-50 border border-red-100 p-4 rounded-2xl">
+                                <h4 className="text-red-800 font-bold text-sm mb-1">Zona de Peligro</h4>
+                                <p className="text-red-700 text-xs mb-3">Estas acciones son irreversibles y afectan a toda la plataforma.</p>
+                                <div className="flex gap-2">
+                                    <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-100">Resetear Estadísticas</Button>
+                                    <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-100">Limpiar Caché Global</Button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

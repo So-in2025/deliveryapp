@@ -87,11 +87,11 @@ Este es el archivo más importante. Es el "director de orquesta".
 - Simulación de GPS y simulación de pagos.
 
 ### ⚠️ Lo que está en "Modo Simulación" (Para pruebas):
-- **Pagos:** El sistema simula que la tarjeta pasa con éxito.
+- **Pagos:** Integración con Mercado Pago México (Simulación de flujo completa).
 - **GPS:** El repartidor se mueve en el mapa siguiendo una ruta simulada.
 
 ### 🚀 Lo que falta para el Lanzamiento Masivo:
-1. **Conexión Bancaria:** Integrar Stripe o MercadoPago para recibir dinero real.
+1. **Producción Bancaria:** Pasar las credenciales de Mercado Pago de "Prueba" a "Producción".
 2. **GPS Real:** Conectar con satélites reales (Google Maps API) para ver la ubicación exacta del driver.
 3. **App en Tiendas:** Empaquetar el código para subirlo a la Play Store y App Store.
 4. **Notificaciones Push:** Para que el celular vibre incluso si la app está cerrada.

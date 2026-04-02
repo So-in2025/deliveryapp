@@ -19,6 +19,7 @@ export interface UserProfile {
   isDriver?: boolean; // Has completed driver onboarding
   ownedStoreId?: string; // Has completed merchant onboarding
   addresses?: string[]; // Saved addresses
+  isOnline?: boolean; // New: For Driver availability in real-time
 }
 
 export enum OrderStatus {
@@ -35,7 +36,8 @@ export enum OrderStatus {
 
 export enum PaymentMethod {
   CASH = 'CASH',
-  CARD = 'CARD'
+  CARD = 'CARD',
+  MERCADO_PAGO = 'MERCADO_PAGO'
 }
 
 export enum OrderType {
@@ -80,6 +82,8 @@ export interface Store {
   createdAt: string; // New: ISO Date string for "New" badge
   customFont?: string; // New: Store customization
   customColor?: string; // New: Store customization
+  isActive?: boolean; // New: For Admin suspension/approval
+  isOpen?: boolean; // New: For Merchant to toggle store status
 }
 
 export interface CartItem {
@@ -144,8 +148,15 @@ export interface AppNotification {
     orderId?: string;
 }
 
+export interface GlobalConfig {
+  platformCommission: number; // e.g., 15 for 15%
+  baseDeliveryFee: number; // e.g., 45
+  supportEmail: string;
+  maintenanceMode: boolean;
+}
+
 // UI State Types - Standardized
 export type ViewState = 'BROWSE' | 'CHECKOUT' | 'TRACKING' | 'HISTORY' | 'RECEIPT' | 'FAVORITES' | 'PROFILE';
 export type MerchantViewState = 'ORDERS' | 'MENU' | 'COUPONS' | 'HISTORY' | 'SETTINGS';
 export type DriverViewState = 'MAP' | 'DELIVERIES' | 'HISTORY' | 'PROFILE';
-export type AdminViewState = 'DASHBOARD' | 'USERS' | 'STORES' | 'FLEET' | 'DISPUTES' | 'SETTINGS';
+export type AdminViewState = 'DASHBOARD' | 'USERS' | 'STORES' | 'FLEET' | 'DISPUTES' | 'SETTINGS' | 'ORDERS';

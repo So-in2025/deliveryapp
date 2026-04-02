@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order } from '../types';
 import { Button } from '../components/ui/Button';
 import { LazyImage } from '../components/ui/LazyImage';
-import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Coffee, Pizza, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings } from 'lucide-react';
+import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Coffee, Pizza, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings, Trash2, FileText, DollarSign } from 'lucide-react';
 import { formatCurrency } from '../constants';
 import { useToast } from '../context/ToastContext';
 import jsPDF from 'jspdf';
@@ -41,9 +41,18 @@ const isNewStore = (dateString: string): boolean => {
                 <LazyImage 
                     src={store.image} 
                     alt={store.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                    className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out ${store.isOpen === false ? 'grayscale opacity-50' : ''}`} 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                
+                {store.isOpen === false && (
+                    <div className="absolute inset-0 flex items-center justify-center z-20">
+                        <div className="bg-black/60 backdrop-blur-md px-6 py-2 rounded-2xl border border-white/20 shadow-2xl transform -rotate-12">
+                            <span className="text-white font-black text-xl tracking-widest uppercase">CERRADO</span>
+                        </div>
+                    </div>
+                )}
+
                 {/* Badges Overlay */}
                 <div className="absolute top-3 right-3 flex flex-col items-end gap-2 z-10">
                     <div className="bg-white/90 dark:bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg text-stone-900 dark:text-white border border-white/20">
@@ -158,19 +167,22 @@ export const ClientView: React.FC = () => {
   }, [stores]);
 
   const fastestStores = useMemo(() => {
-      return [...stores]
+      return stores
+        .filter(s => s.isActive !== false)
         .sort((a, b) => a.deliveryTimeMin - b.deliveryTimeMin)
         .slice(0, 5);
   }, [stores]);
 
   const filteredStores = useMemo(() => {
-    const sorted = [...stores].sort((a, b) => {
-        const aFav = favorites.includes(a.id);
-        const bFav = favorites.includes(b.id);
-        if (aFav && !bFav) return -1;
-        if (!aFav && bFav) return 1;
-        return 0;
-    });
+    const sorted = stores
+        .filter(s => s.isActive !== false)
+        .sort((a, b) => {
+            const aFav = favorites.includes(a.id);
+            const bFav = favorites.includes(b.id);
+            if (aFav && !bFav) return -1;
+            if (!aFav && bFav) return 1;
+            return 0;
+        });
 
     return sorted.filter(store => {
         const matchesSearch = store.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -424,46 +436,72 @@ export const ClientView: React.FC = () => {
 
   const LocationModal = () => {
       if (!showLocationSelector) return null;
+      
+      const handleSelectAddress = (addr: string) => {
+          // Move selected address to the front (primary)
+          const otherAddresses = user.addresses.filter(a => a !== addr);
+          updateUser({ addresses: [addr, ...otherAddresses] });
+          showToast(`Ubicación actualizada: ${addr.split('(')[0]}`, 'success');
+          setShowLocationSelector(false);
+      };
+
+      const handleAddAddress = () => {
+          const newAddress = window.prompt("Ingresa tu nueva dirección:");
+          if (newAddress && newAddress.trim()) {
+              const updatedAddresses = [newAddress.trim(), ...user.addresses];
+              updateUser({ addresses: updatedAddresses });
+              showToast('Dirección agregada y establecida como principal', 'success');
+          }
+      };
+
       return (
-          <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowLocationSelector(false)}></div>
-              <div className="bg-white dark:bg-stone-900 w-full max-w-sm rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 relative animate-slide-up z-10">
-                  <div className="w-12 h-1 bg-stone-200 dark:bg-stone-700 rounded-full mx-auto mb-4 sm:hidden"></div>
-                  <h3 className="text-lg font-bold text-stone-900 dark:text-white mb-4">Selecciona tu ubicación</h3>
+              <div className="bg-white dark:bg-stone-900 w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl p-8 relative animate-slide-up z-10 border-t border-white/10">
+                  <div className="w-12 h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full mx-auto mb-6 sm:hidden"></div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-black text-stone-900 dark:text-white tracking-tight">¿A dónde enviamos?</h3>
+                    <button onClick={() => setShowLocationSelector(false)} className="p-2 bg-stone-100 dark:bg-stone-800 rounded-full text-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors">
+                        <X size={20} />
+                    </button>
+                  </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
                       {user.addresses.map((addr, idx) => (
                           <button 
                               key={idx}
-                              onClick={() => {
-                                  showToast(`Ubicación actualizada: ${addr.split('(')[0]}`, 'success');
-                                  setShowLocationSelector(false);
-                              }}
-                              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors text-left border border-transparent hover:border-stone-100 dark:hover:border-stone-700"
+                              onClick={() => handleSelectAddress(addr)}
+                              className={`w-full flex items-center gap-4 p-4 rounded-3xl transition-all text-left border-2 ${
+                                  idx === 0 
+                                  ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 ring-4 ring-brand-500/10' 
+                                  : 'border-stone-100 dark:border-stone-800 hover:border-brand-200 dark:hover:border-brand-900/50 hover:bg-stone-50 dark:hover:bg-stone-800/30'
+                              }`}
                           >
-                              <div className="w-8 h-8 rounded-full bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-800 dark:text-brand-400">
-                                  <MapPin size={16} />
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${
+                                  idx === 0 ? 'bg-brand-500 text-brand-950' : 'bg-stone-100 dark:bg-stone-800 text-stone-400'
+                              }`}>
+                                  <MapPin size={24} />
                               </div>
-                              <div>
-                                  <p className="font-bold text-stone-900 dark:text-white text-sm">{addr}</p>
-                                  <p className="text-xs text-stone-500 dark:text-stone-400">Disponible para entrega</p>
+                              <div className="flex-1 min-w-0">
+                                  <p className={`font-bold text-base truncate ${idx === 0 ? 'text-brand-950 dark:text-brand-100' : 'text-stone-900 dark:text-white'}`}>{addr}</p>
+                                  <p className="text-xs text-stone-500 dark:text-stone-400 font-medium">{idx === 0 ? 'Dirección Principal' : 'Dirección Guardada'}</p>
                               </div>
-                              {idx === 0 && <CheckCircle2 size={16} className="ml-auto text-brand-800 dark:text-brand-400" />}
+                              {idx === 0 && (
+                                <div className="bg-brand-500/20 p-1.5 rounded-full">
+                                    <CheckCircle2 size={18} className="text-brand-600 dark:text-brand-400" />
+                                </div>
+                              )}
                           </button>
                       ))}
                       
                       <button 
-                          onClick={() => {
-                              const newAddress = window.prompt("Ingresa tu nueva dirección:");
-                              if (newAddress && newAddress.trim()) {
-                                  const updatedAddresses = [...user.addresses, newAddress.trim()];
-                                  updateUser({ addresses: updatedAddresses });
-                                  showToast('Dirección agregada', 'success');
-                              }
-                          }}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl text-brand-800 dark:text-brand-400 font-bold text-sm mt-2 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
+                          onClick={handleAddAddress}
+                          className="w-full flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed border-stone-200 dark:border-stone-700 text-stone-500 dark:text-stone-400 font-bold text-sm mt-4 hover:bg-stone-50 dark:hover:bg-stone-800/30 hover:border-brand-500 transition-all group"
                       >
-                          <Plus size={18} /> Agregar nueva dirección
+                          <div className="p-2 bg-stone-100 dark:bg-stone-800 rounded-xl group-hover:bg-brand-500 group-hover:text-brand-950 transition-colors">
+                            <Plus size={20} />
+                          </div>
+                          Agregar nueva dirección
                       </button>
                   </div>
               </div>
@@ -750,39 +788,50 @@ export const ClientView: React.FC = () => {
 
             {displayOrder.type === OrderType.DELIVERY && (displayOrder.status === OrderStatus.DRIVER_ASSIGNED || displayOrder.status === OrderStatus.PICKED_UP) && (
                 <div className="px-6 mt-6 mb-2">
-                    <div className="h-56 rounded-3xl bg-stone-200 dark:bg-stone-800 overflow-hidden relative shadow-inner border border-stone-200 dark:border-stone-700">
+                    <div className="h-64 rounded-[2.5rem] bg-stone-200 dark:bg-stone-800 overflow-hidden relative shadow-inner border border-stone-200 dark:border-stone-700">
                         {/* Simulated Town Map with dynamic movement */}
                         <div className="absolute inset-0 bg-stone-200 dark:bg-stone-800 opacity-60">
-                             <div className="w-full h-full" style={{backgroundImage: 'radial-gradient(var(--tw-colors-stone-400) 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
-                             <div className="absolute top-1/2 left-0 w-full h-2 bg-white dark:bg-stone-700 transform -rotate-12"></div>
-                             <div className="absolute top-0 left-1/3 w-2 h-full bg-white dark:bg-stone-700 transform"></div>
+                             <div className="w-full h-full" style={{backgroundImage: 'radial-gradient(var(--tw-colors-stone-400) 1px, transparent 1px)', backgroundSize: '30px 30px'}}></div>
+                             {/* Roads */}
+                             <div className="absolute top-1/2 left-0 w-full h-4 bg-white dark:bg-stone-700 transform -rotate-12 shadow-sm"></div>
+                             <div className="absolute top-0 left-1/3 w-4 h-full bg-white dark:bg-stone-700 transform shadow-sm"></div>
+                             <div className="absolute top-1/4 right-0 w-full h-4 bg-white dark:bg-stone-700 transform rotate-45 shadow-sm"></div>
+                             
+                             {/* Buildings/Blocks */}
+                             <div className="absolute top-10 left-10 w-20 h-20 bg-stone-300 dark:bg-stone-700/50 rounded-xl"></div>
+                             <div className="absolute bottom-10 right-20 w-32 h-16 bg-stone-300 dark:bg-stone-700/50 rounded-xl"></div>
+                             <div className="absolute top-1/2 right-10 w-16 h-24 bg-stone-300 dark:bg-stone-700/50 rounded-xl"></div>
                         </div>
                         
                         <motion.div 
                             animate={{ 
-                                x: displayOrder.status === OrderStatus.PICKED_UP ? [0, 20, 0, -20, 0] : 0,
-                                y: displayOrder.status === OrderStatus.PICKED_UP ? [0, -10, 0, 10, 0] : 0
+                                x: displayOrder.status === OrderStatus.PICKED_UP ? [0, 40, 80, 120, 160] : 0,
+                                y: displayOrder.status === OrderStatus.PICKED_UP ? [0, -20, -10, -30, -15] : 0
                             }}
-                            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                             className="absolute top-1/3 left-1/4 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center z-10"
                         >
                             <div className="relative">
-                                <div className="absolute -inset-4 bg-brand-500/20 rounded-full animate-ping" />
-                                <div className="w-10 h-10 bg-brand-500 rounded-full border-4 border-white dark:border-stone-800 shadow-xl flex items-center justify-center z-10 relative">
-                                    <Bike size={20} className="text-brand-950" />
+                                <div className="absolute -inset-6 bg-brand-500/30 rounded-full animate-ping" />
+                                <div className="absolute -inset-10 bg-brand-500/10 rounded-full animate-pulse" />
+                                <div className="w-14 h-14 bg-brand-500 rounded-[1.5rem] border-4 border-white dark:border-stone-800 shadow-2xl flex items-center justify-center z-10 relative">
+                                    <Bike size={28} className="text-brand-950" />
                                 </div>
                             </div>
-                            <div className="bg-white dark:bg-stone-900 px-3 py-1 rounded-full text-[10px] font-bold shadow-lg mt-2 text-stone-900 dark:text-white border border-stone-100 dark:border-stone-800">
-                                {displayOrder.driverName || 'Repartidor'} está en camino
+                            <div className="bg-white dark:bg-stone-900 px-4 py-2 rounded-2xl text-xs font-black shadow-2xl mt-4 text-stone-900 dark:text-white border border-stone-100 dark:border-stone-800 whitespace-nowrap">
+                                {displayOrder.driverName || 'Repartidor'} en camino
                             </div>
                         </motion.div>
 
                         {/* Destination Marker */}
                         <div className="absolute bottom-1/4 right-1/4 flex flex-col items-center">
-                            <div className="w-8 h-8 bg-zinc-900 dark:bg-white rounded-full border-4 border-white dark:border-zinc-800 shadow-lg flex items-center justify-center">
-                                <MapPin size={16} className="text-white dark:text-zinc-900" />
+                            <div className="relative">
+                                <div className="absolute -inset-4 bg-red-500/20 rounded-full animate-pulse" />
+                                <div className="w-12 h-12 bg-stone-900 dark:bg-white rounded-[1.2rem] border-4 border-white dark:border-stone-800 shadow-2xl flex items-center justify-center relative z-10">
+                                    <MapPin size={24} className="text-white dark:text-stone-900" />
+                                </div>
                             </div>
-                            <div className="bg-zinc-900 dark:bg-white px-2 py-0.5 rounded text-[8px] font-bold text-white dark:text-zinc-900 mt-1">Tu Casa</div>
+                            <div className="bg-stone-900 dark:bg-white px-3 py-1 rounded-xl text-[10px] font-black text-white dark:text-stone-900 mt-2 shadow-xl uppercase tracking-widest">Tu Casa</div>
                         </div>
                     </div>
                 </div>
@@ -861,6 +910,9 @@ export const ClientView: React.FC = () => {
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<{code: string, discountPct: number} | null>(null);
 
+    const [tip, setTip] = useState<number>(0);
+    const [requestCutlery, setRequestCutlery] = useState<boolean>(false);
+
     // FIXED FEE LOGIC
     const deliveryFee = orderType === OrderType.DELIVERY ? (selectedStore?.deliveryFee ?? 45) : 0;
 
@@ -869,12 +921,20 @@ export const ClientView: React.FC = () => {
         if (found) { setAppliedCoupon({ code: found.code, discountPct: found.discountPct }); showToast('¡Cupón aplicado!', 'success'); } else { showToast('Cupón inválido.', 'error'); setAppliedCoupon(null); }
     };
     const discountAmount = appliedCoupon ? (subtotal + deliveryFee) * appliedCoupon.discountPct : 0;
-    const total = subtotal + deliveryFee - discountAmount;
+    const total = subtotal + deliveryFee + tip - discountAmount;
 
     const handlePlaceOrder = async () => {
         if (!selectedStore) return;
         setIsProcessing(true);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        if (paymentMethod === PaymentMethod.MERCADO_PAGO) {
+            showToast('Conectando con Mercado Pago...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            showToast('Pago procesado con éxito', 'success');
+        } else {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
         placeOrder(selectedStore.id, selectedStore.name, deliveryAddr, paymentMethod, notes, orderType, discountAmount);
         setIsProcessing(false); 
         // Note: Layout will handle navigation reset, but placeOrder clears selectedStore via context
@@ -895,26 +955,139 @@ export const ClientView: React.FC = () => {
           </div>
           {orderType === OrderType.DELIVERY && (
             <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm animate-slide-up">
-                <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-stone-900 dark:text-white">Dirección</h3><button className="text-brand-800 dark:text-brand-400 text-sm font-bold">Editar</button></div>
-                <div className="space-y-2">{addresses.map(addr => (<div key={addr} onClick={() => !isProcessing && setDeliveryAddr(addr)} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${deliveryAddr === addr ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' : 'border-stone-100 dark:border-stone-700'} ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}><div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${deliveryAddr === addr ? 'border-brand-600' : 'border-stone-300 dark:border-stone-600'}`}>{deliveryAddr === addr && <div className="w-2.5 h-2.5 bg-brand-600 rounded-full"></div>}</div><span className="text-sm font-medium text-stone-700 dark:text-stone-300">{addr}</span></div>))}</div>
+                <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-bold text-stone-900 dark:text-white flex items-center gap-2">
+                        <MapPin size={18} className="text-brand-500" /> Dirección de Entrega
+                    </h3>
+                    <button 
+                        onClick={() => setShowLocationSelector(true)} 
+                        className="text-brand-800 dark:text-brand-400 text-xs font-bold uppercase tracking-wider hover:opacity-70 transition-opacity"
+                    >
+                        Cambiar
+                    </button>
+                </div>
+                <div className="p-4 bg-stone-50 dark:bg-stone-900/50 rounded-2xl border border-stone-100 dark:border-stone-700">
+                    <p className="text-sm font-bold text-stone-900 dark:text-white">{deliveryAddr}</p>
+                    <p className="text-[10px] text-stone-500 dark:text-stone-400 uppercase font-bold mt-1">Tu ubicación seleccionada</p>
+                </div>
             </div>
           )}
-          <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm"><h3 className="font-bold text-stone-900 dark:text-white mb-3">Método de Pago</h3><div className="flex gap-3"><button onClick={() => setPaymentMethod(PaymentMethod.CARD)} disabled={isProcessing} className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.CARD ? 'border-brand-500 bg-brand-500 text-brand-950 shadow-md' : 'border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/50'} ${isProcessing ? 'opacity-50' : ''}`}><CreditCard size={24} /><span className="text-xs font-bold">Tarjeta</span></button><button onClick={() => setPaymentMethod(PaymentMethod.CASH)} disabled={isProcessing} className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.CASH ? 'border-brand-500 bg-brand-500 text-brand-950 shadow-md' : 'border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/50'} ${isProcessing ? 'opacity-50' : ''}`}><Banknote size={24} /><span className="text-xs font-bold">Efectivo</span></button></div></div>
+          <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm">
+            <h3 className="font-bold text-stone-900 dark:text-white mb-3">Método de Pago</h3>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setPaymentMethod(PaymentMethod.MERCADO_PAGO)} 
+                disabled={isProcessing} 
+                className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.MERCADO_PAGO ? 'border-brand-500 bg-brand-500 text-brand-950 shadow-md' : 'border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/50'} ${isProcessing ? 'opacity-50' : ''}`}
+              >
+                <div className="w-6 h-6 bg-sky-500 rounded-full flex items-center justify-center text-[8px] text-white font-black">MP</div>
+                <span className="text-[10px] font-bold">Mercado Pago</span>
+              </button>
+              <button 
+                onClick={() => setPaymentMethod(PaymentMethod.CARD)} 
+                disabled={isProcessing} 
+                className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.CARD ? 'border-brand-500 bg-brand-500 text-brand-950 shadow-md' : 'border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/50'} ${isProcessing ? 'opacity-50' : ''}`}
+              >
+                <CreditCard size={24} />
+                <span className="text-[10px] font-bold">Tarjeta</span>
+              </button>
+              <button 
+                onClick={() => setPaymentMethod(PaymentMethod.CASH)} 
+                disabled={isProcessing} 
+                className={`flex-1 p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === PaymentMethod.CASH ? 'border-brand-500 bg-brand-500 text-brand-950 shadow-md' : 'border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/50'} ${isProcessing ? 'opacity-50' : ''}`}
+              >
+                <Banknote size={24} />
+                <span className="text-[10px] font-bold">Efectivo</span>
+              </button>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm">
+              <h3 className="font-bold text-stone-900 dark:text-white mb-3">Opciones Adicionales</h3>
+              <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                          <Utensils size={18} className="text-stone-400" />
+                          <span className="text-sm font-medium text-stone-700 dark:text-stone-300">¿Necesitas cubiertos?</span>
+                      </div>
+                      <button 
+                        onClick={() => setRequestCutlery(!requestCutlery)}
+                        className={`w-12 h-6 rounded-full transition-colors relative ${requestCutlery ? 'bg-brand-500' : 'bg-stone-200 dark:bg-stone-700'}`}
+                      >
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${requestCutlery ? 'right-1' : 'left-1'}`} />
+                      </button>
+                  </div>
+                  
+                  <div>
+                      <p className="text-sm font-bold text-stone-900 dark:text-white mb-2 flex items-center gap-2">
+                          <DollarSign size={16} className="text-brand-500" /> Propina para el repartidor
+                      </p>
+                      <div className="flex gap-2">
+                          {[0, 20, 50, 100].map(amount => (
+                              <button 
+                                key={amount}
+                                onClick={() => setTip(amount)}
+                                className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${tip === amount ? 'bg-brand-500 border-brand-500 text-brand-950' : 'bg-stone-50 dark:bg-stone-900/50 border-stone-200 dark:border-stone-700 text-stone-500 dark:text-stone-400'}`}
+                              >
+                                  {amount === 0 ? 'No' : formatCurrency(amount)}
+                              </button>
+                          ))}
+                      </div>
+                  </div>
+              </div>
+          </div>
+
            <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm">
               <h3 className="font-bold text-stone-900 dark:text-white mb-2 flex items-center gap-2"><Ticket size={16} className="text-brand-800 dark:text-brand-400" /> Cupón</h3>
-              {appliedCoupon ? (<div className="flex justify-between items-center bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 p-3 rounded-xl"><div className="flex items-center gap-2"><Tag size={16} className="text-amber-600 dark:text-amber-400" /><div><p className="font-bold text-amber-800 dark:text-amber-300 text-sm">{appliedCoupon.code}</p><p className="text-xs text-amber-600 dark:text-amber-400">{(appliedCoupon.discountPct * 100)}% descuento</p></div></div><button onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-full text-amber-700 dark:text-amber-400"><X size={16} /></button></div>) : (<div className="flex gap-2"><input type="text" placeholder="Ej: BENVENUTO20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} disabled={isProcessing} className="flex-1 bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 text-stone-900 dark:text-white" /><Button size="sm" onClick={handleApplyCoupon} disabled={!couponCode || isProcessing} className="px-4">Aplicar</Button></div>)}
+              {appliedCoupon ? (
+                <div className="flex justify-between items-center bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 p-3 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <Tag size={16} className="text-amber-600 dark:text-amber-400" />
+                    <div>
+                      <p className="font-bold text-amber-800 dark:text-amber-300 text-sm">{appliedCoupon.code}</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400">{(appliedCoupon.discountPct * 100)}% descuento</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setAppliedCoupon(null); setCouponCode(''); }} className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/40 rounded-full text-amber-700 dark:text-amber-400"><X size={16} /></button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input type="text" placeholder="Ej: BENVENUTO20" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} disabled={isProcessing} className="flex-1 bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500 text-stone-900 dark:text-white" />
+                  <Button size="sm" onClick={handleApplyCoupon} disabled={!couponCode || isProcessing} className="px-4">Aplicar</Button>
+                </div>
+              )}
           </div>
           <div id="order-summary" className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm">
              <h3 className="font-bold text-stone-900 dark:text-white mb-3">Resumen</h3>
-             <div className="space-y-2 mb-3">{cart.map((item, idx) => (<div key={idx} className="flex justify-between text-sm"><span className="text-stone-600 dark:text-stone-400">{item.quantity}x {item.product.name}</span><span className="text-stone-900 dark:text-white font-medium">{formatCurrency(item.totalPrice * item.quantity)}</span></div>))}</div>
+             <div className="space-y-2 mb-3">
+               {cart.map((item, idx) => (
+                 <div key={idx} className="flex justify-between text-sm">
+                   <span className="text-stone-600 dark:text-stone-400">{item.quantity}x {item.product.name}</span>
+                   <span className="text-stone-900 dark:text-white font-medium">{formatCurrency(item.totalPrice * item.quantity)}</span>
+                 </div>
+               ))}
+             </div>
              {orderType === OrderType.DELIVERY && (
                  <div className="flex justify-between text-sm py-2 border-t border-dashed border-stone-200 dark:border-stone-700">
                      <span className="text-stone-600 dark:text-stone-400">Costo de Envío</span>
                      <span className="text-stone-900 dark:text-white font-medium">{formatCurrency(deliveryFee)}</span>
                  </div>
              )}
-             {appliedCoupon && (<div className="flex justify-between items-center py-2 border-t border-dashed border-stone-200 dark:border-stone-700 text-green-600 dark:text-green-400"><span className="text-sm font-medium">Descuento</span><span className="font-bold">- {formatCurrency(discountAmount)}</span></div>)}
-             <div className="border-t border-stone-100 dark:border-stone-700 pt-3 flex justify-between items-center"><span className="font-bold text-stone-900 dark:text-white text-lg">Total</span><span className="font-bold text-brand-800 dark:text-brand-400 text-lg">{formatCurrency(total)}</span></div>
+             {tip > 0 && (
+                 <div className="flex justify-between text-sm py-2 border-t border-dashed border-stone-200 dark:border-stone-700">
+                     <span className="text-stone-600 dark:text-stone-400">Propina</span>
+                     <span className="text-stone-900 dark:text-white font-medium">{formatCurrency(tip)}</span>
+                 </div>
+             )}
+             {appliedCoupon && (
+               <div className="flex justify-between items-center py-2 border-t border-dashed border-stone-200 dark:border-stone-700 text-green-600 dark:text-green-400">
+                 <span className="text-sm font-medium">Descuento</span>
+                 <span className="font-bold">- {formatCurrency(discountAmount)}</span>
+               </div>
+             )}
+             <div className="border-t border-stone-100 dark:border-stone-700 pt-3 flex justify-between items-center">
+               <span className="font-bold text-stone-900 dark:text-white text-lg">Total</span>
+               <span className="font-bold text-brand-800 dark:text-brand-400 text-lg">{formatCurrency(total)}</span>
+             </div>
           </div>
           <div className="h-20"></div>
         </div>
@@ -1128,6 +1301,60 @@ export const ClientView: React.FC = () => {
                   )}
               </div>
 
+              {/* Address Manager */}
+              <div className="bg-stone-50 dark:bg-[#0A0A0A] p-6 rounded-[2rem] shadow-inner border border-black/5 dark:border-white/5 space-y-5">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-bold text-lg text-stone-900 dark:text-white tracking-tight">Mis Direcciones</h4>
+                    <button onClick={() => setShowLocationSelector(true)} className="text-brand-500 text-sm font-bold hover:opacity-80 transition-opacity flex items-center gap-1">
+                        <Plus size={14} /> Agregar
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                      {user.addresses.map((addr, idx) => (
+                          <div key={idx} className="bg-white dark:bg-[#141414] p-4 rounded-2xl border border-black/5 dark:border-white/5 flex justify-between items-center group">
+                              <div className="flex items-center gap-3 min-w-0">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${idx === 0 ? 'bg-brand-500 text-brand-950' : 'bg-stone-100 dark:bg-stone-800 text-stone-400'}`}>
+                                      <MapPin size={18} />
+                                  </div>
+                                  <div className="min-w-0">
+                                      <p className="text-sm font-bold text-stone-900 dark:text-white truncate">{addr}</p>
+                                      {idx === 0 && <span className="text-[10px] font-bold text-brand-600 uppercase tracking-widest">Principal</span>}
+                                  </div>
+                              </div>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {idx !== 0 && (
+                                      <button 
+                                        onClick={() => {
+                                            const otherAddresses = user.addresses.filter(a => a !== addr);
+                                            updateUser({ addresses: [addr, ...otherAddresses] });
+                                            showToast('Dirección principal actualizada', 'success');
+                                        }}
+                                        className="p-2 text-stone-400 hover:text-brand-600 transition-colors"
+                                      >
+                                          <CheckCircle2 size={18} />
+                                      </button>
+                                  )}
+                                  <button 
+                                    onClick={() => {
+                                        if (user.addresses.length <= 1) {
+                                            showToast('Debes tener al menos una dirección', 'error');
+                                            return;
+                                        }
+                                        const newAddresses = user.addresses.filter(a => a !== addr);
+                                        updateUser({ addresses: newAddresses });
+                                        showToast('Dirección eliminada', 'success');
+                                    }}
+                                    className="p-2 text-stone-400 hover:text-red-500 transition-colors"
+                                  >
+                                      <Trash2 size={18} />
+                                  </button>
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+
               {/* Actions */}
               <div className="space-y-3">
                   <button onClick={() => setClientViewState('HISTORY')} className="w-full flex items-center justify-between p-4 bg-stone-50 dark:bg-[#0A0A0A] rounded-[2rem] shadow-inner border border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
@@ -1279,25 +1506,57 @@ export const ClientView: React.FC = () => {
       </div>
       <div className="px-4 -mt-10 relative z-10 lg:max-w-4xl lg:mx-auto lg:-mt-16">
         <div className="bg-white dark:bg-stone-800 rounded-2xl p-5 shadow-lg border border-stone-100 dark:border-stone-700">
-            <h2 className="font-bold text-2xl text-stone-900 dark:text-white lg:text-4xl" style={{ color: accentColor }}>{selectedStore?.name}</h2>
+            <div className="flex justify-between items-start">
+                <h2 className="font-bold text-2xl text-stone-900 dark:text-white lg:text-4xl" style={{ color: accentColor }}>{selectedStore?.name}</h2>
+                <div className="bg-stone-100 dark:bg-stone-700 px-3 py-1 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300">
+                    {selectedStore?.category}
+                </div>
+            </div>
             <div className="flex items-center gap-2 mt-2 text-stone-500 dark:text-stone-400 text-sm lg:text-base"><Clock size={14} /> <span>{selectedStore?.deliveryTimeMin}-{selectedStore?.deliveryTimeMax} min</span><span>•</span><Star size={14} className="text-amber-400 fill-amber-400" /> <span>{selectedStore?.rating}</span> <span className="text-xs text-stone-400 dark:text-stone-500">({selectedStore?.reviewsCount} reviews)</span></div>
         </div>
       </div>
-      <div className="p-4 space-y-6 lg:max-w-4xl lg:mx-auto lg:p-8">
-        <div>
-            <h3 className="font-bold text-stone-900 dark:text-white text-lg mb-3">Más vendidos</h3>
-            <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
-                {selectedStore?.products.map(product => (
-                    <ProductRow 
-                        key={product.id} 
-                        product={product} 
-                        onAdd={() => { if(selectedStore) { addToCart(product, 1, [], selectedStore.id); showToast('Agregado al carrito', 'success'); } }} 
-                        onCustomize={() => setProductToCustomize(product)} 
-                        accentColor={accentColor}
-                    />
-                ))}
-            </div>
-        </div>
+      <div className="p-4 space-y-8 lg:max-w-4xl lg:mx-auto lg:p-8">
+        {/* Categories / Sections */}
+        {['Más vendidos', 'Entradas', 'Platos Principales', 'Bebidas'].map((categoryName) => {
+            const products = selectedStore?.products || [];
+            // For demo, we just show all products in "Más vendidos" and filter others if we had categories
+            if (categoryName !== 'Más vendidos') return null; 
+
+            return (
+                <div key={categoryName}>
+                    <h3 className="font-bold text-stone-900 dark:text-white text-lg mb-4 flex items-center gap-2">
+                        {categoryName === 'Más vendidos' && <Flame size={18} className="text-orange-500" />}
+                        {categoryName}
+                    </h3>
+                    <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                        {products.map(product => (
+                            <ProductRow 
+                                key={product.id} 
+                                product={product} 
+                                onAdd={() => { 
+                                    if(selectedStore) { 
+                                        if (selectedStore.isOpen === false) {
+                                            showToast('Este comercio está cerrado por el momento', 'error');
+                                            return;
+                                        }
+                                        addToCart(product, 1, [], selectedStore.id); 
+                                        showToast('Agregado al carrito', 'success'); 
+                                    } 
+                                }} 
+                                onCustomize={() => {
+                                    if (selectedStore?.isOpen === false) {
+                                        showToast('Este comercio está cerrado por el momento', 'error');
+                                        return;
+                                    }
+                                    setProductToCustomize(product);
+                                }} 
+                                accentColor={accentColor}
+                            />
+                        ))}
+                    </div>
+                </div>
+            );
+        })}
         
         {selectedStore && reviews.filter(r => r.storeId === selectedStore.id).length > 0 && (
             <div>

@@ -3,15 +3,52 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { ShoppingBag, Store, Bike, Terminal, ArrowRight, Shield, LogIn, User as UserIcon, Globe, Sparkles } from 'lucide-react';
+import { ShoppingBag, Store, Bike, Terminal, ArrowRight, Shield, LogIn, User as UserIcon, Globe, Sparkles, Download } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
-import { DemoGuideModal } from '../components/ui/DemoGuideModal';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect } from 'react';
 
 export const AuthView: React.FC = () => {
   const { setRole } = useApp();
   const { showToast } = useToast();
   const { user, login, signOut, loading } = useAuth();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Check if iOS
+    const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    
+    if (isIOS && !isStandalone) {
+      setShowInstallButton(true);
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+      if (isIOS) {
+        showToast('Para instalar: Toca compartir y luego "Agregar a Inicio"', 'info');
+      }
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+      setShowInstallButton(false);
+    }
+  };
 
   const handleRoleSelection = (role: UserRole, isGuest: boolean = false) => {
     if (!user && !isGuest) {
@@ -33,8 +70,30 @@ export const AuthView: React.FC = () => {
 
   return (
     <div className="h-screen w-full bg-white dark:bg-stone-950 relative flex flex-col lg:flex-row overflow-hidden">
-      <DemoGuideModal />
       
+      {/* FLOATING INSTALL BUTTON */}
+      <AnimatePresence>
+        {showInstallButton && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.5, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.5, y: -20 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleInstallClick}
+            className="absolute top-6 right-6 z-50 bg-brand-500 text-brand-950 px-4 py-2 rounded-full font-black text-xs flex items-center gap-2 shadow-lg shadow-brand-500/20 border border-brand-400/50 group"
+          >
+            <Download size={14} className="group-hover:bounce" />
+            INSTALAR APP
+            <motion.div 
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-stone-950"
+            />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       {/* FLOATING DECORATIVE ELEMENTS */}
       <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
           <motion.div 

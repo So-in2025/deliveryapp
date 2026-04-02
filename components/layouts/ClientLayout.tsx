@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
 import { ShoppingBag, Settings, LogOut, WifiOff, Heart, History, User, Bell } from 'lucide-react';
 import { UserRole } from '../../types';
-import { IOSInstallPrompt } from '../ui/IOSInstallPrompt';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -26,7 +25,6 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <div className="h-[100dvh] w-full flex flex-col items-center overflow-hidden bg-brand-50 dark:bg-stone-950 transition-colors duration-300">
-      <IOSInstallPrompt />
       <SettingsOverlay />
 
       <div className="w-full max-w-md lg:max-w-none h-full shadow-2xl relative flex flex-col lg:flex-row overflow-hidden bg-white dark:bg-stone-900 transition-colors duration-300">

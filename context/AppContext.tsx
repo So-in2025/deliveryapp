@@ -1,25 +1,20 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { soundService } from '../services/soundService';
-import { UserRole, Order, Store, Product, OrderStatus, CartItem, Modifier, PaymentMethod, OrderType, Coupon, UserProfile, ViewState, Review, MerchantViewState, DriverViewState, AdminViewState, AppNotification } from '../types';
+import { UserRole, Order, Store, Product, OrderStatus, CartItem, Modifier, PaymentMethod, OrderType, Coupon, UserProfile, ViewState, Review, MerchantViewState, DriverViewState, AdminViewState, AppNotification, GlobalConfig } from '../types';
 import { loadCart, saveCart } from '../services/dataService';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
 import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, OperationType, handleFirestoreError } from '../firebase';
 
-// Mock Drivers for Manual Dispatch
-const MOCK_DRIVERS = [
-    { id: 'd1', name: 'Carlos R. (Moto)' },
-    { id: 'd2', name: 'Ana M. (Bici)' },
-    { id: 'd3', name: 'Jorge L. (Moto)' }
-];
-
+// App Context Type and Provider
 interface AppContextType {
   role: UserRole;
   setRole: (role: UserRole) => void;
   user: UserProfile; 
   users: UserProfile[];
   updateUser: (data: Partial<UserProfile>) => void;
+  updateAnyUser: (userId: string, data: Partial<UserProfile>) => void;
   createStore: (store: Store) => void;
   orders: Order[];
   stores: Store[]; 
@@ -41,6 +36,7 @@ interface AppContextType {
   addProduct: (storeId: string, product: Product) => void;
   updateProduct: (storeId: string, product: Product) => void;
   deleteProduct: (storeId: string, productId: string) => void;
+  bulkAddProducts: (storeId: string, products: Product[]) => void;
   addCoupon: (coupon: Coupon) => void;
   deleteCoupon: (id: string) => void;
   toggleCoupon: (id: string) => void;
@@ -77,15 +73,17 @@ interface AppContextType {
   addNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
+  
+  // Global Config
+  config: GlobalConfig;
+  updateConfig: (data: Partial<GlobalConfig>) => void;
+  
+  // Driver GPS Simulation
+  driverLocation: { lat: number, lng: number };
+  setDriverLocation: (loc: { lat: number, lng: number }) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-const DEFAULT_COUPONS: Coupon[] = [
-    { id: 'c1', code: 'BENVENUTO20', discountPct: 0.20, active: true, description: '20% descuento bienvenida' },
-    { id: 'c2', code: 'PIZZA10', discountPct: 0.10, active: true, description: '10% en pizzas' },
-    { id: 'c3', code: 'DELIVERYFREE', discountPct: 0.05, active: false, description: 'Envío gratis (Simulado)' }
-];
 
 const DEFAULT_USER: UserProfile = {
     uid: 'guest',
@@ -122,9 +120,86 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [orders, setOrders] = useState<Order[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [coupons, setCoupons] = useState<Coupon[]>(DEFAULT_COUPONS);
-  const [drivers] = useState(MOCK_DRIVERS);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [isDriverOnline, setIsDriverOnline] = useState(false); // Session state
+
+  // Global Config State
+  const [config, setConfig] = useState<GlobalConfig>({
+    platformCommission: 15,
+    baseDeliveryFee: 45,
+    supportEmail: 'soporte@telollevo.com',
+    maintenanceMode: false
+  });
+
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+    try {
+      const stored = localStorage.getItem('codex_notifications_v1');
+      if (!stored) return [];
+      return JSON.parse(stored).map((n: any) => ({ ...n, timestamp: new Date(n.timestamp) }));
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('codex_notifications_v1', JSON.stringify(notifications));
+  }, [notifications]);
+
+  const addNotification = useCallback((notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
+    const newNotif: AppNotification = {
+      ...notif,
+      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date(),
+      read: false
+    };
+    setNotifications(prev => [newNotif, ...prev].slice(0, 50)); // Keep last 50
+  }, []);
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const clearNotifications = () => setNotifications([]);
+
+  const initialLoadRef = React.useRef({
+    orders: true,
+    stores: true,
+    users: true,
+    reviews: true
+  });
+
+  // Derive real drivers from users collection
+  const drivers = useMemo(() => {
+    return users
+      .filter(u => u.role === UserRole.DRIVER)
+      .map(u => ({ id: u.uid, name: u.name }));
+  }, [users]);
+
+  // Driver GPS State
+  const [driverLocation, setDriverLocation] = useState({ lat: -34.6037, lng: -58.3816 });
+
+  const updateConfig = async (data: Partial<GlobalConfig>) => {
+    const newConfig = { ...config, ...data };
+    setConfig(newConfig);
+    try {
+      await setDoc(doc(db, 'config', 'global'), newConfig);
+    } catch (error) {
+      console.error('Error updating global config:', error);
+    }
+  };
+
+  // GPS Simulation Effect
+  useEffect(() => {
+    if (isDriverOnline) {
+      const interval = setInterval(() => {
+        setDriverLocation(prev => ({
+          lat: prev.lat + (Math.random() - 0.5) * 0.0005,
+          lng: prev.lng + (Math.random() - 0.5) * 0.0005
+        }));
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [isDriverOnline]);
 
   // Sync User Profile from AuthContext
   useEffect(() => {
@@ -132,9 +207,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (authProfile) {
       setUser(authProfile);
       setRoleState(authProfile.role);
+      setIsDriverOnline(!!authProfile.isOnline);
     } else {
       setUser(DEFAULT_USER);
       setRoleState(UserRole.NONE);
+      setIsDriverOnline(false);
     }
   }, [authProfile]);
 
@@ -247,13 +324,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
     }
 
+    // Listen to Global Config
+    const unsubscribeConfig = onSnapshot(doc(db, 'config', 'global'), (snapshot) => {
+      if (snapshot.exists()) {
+        setConfig(snapshot.data() as GlobalConfig);
+      }
+    });
+
+    // Listen to Coupons
+    const unsubscribeCoupons = onSnapshot(collection(db, 'coupons'), (snapshot) => {
+      const couponsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Coupon));
+      setCoupons(couponsData);
+    });
+
     return () => {
       unsubscribeStores();
       unsubscribeOrders();
       unsubscribeUsers();
       unsubscribeReviews();
+      unsubscribeConfig();
+      unsubscribeCoupons();
     };
-  }, [isAuthReady, authProfile]);
+  }, [isAuthReady, authProfile, authUser?.uid, addNotification]);
   
   // Theme State
   const [darkMode, setDarkMode] = useState(() => {
@@ -282,35 +374,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [adminViewState, setAdminViewState] = useState<AdminViewState>('DASHBOARD');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
-    try {
-      const stored = localStorage.getItem('codex_notifications_v1');
-      if (!stored) return [];
-      return JSON.parse(stored).map((n: any) => ({ ...n, timestamp: new Date(n.timestamp) }));
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('codex_notifications_v1', JSON.stringify(notifications));
-  }, [notifications]);
-
-  const addNotification = useCallback((notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
-    const newNotif: AppNotification = {
-      ...notif,
-      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date(),
-      read: false
-    };
-    setNotifications(prev => [newNotif, ...prev].slice(0, 50)); // Keep last 50
-  }, []);
-
-  const markNotificationAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-
-  const clearNotifications = () => setNotifications([]);
 
   const toggleSound = () => {
     setSoundEnabled(prev => {
@@ -320,12 +383,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   };
 
-  const initialLoadRef = React.useRef({
-    orders: true,
-    stores: true,
-    users: true,
-    reviews: true
-  });
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -362,8 +419,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const toggleSettings = () => setIsSettingsOpen(prev => !prev);
   
   const toggleDriverStatus = () => {
-      setIsDriverOnline(prev => !prev);
-      showToast(isDriverOnline ? 'Desconectado' : 'Ahora estás en línea', 'info');
+      const nextStatus = !isDriverOnline;
+      setIsDriverOnline(nextStatus);
+      updateUser({ isOnline: nextStatus });
+      showToast(nextStatus ? 'Ahora estás en línea' : 'Desconectado', 'info');
   };
 
   const updateUser = async (data: Partial<UserProfile>) => {
@@ -377,13 +436,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
   };
 
+  const updateAnyUser = async (userId: string, data: Partial<UserProfile>) => {
+      try {
+        await updateDoc(doc(db, 'users', userId), data);
+      } catch (error) {
+        console.error('Error updating any user:', error);
+      }
+  };
+
   const createStore = async (newStore: Store) => {
       try {
-        await setDoc(doc(db, 'stores', newStore.id), {
+        const storeId = newStore.id || `store-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        await setDoc(doc(db, 'stores', storeId), {
           ...newStore,
+          id: storeId,
           createdAt: serverTimestamp()
         });
-        await updateUser({ ownedStoreId: newStore.id });
+        await updateUser({ ownedStoreId: storeId });
         showToast('Tienda creada con éxito', 'success');
       } catch (error) {
         console.error('Error creating store:', error);
@@ -454,9 +523,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // Dynamic Delivery Fee Logic
     const store = stores.find(s => s.id === storeId);
-    const deliveryFee = type === OrderType.DELIVERY ? (store?.deliveryFee ?? 45) : 0;
+    const deliveryFee = type === OrderType.DELIVERY ? (store?.deliveryFee ?? config.baseDeliveryFee) : 0;
     
-    const total = Math.max(0, subtotal + deliveryFee - discount);
+    const total = Math.max(0, subtotal + deliveryFee - (discount || 0));
     
     const orderId = `ord-${Date.now()}`;
     const newOrder: any = {
@@ -592,16 +661,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const addCoupon = (coupon: Coupon) => {
-      setCoupons(prev => [...prev, coupon]);
+  const bulkAddProducts = async (storeId: string, newProducts: Product[]) => {
+    const store = stores.find(s => s.id === storeId);
+    if (!store) return;
+
+    try {
+      await updateDoc(doc(db, 'stores', storeId), {
+        products: [...store.products, ...newProducts]
+      });
+    } catch (error) {
+      console.error('Error bulk adding products:', error);
+    }
   };
 
-  const deleteCoupon = (id: string) => {
-      setCoupons(prev => prev.filter(c => c.id !== id));
+  const addCoupon = async (coupon: Coupon) => {
+      try {
+        await setDoc(doc(db, 'coupons', coupon.id), coupon);
+      } catch (error) {
+        console.error('Error adding coupon:', error);
+      }
   };
 
-  const toggleCoupon = (id: string) => {
-      setCoupons(prev => prev.map(c => c.id === id ? { ...c, active: !c.active } : c));
+  const deleteCoupon = async (id: string) => {
+      try {
+        await updateDoc(doc(db, 'coupons', id), { active: false }); // Soft delete or real delete
+        // await deleteDoc(doc(db, 'coupons', id)); // Real delete
+      } catch (error) {
+        console.error('Error deleting coupon:', error);
+      }
+  };
+
+  const toggleCoupon = async (id: string) => {
+      const coupon = coupons.find(c => c.id === id);
+      if (!coupon) return;
+      try {
+        await updateDoc(doc(db, 'coupons', id), { active: !coupon.active });
+      } catch (error) {
+        console.error('Error toggling coupon:', error);
+      }
   };
 
   const addReview = async (review: Review) => {
@@ -651,6 +748,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       user,
       users,
       updateUser,
+      updateAnyUser,
       createStore,
       orders, 
       stores, 
@@ -672,6 +770,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addProduct,
       updateProduct,
       deleteProduct,
+      bulkAddProducts,
       addCoupon,
       deleteCoupon,
       toggleCoupon,
@@ -701,7 +800,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setIsNotificationsOpen,
       addNotification,
       markNotificationAsRead,
-      clearNotifications
+      clearNotifications,
+      config,
+      updateConfig,
+      driverLocation,
+      setDriverLocation
     }}>
       {children}
     </AppContext.Provider>

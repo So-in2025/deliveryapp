@@ -2,32 +2,33 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
-import { OrderStatus, PaymentMethod, OrderType } from '../types';
+import { OrderStatus, PaymentMethod, OrderType, Order } from '../types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Navigation, DollarSign, LocateFixed, Bike, Banknote, CreditCard, Shield, MapPin, Truck, ChevronRight } from 'lucide-react';
+import { Navigation, DollarSign, LocateFixed, Bike, Banknote, CreditCard, Shield, MapPin, Truck, ChevronRight, FileText, X } from 'lucide-react';
 import { formatCurrency } from '../constants';
 
 export const DriverView: React.FC = () => {
-  const { user, orders, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound } = useApp();
+  const { user, orders, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, setDriverLocation } = useApp();
   const { showToast } = useToast();
 
-  const [simulatedLocation, setSimulatedLocation] = useState({ lat: -34.6037, lng: -58.3816 });
+  const [selectedTask, setSelectedTask] = useState<Order | null>(null);
+  const [vehicleType, setVehicleType] = useState<'MOTO' | 'BICI' | 'AUTO'>('MOTO');
   const [isSimulating, setIsSimulating] = useState(false);
 
-  // GPS Simulation Logic
+  // GPS Simulation Logic (Local toggle, global update)
   useEffect(() => {
     let interval: any;
     if (isSimulating) {
       interval = setInterval(() => {
-        setSimulatedLocation(prev => ({
-          lat: prev.lat + (Math.random() - 0.5) * 0.001,
-          lng: prev.lng + (Math.random() - 0.5) * 0.001
-        }));
-      }, 2000);
+        setDriverLocation({
+          lat: driverLocation.lat + (Math.random() - 0.5) * 0.0005,
+          lng: driverLocation.lng + (Math.random() - 0.5) * 0.0005
+        });
+      }, 3000);
     }
     return () => clearInterval(interval);
-  }, [isSimulating]);
+  }, [isSimulating, driverLocation, setDriverLocation]);
 
   // FEED: Orders ready to be picked up by ANY driver (Simulated Pool)
   // FILTER: Only show DELIVERY orders AND if driver is ONLINE
@@ -47,9 +48,15 @@ export const DriverView: React.FC = () => {
 
   // Calculate Total Earnings (Simulated for Demo)
   // Sum of delivery fees for all DELIVERED orders
-  const totalEarnings = myHistory
+  const deliveryEarnings = myHistory
     .filter(o => o.status === OrderStatus.DELIVERED)
     .reduce((sum, o) => sum + (o.type === OrderType.DELIVERY ? (o.deliveryFee ?? 45) : 0), 0);
+  
+  const tipEarnings = myHistory
+    .filter(o => o.status === OrderStatus.DELIVERED)
+    .reduce((sum, o) => sum + (o.tip ?? 0), 0);
+
+  const totalEarnings = deliveryEarnings + tipEarnings;
 
   const handleAcceptOrder = (orderId: string) => {
     updateOrder(orderId, OrderStatus.DRIVER_ASSIGNED);
@@ -112,6 +119,12 @@ export const DriverView: React.FC = () => {
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'HISTORY' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
                 Historial
+            </button>
+            <button 
+                onClick={() => setDriverViewState('PROFILE')}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'PROFILE' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
+            >
+                Perfil
             </button>
         </div>
       </div>
@@ -212,7 +225,7 @@ export const DriverView: React.FC = () => {
                             </div>
                             <p className="text-xs font-bold text-stone-600 dark:text-stone-400 uppercase tracking-widest">Ubicación Actual</p>
                             <p className="text-[10px] font-mono text-stone-400 dark:text-stone-500 mt-1">
-                                {simulatedLocation.lat.toFixed(6)}, {simulatedLocation.lng.toFixed(6)}
+                                {driverLocation.lat.toFixed(6)}, {driverLocation.lng.toFixed(6)}
                             </p>
                         </div>
                         {/* Simulated Route */}
@@ -254,6 +267,12 @@ export const DriverView: React.FC = () => {
                         <div className="absolute top-3 left-3">
                              <Badge status={task.status} />
                         </div>
+                        <button 
+                            onClick={() => setSelectedTask(task)}
+                            className="absolute top-3 right-3 bg-white/90 dark:bg-stone-800/90 p-2 rounded-full shadow-sm backdrop-blur-sm hover:bg-white transition-colors"
+                        >
+                            <FileText size={16} className="text-stone-600 dark:text-stone-300" />
+                        </button>
                    </div>
 
                    <div className="p-4">
@@ -390,6 +409,24 @@ export const DriverView: React.FC = () => {
                 </div>
 
                 <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-100 dark:border-stone-700 p-4 shadow-sm">
+                    <h3 className="font-bold text-stone-900 dark:text-white mb-4">Vehículo de Entrega</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                        {(['MOTO', 'BICI', 'AUTO'] as const).map(type => (
+                            <button 
+                                key={type}
+                                onClick={() => setVehicleType(type)}
+                                className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${vehicleType === type ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 text-brand-900 dark:text-brand-100 ring-2 ring-brand-500/20' : 'border-stone-200 dark:border-stone-700 text-stone-500 dark:text-stone-400 hover:border-brand-300'}`}
+                            >
+                                {type === 'MOTO' && <Bike size={24} />}
+                                {type === 'BICI' && <Bike size={24} className="rotate-12" />}
+                                {type === 'AUTO' && <Truck size={24} />}
+                                <span className="text-[10px] font-bold uppercase">{type === 'AUTO' ? 'Auto' : type === 'BICI' ? 'Bici' : 'Moto'}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-100 dark:border-stone-700 p-4 shadow-sm">
                     <h3 className="font-bold text-stone-900 dark:text-white mb-4">Preferencias</h3>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -424,6 +461,61 @@ export const DriverView: React.FC = () => {
         )}
 
       </div>
+
+      {/* Order Detail Modal */}
+      {selectedTask && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white dark:bg-stone-900 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+                <div className="p-4 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-stone-50 dark:bg-stone-800/50">
+                    <div>
+                        <h3 className="font-bold dark:text-white">Detalle de Entrega</h3>
+                        <p className="text-[10px] font-mono text-stone-400">#{selectedTask.id.slice(-6)}</p>
+                    </div>
+                    <button onClick={() => setSelectedTask(null)} className="dark:text-white p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors">
+                        <X size={20}/>
+                    </button>
+                </div>
+                <div className="p-4 overflow-y-auto space-y-6">
+                    <div>
+                        <h4 className="text-xs font-bold text-stone-400 uppercase mb-2">Productos</h4>
+                        <div className="space-y-2">
+                            {selectedTask.items.map((item, idx) => (
+                                <div key={idx} className="flex justify-between text-sm">
+                                    <span className="text-stone-900 dark:text-white"><span className="font-bold">{item.quantity}x</span> {item.product.name}</span>
+                                    <span className="text-stone-500 dark:text-stone-400">{formatCurrency(item.totalPrice)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {selectedTask.notes && (
+                        <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-xl border border-amber-100 dark:border-amber-900/30">
+                            <h4 className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase mb-1">Instrucciones del Cliente</h4>
+                            <p className="text-sm text-amber-900 dark:text-amber-200 italic">"{selectedTask.notes}"</p>
+                        </div>
+                    )}
+
+                    <div className="bg-stone-50 dark:bg-stone-800/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-stone-500 dark:text-stone-400">Método de Pago</span>
+                            <span className="text-sm font-bold text-stone-900 dark:text-white">
+                                {selectedTask.paymentMethod === PaymentMethod.CASH ? 'Efectivo' : 'Tarjeta (Pagado)'}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-stone-500 dark:text-stone-400">Total a Cobrar</span>
+                            <span className="text-lg font-bold text-stone-900 dark:text-white">
+                                {selectedTask.paymentMethod === PaymentMethod.CASH ? formatCurrency(selectedTask.total) : formatCurrency(0)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div className="p-4 bg-stone-50 dark:bg-stone-800/50 border-t dark:border-stone-800">
+                    <Button fullWidth onClick={() => setSelectedTask(null)}>Cerrar Detalle</Button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

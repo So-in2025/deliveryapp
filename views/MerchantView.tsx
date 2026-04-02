@@ -279,7 +279,7 @@ const CouponManager: React.FC = () => {
 };
 
 const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
-  const { addProduct } = useApp();
+  const { bulkAddProducts } = useApp();
   const { showToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -309,23 +309,24 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
         const ws = wb.Sheets[wsname];
         const data = XLSX.utils.sheet_to_json(ws) as any[];
 
-        let count = 0;
+        const newProducts: Product[] = [];
         data.forEach(item => {
           if (item.Nombre && item.Precio) {
-            const newProduct: Product = {
+            newProducts.push({
               id: `prod-bulk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               name: String(item.Nombre),
               description: String(item.Descripcion || ''),
               price: Number(item.Precio),
               image: String(item.ImagenURL || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'),
               modifierGroups: []
-            };
-            addProduct(storeId, newProduct);
-            count++;
+            });
           }
         });
 
-        showToast(`${count} productos cargados con éxito`, 'success');
+        if (newProducts.length > 0) {
+          bulkAddProducts(storeId, newProducts);
+          showToast(`${newProducts.length} productos cargados con éxito`, 'success');
+        }
       } catch (err) {
         console.error(err);
         showToast('Error al procesar el archivo', 'error');
@@ -342,7 +343,7 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
     if (!file) return;
 
     setIsUploading(true);
-    showToast(`Escaneando ${file.type.includes('pdf') ? 'PDF' : 'imagen'} con IA...`, 'info');
+    showToast('Iniciando escaneo con IA...', 'info');
 
     try {
       const reader = new FileReader();
@@ -352,18 +353,18 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
       });
 
       const base64Data = await base64Promise;
+      
+      showToast('Analizando estructura del menú...', 'info');
       const products = await extractProductsFromMenu(base64Data);
 
-      let count = 0;
-      products.forEach((p: Product) => {
-        addProduct(storeId, p);
-        count++;
-      });
-
-      showToast(`${count} productos extraídos con IA`, 'success');
+      if (products && products.length > 0) {
+        showToast('Integrando productos al catálogo...', 'info');
+        bulkAddProducts(storeId, products);
+        showToast(`${products.length} productos extraídos con IA con éxito`, 'success');
+      }
     } catch (err) {
       console.error(err);
-      showToast('Error al escanear el archivo', 'error');
+      showToast('Error al escanear el archivo. Verifica el formato.', 'error');
     } finally {
       setIsUploading(false);
       if (imageInputRef.current) imageInputRef.current.value = '';
@@ -635,12 +636,12 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
 };
 
 export const MerchantView: React.FC = () => {
-  const { user, orders, stores, merchantViewState, setMerchantViewState } = useApp();
+  const { user, orders, stores, merchantViewState, setMerchantViewState, createStore } = useApp();
   const { showToast } = useToast();
 
   // IDENTITY INTEGRATION:
   // If user owns a store, use it. If not, show "No Store" state.
-  const myStore = stores.find(s => s.id === user.ownedStoreId);
+  const myStore = stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid);
 
   if (!myStore) {
       return (
@@ -727,11 +728,14 @@ export const MerchantView: React.FC = () => {
         <div className="p-4 flex justify-between items-end border-b border-stone-50 dark:border-stone-700">
           <div>
             <h2 className="text-2xl font-bold text-stone-900 dark:text-white">{myStore.name}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="bg-brand-500 text-brand-950 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-950 animate-pulse"></span>
-                ONLINE
-              </div>
+            <div className="flex items-center gap-3 mt-1">
+              <button 
+                onClick={() => updateStore(myStore.id, { isOpen: !myStore.isOpen })}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 w-fit transition-all ${myStore.isOpen !== false ? 'bg-brand-500 text-brand-950' : 'bg-stone-200 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${myStore.isOpen !== false ? 'bg-brand-950 animate-pulse' : 'bg-stone-400'}`}></span>
+                {myStore.isOpen !== false ? 'ONLINE' : 'OFFLINE'}
+              </button>
               <span className="text-xs text-stone-400 dark:text-stone-500">| {activeOrders.length} pedidos activos</span>
             </div>
           </div>

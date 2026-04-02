@@ -17,6 +17,7 @@ import { ClientLayout } from './components/layouts/ClientLayout';
 import { MerchantLayout } from './components/layouts/MerchantLayout';
 import { DriverLayout } from './components/layouts/DriverLayout';
 import { AdminLayout } from './components/layouts/AdminLayout';
+import { PWAInstallPrompt } from './components/ui/PWAInstallPrompt';
 import { NotificationOverlay } from './components/ui/NotificationOverlay';
 
 // Modern Splash Screen Component
@@ -82,6 +83,7 @@ const ViewRouter = () => {
 
   return (
     <>
+      <PWAInstallPrompt />
       <NotificationOverlay isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
       {(() => {
         switch (role) {

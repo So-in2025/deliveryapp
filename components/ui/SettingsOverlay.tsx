@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { resetAppData } from '../../services/dataService';
 import { UserRole, Store } from '../../types';
 import { Button } from './Button';
-import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Sparkles } from 'lucide-react';
+import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Sparkles, Download } from 'lucide-react';
 import { APP_CONFIG } from '../../constants';
 
 // Internal navigation state for the overlay
@@ -33,6 +33,34 @@ export const SettingsOverlay: React.FC = () => {
 
   // Demo State
   const [demoStoreId, setDemoStoreId] = useState(user.ownedStoreId || (stores.length > 0 ? stores[0].id : 's1'));
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) {
+      // Check if iOS
+      const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+      if (isIOS) {
+        showToast('Para instalar en iOS: Toca compartir y luego "Agregar a Inicio"', 'info');
+      } else {
+        showToast('La app ya está instalada o tu navegador no soporta la instalación directa.', 'info');
+      }
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   if (!isSettingsOpen) return null;
 
@@ -187,6 +215,9 @@ export const SettingsOverlay: React.FC = () => {
                     </div>
                     <div onClick={handlePrivacy}>
                         <SettingItem icon={<Shield size={18} />} label="Privacidad y Seguridad" />
+                    </div>
+                    <div onClick={handleInstallApp}>
+                        <SettingItem icon={<Download size={18} />} label="Instalar Aplicación" />
                     </div>
                 </div>
             </div>

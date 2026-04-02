@@ -29,15 +29,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Fetch profile from Firestore
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
-          setProfile(userDoc.data() as UserProfile);
+          const data = userDoc.data() as UserProfile;
+          // Auto-upgrade to ADMIN if email matches
+          const isAdminEmail = currentUser.email === "ofeliaacevedo41@gmail.com";
+          if (isAdminEmail && data.role !== UserRole.ADMIN) {
+            const updatedProfile = { ...data, role: UserRole.ADMIN };
+            await updateDoc(doc(db, 'users', currentUser.uid), { role: UserRole.ADMIN });
+            setProfile(updatedProfile);
+          } else {
+            setProfile(data);
+          }
         } else {
-          // Create default profile if it doesn't exist
+          // Create profile
+          const isAdminEmail = currentUser.email === "ofeliaacevedo41@gmail.com";
           const newProfile: UserProfile = {
             uid: currentUser.uid,
             name: currentUser.displayName || 'Usuario',
             email: currentUser.email || '',
             avatar: currentUser.photoURL || undefined,
-            role: UserRole.CLIENT, // Default role
+            role: isAdminEmail ? UserRole.ADMIN : UserRole.CLIENT,
           };
           await setDoc(doc(db, 'users', currentUser.uid), newProfile);
           setProfile(newProfile);
