@@ -1,21 +1,28 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { UserRole } from '../types';
-import { ShoppingBag, Store, Bike, Terminal, ArrowRight, Shield, LogIn, User as UserIcon, Globe, Sparkles, Download } from 'lucide-react';
+import { UserRole, Store } from '../types';
+import { ShoppingBag, Store as StoreIcon, Bike, Terminal, ArrowRight, Shield, LogIn, User as UserIcon, Globe, Sparkles, Download, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { useState, useEffect } from 'react';
 import { APP_CONFIG } from '../constants';
 
 export const AuthView: React.FC = () => {
-  const { setRole } = useApp();
+  const { setRole, user: appUser, createStore, updateUser } = useApp();
   const { showToast } = useToast();
-  const { user, login, signOut, loading } = useAuth();
+  const { user: authUser, login, signOut, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<'NONE' | 'MERCHANT' | 'DRIVER'>('NONE');
+
+  // Form states
+  const [storeName, setStoreName] = useState('');
+  const [storeCategory, setStoreCategory] = useState('Comida');
+  const [storeTime, setStoreTime] = useState('30');
+  const [vehicleType, setVehicleType] = useState('Moto');
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   const handleLogin = async () => {
       setIsLoggingIn(true);
@@ -62,12 +69,66 @@ export const AuthView: React.FC = () => {
   };
 
   const handleRoleSelection = (role: UserRole, isGuest: boolean = false) => {
-    if (!user && !isGuest) {
+    if (!authUser && !isGuest) {
       showToast("Por favor, inicia sesión primero", "info");
       login();
       return;
     }
+    
+    if (isGuest) {
+      setRole(role);
+      return;
+    }
+
+    // Professional Onboarding Interception
+    if (role === UserRole.MERCHANT) {
+        if (!appUser?.ownedStoreId) {
+            setOnboardingStep('MERCHANT');
+            return;
+        }
+    }
+    
+    if (role === UserRole.DRIVER) {
+        if (!appUser?.isDriver) {
+            setOnboardingStep('DRIVER');
+            return;
+        }
+    }
+
     setRole(role);
+  };
+
+  const handleRegisterMerchant = () => {
+      if (!storeName) {
+          showToast('El nombre de la tienda es requerido', 'error');
+          return;
+      }
+      const newStore: Store = {
+          id: `store-${Date.now()}`,
+          name: storeName,
+          category: storeCategory,
+          rating: 5.0,
+          reviewsCount: 0,
+          deliveryTimeMin: Number(storeTime),
+          deliveryTimeMax: Number(storeTime) + 15,
+          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+          products: [],
+          createdAt: new Date().toISOString(),
+          ownerId: authUser?.uid || 'guest'
+      };
+      createStore(newStore);
+      showToast('¡Tienda creada exitosamente!', 'success');
+      setRole(UserRole.MERCHANT);
+  };
+
+  const handleRegisterDriver = () => {
+      if (!phoneNumber) {
+          showToast('El número de teléfono es requerido', 'error');
+          return;
+      }
+      updateUser({ isDriver: true }); // We could save vehicle/phone here if added to UserProfile
+      showToast('¡Registro de Repartidor completo!', 'success');
+      setRole(UserRole.DRIVER);
   };
 
   const handleDevAccess = () => {
@@ -264,7 +325,7 @@ export const AuthView: React.FC = () => {
                 transition={{ delay: 0.1 }}
                 className="mb-10 space-y-4"
             >
-                {!user ? (
+                {!authUser ? (
                     <>
                         <button
                             onClick={handleLogin}
@@ -301,8 +362,8 @@ export const AuthView: React.FC = () => {
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-brand-500 p-0.5 shadow-md">
                                 <div className="w-full h-full rounded-[10px] overflow-hidden bg-stone-800">
-                                    {user.photoURL ? (
-                                        <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" />
+                                    {authUser.photoURL ? (
+                                        <img src={authUser.photoURL} alt={authUser.displayName || ''} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-white">
                                             <UserIcon size={20} />
@@ -312,7 +373,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <div className="text-left">
                                 <p className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-0.5">Perfil Activo</p>
-                                <p className="text-sm font-black text-stone-900 dark:text-white truncate max-w-[160px]">{user.displayName}</p>
+                                <p className="text-sm font-black text-stone-900 dark:text-white truncate max-w-[160px]">{authUser.displayName}</p>
                             </div>
                         </div>
                         <button 
@@ -325,43 +386,171 @@ export const AuthView: React.FC = () => {
                 )}
             </motion.div>
 
-            {/* Role Grid */}
-            <div className="grid grid-cols-1 gap-4">
-                <RoleButton 
-                    icon={<ShoppingBag />} 
-                    title="Realizar Pedido" 
-                    subtitle="Cliente Final" 
-                    variant="primary"
-                    onClick={() => handleRoleSelection(UserRole.CLIENT, true)}
-                    delay={0.2}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                    <RoleButton 
-                        icon={<Store />} 
-                        title="Vender" 
-                        subtitle="Comercio" 
-                        variant="secondary"
-                        onClick={() => handleRoleSelection(UserRole.MERCHANT, true)}
-                        delay={0.3}
-                    />
-                    <RoleButton 
-                        icon={<Bike />} 
-                        title="Repartir" 
-                        subtitle="Driver" 
-                        variant="secondary"
-                        onClick={() => handleRoleSelection(UserRole.DRIVER, true)}
-                        delay={0.4}
-                    />
-                </div>
-                <RoleButton 
-                    icon={<Shield />} 
-                    title="Panel Administrativo" 
-                    subtitle="Gestión de Plataforma" 
-                    variant="dark"
-                    onClick={() => handleRoleSelection(UserRole.ADMIN, true)}
-                    delay={0.5}
-                />
-            </div>
+            {/* Role Grid or Onboarding Forms */}
+            <AnimatePresence mode="wait">
+                {onboardingStep === 'NONE' ? (
+                    <motion.div 
+                        key="roles"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="grid grid-cols-1 gap-4"
+                    >
+                        <RoleButton 
+                            icon={<ShoppingBag />} 
+                            title="Realizar Pedido" 
+                            subtitle="Cliente Final" 
+                            variant="primary"
+                            onClick={() => handleRoleSelection(UserRole.CLIENT, true)}
+                            delay={0.2}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <RoleButton 
+                                icon={<StoreIcon />} 
+                                title="Vender" 
+                                subtitle="Comercio" 
+                                variant="secondary"
+                                onClick={() => handleRoleSelection(UserRole.MERCHANT, true)}
+                                delay={0.3}
+                            />
+                            <RoleButton 
+                                icon={<Bike />} 
+                                title="Repartir" 
+                                subtitle="Driver" 
+                                variant="secondary"
+                                onClick={() => handleRoleSelection(UserRole.DRIVER, true)}
+                                delay={0.4}
+                            />
+                        </div>
+                        <RoleButton 
+                            icon={<Shield />} 
+                            title="Panel Administrativo" 
+                            subtitle="Gestión de Plataforma" 
+                            variant="dark"
+                            onClick={() => handleRoleSelection(UserRole.ADMIN, true)}
+                            delay={0.5}
+                        />
+                    </motion.div>
+                ) : onboardingStep === 'MERCHANT' ? (
+                    <motion.div 
+                        key="merchant-onboarding"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 shadow-xl"
+                    >
+                        <div className="flex items-center gap-3 mb-6">
+                            <button onClick={() => setOnboardingStep('NONE')} className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors">
+                                <ArrowLeft size={20} className="text-stone-500" />
+                            </button>
+                            <div>
+                                <h4 className="text-xl font-black text-stone-900 dark:text-white">Crea tu Tienda</h4>
+                                <p className="text-sm text-stone-500">Completa tu perfil comercial</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Nombre del Local</label>
+                                <input 
+                                    type="text" 
+                                    value={storeName}
+                                    onChange={(e) => setStoreName(e.target.value)}
+                                    placeholder="Ej. Tacos El Gordo"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Categoría</label>
+                                    <select 
+                                        value={storeCategory}
+                                        onChange={(e) => setStoreCategory(e.target.value)}
+                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
+                                    >
+                                        <option value="Comida">Comida</option>
+                                        <option value="Farmacia">Farmacia</option>
+                                        <option value="Abarrotes">Abarrotes</option>
+                                        <option value="Vinos y Licores">Vinos y Licores</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Tiempo (Min)</label>
+                                    <select 
+                                        value={storeTime}
+                                        onChange={(e) => setStoreTime(e.target.value)}
+                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
+                                    >
+                                        <option value="15">15 min</option>
+                                        <option value="30">30 min</option>
+                                        <option value="45">45 min</option>
+                                        <option value="60">60 min</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={handleRegisterMerchant}
+                                disabled={!storeName}
+                                className="w-full mt-4 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:hover:bg-brand-500 text-brand-950 font-black py-4 px-6 rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
+                            >
+                                <StoreIcon size={20} />
+                                Abrir Tienda
+                            </button>
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div 
+                        key="driver-onboarding"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 shadow-xl"
+                    >
+                        <div className="flex items-center gap-3 mb-6">
+                            <button onClick={() => setOnboardingStep('NONE')} className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors">
+                                <ArrowLeft size={20} className="text-stone-500" />
+                            </button>
+                            <div>
+                                <h4 className="text-xl font-black text-stone-900 dark:text-white">Sé Repartidor</h4>
+                                <p className="text-sm text-stone-500">Configura tu vehículo</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Vehículo</label>
+                                <select 
+                                    value={vehicleType}
+                                    onChange={(e) => setVehicleType(e.target.value)}
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
+                                >
+                                    <option value="Moto">Motocicleta</option>
+                                    <option value="Auto">Automóvil</option>
+                                    <option value="Bici">Bicicleta</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Teléfono de Contacto</label>
+                                <input 
+                                    type="tel" 
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
+                                    placeholder="Ej. 33 1234 5678"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                            <button 
+                                onClick={handleRegisterDriver}
+                                disabled={!phoneNumber}
+                                className="w-full mt-4 bg-stone-900 dark:bg-white disabled:opacity-50 text-white dark:text-stone-900 font-black py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                            >
+                                <Bike size={20} />
+                                Comenzar a Repartir
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <motion.div 
                 initial={{ opacity: 0 }}
