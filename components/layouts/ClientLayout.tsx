@@ -5,6 +5,7 @@ import { useConnectivity } from '../../context/ConnectivityContext';
 import { ShoppingBag, Settings, LogOut, WifiOff, Heart, History, User, Bell } from 'lucide-react';
 import { UserRole } from '../../types';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
+import { APP_CONFIG } from '../../constants';
 
 export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toggleSettings, setClientViewState, setSelectedStore, clientViewState, notifications, setIsNotificationsOpen, setRole } = useApp();
@@ -39,7 +40,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-brand-50 dark:bg-stone-950 border-r border-brand-200 dark:border-stone-800 z-40 transition-colors duration-300">
           <div className="p-6 border-b border-brand-200 dark:border-stone-800 flex items-center justify-center">
-            <img src="/logo.jpg" alt="Te lo Llevo" className="h-16 object-contain" />
+            <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="h-24 lg:h-32 object-contain" />
           </div>
           
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -61,7 +62,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
           {/* Mobile Header */}
           <header className="lg:hidden shrink-0 z-30 bg-brand-500 dark:bg-stone-900 backdrop-blur-md border-b border-brand-600 dark:border-stone-800 px-4 py-3 flex justify-between items-center pt-safe transition-colors duration-300">
             <div className="flex items-center">
-              <img src="/logo.jpg" alt="Te lo Llevo" className="h-8 object-contain" />
+              <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="h-12 object-contain" />
             </div>
             
             <div className="flex items-center gap-2">

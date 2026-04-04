@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -13,14 +13,16 @@ type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'REGISTER_MERCHANT' | 'REGISTER_DR
 
 export const SettingsOverlay: React.FC = () => {
   const { isSettingsOpen, toggleSettings, role, setRole, user, updateUser, createStore, darkMode, toggleDarkMode, stores, isDriverOnline, toggleDriverStatus } = useApp();
-  const { signOut } = useAuth();
+  const { signOut, requestNotificationPermission } = useAuth();
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState<SettingsView>('MAIN');
 
   // Temporary State for forms
   const [editName, setEditName] = useState(user.name);
   const [editEmail, setEditEmail] = useState(user.email);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    typeof Notification !== 'undefined' && Notification.permission === 'granted' && !!user.fcmToken
+  );
   
   // Store Reg State
   const [storeName, setStoreName] = useState('');
@@ -80,9 +82,14 @@ export const SettingsOverlay: React.FC = () => {
       }, 1000);
   };
 
-  const toggleNotifications = () => {
-      setNotificationsEnabled(prev => !prev);
-      showToast(notificationsEnabled ? 'Notificaciones desactivadas' : 'Notificaciones activadas', 'info');
+  const toggleNotifications = async () => {
+      if (!notificationsEnabled) {
+          await requestNotificationPermission();
+          setNotificationsEnabled(true);
+      } else {
+          setNotificationsEnabled(false);
+          showToast('Notificaciones desactivadas localmente', 'info');
+      }
   };
 
   const handlePrivacy = () => {

@@ -1,0 +1,24 @@
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyCx8W1fB5zy1roF4xXVutIwDfAimt-QDHU",
+  authDomain: "deliveryapp-8ef4a.firebaseapp.com",
+  projectId: "deliveryapp-8ef4a",
+  storageBucket: "deliveryapp-8ef4a.firebasestorage.app",
+  messagingSenderId: "901369332254",
+  appId: "1:901369332254:web:def3a938212c709e5ea40f"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/palmtree.svg'
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});

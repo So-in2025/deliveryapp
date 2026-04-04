@@ -84,17 +84,14 @@ Este es el archivo más importante. Es el "director de orquesta".
 - Sistema de pedidos en tiempo real.
 - Notificaciones internas y alertas sonoras.
 - Generación de recibos PDF y carga de Excel.
-- Simulación de GPS y simulación de pagos.
+- Producción Bancaria (Mercado Pago Webhooks).
+- GPS Real (Geolocalización nativa y React-Leaflet).
+- Preparación para Tiendas (Capacitor configurado).
+- Notificaciones Push (Web y Nativo vía Capacitor + FCM).
 
-### ⚠️ Lo que está en "Modo Simulación" (Para pruebas):
-- **Pagos:** Integración con Mercado Pago México (Simulación de flujo completa).
-- **GPS:** El repartidor se mueve en el mapa siguiendo una ruta simulada.
-
-### 🚀 Lo que falta para el Lanzamiento Masivo:
-1. **Producción Bancaria:** Pasar las credenciales de Mercado Pago de "Prueba" a "Producción".
-2. **GPS Real:** Conectar con satélites reales (Google Maps API) para ver la ubicación exacta del driver.
-3. **App en Tiendas:** Empaquetar el código para subirlo a la Play Store y App Store.
-4. **Notificaciones Push:** Para que el celular vibre incluso si la app está cerrada.
+### 🚀 Siguientes Pasos (Opcional):
+1. **Lanzamiento:** Ejecutar los comandos de Capacitor (`npm run cap:android`) para compilar los APKs/IPAs.
+2. **Marketing:** Configurar campañas de cupones para el lanzamiento.
 
 ---
 

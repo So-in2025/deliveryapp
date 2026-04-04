@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Share, PlusSquare, X, Download, Smartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+import { APP_CONFIG } from '../../constants';
+
 export const PWAInstallPrompt: React.FC = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [platform, setPlatform] = useState<'ios' | 'android' | 'other' | null>(null);
@@ -80,7 +82,7 @@ export const PWAInstallPrompt: React.FC = () => {
 
             <div className="flex gap-4 items-center">
               <div className="w-14 h-14 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
-                <img src="/logo.jpg" alt="Logo" className="w-10 h-10 object-contain" />
+                <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-14 h-14 object-contain" />
               </div>
               <div className="flex-1 pr-6">
                 <h3 className="font-black text-stone-900 dark:text-white text-lg leading-tight">Instalar App</h3>

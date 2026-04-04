@@ -5,7 +5,7 @@ import { UserRole, Order, Store, Product, OrderStatus, CartItem, Modifier, Payme
 import { loadCart, saveCart } from '../services/dataService';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
-import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, OperationType, handleFirestoreError } from '../firebase';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage } from '../firebase';
 
 // App Context Type and Provider
 interface AppContextType {
@@ -26,6 +26,8 @@ interface AppContextType {
   toggleSettings: () => void;
   toggleFavorite: (storeId: string) => void;
   addToCart: (product: Product, quantity: number, modifiers: Modifier[], storeId: string) => void;
+  updateCartItemQuantity: (index: number, quantity: number) => void;
+  removeFromCart: (index: number) => void;
   clearCart: () => void;
   placeOrder: (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount?: number) => void;
   updateOrder: (orderId: string, status: OrderStatus) => void;
@@ -42,7 +44,9 @@ interface AppContextType {
   toggleCoupon: (id: string) => void;
   addReview: (review: Review) => void;
   reviews: Review[];
+  createPaymentPreference: (orderId: string, items: any[]) => Promise<{ id: string, init_point: string } | null>;
   updateStore: (storeId: string, data: Partial<Store>) => void;
+  updateLocation: (lat: number, lng: number) => void;
   
   isDriverOnline: boolean;
   toggleDriverStatus: () => void;
@@ -128,7 +132,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     platformCommission: 15,
     baseDeliveryFee: 45,
     supportEmail: 'soporte@telollevo.com',
-    maintenanceMode: false
+    maintenanceMode: false,
+    paymentMode: 'CENTRALIZED'
   });
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
@@ -153,6 +158,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       read: false
     };
     setNotifications(prev => [newNotif, ...prev].slice(0, 50)); // Keep last 50
+
+    // Trigger Native Browser Push Notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(notif.title, {
+          body: notif.message,
+          icon: '/vite.svg', // Fallback icon
+          badge: '/vite.svg',
+          vibrate: [200, 100, 200]
+        });
+      } catch (e) {
+        console.error('Error showing native notification:', e);
+      }
+    }
   }, []);
 
   const markNotificationAsRead = (id: string) => {
@@ -178,6 +197,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Driver GPS State
   const [driverLocation, setDriverLocation] = useState({ lat: -34.6037, lng: -58.3816 });
 
+  const updateLocation = useCallback(async (lat: number, lng: number) => {
+    setDriverLocation({ lat, lng });
+    if (authUser?.uid) {
+      try {
+        await updateDoc(doc(db, 'users', authUser.uid), { lat, lng });
+      } catch (error) {
+        console.error('Error updating location:', error);
+      }
+    }
+  }, [authUser?.uid]);
+
   const updateConfig = async (data: Partial<GlobalConfig>) => {
     const newConfig = { ...config, ...data };
     setConfig(newConfig);
@@ -188,18 +218,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  // GPS Simulation Effect
+  // Listen for foreground FCM messages
   useEffect(() => {
-    if (isDriverOnline) {
-      const interval = setInterval(() => {
-        setDriverLocation(prev => ({
-          lat: prev.lat + (Math.random() - 0.5) * 0.0005,
-          lng: prev.lng + (Math.random() - 0.5) * 0.0005
-        }));
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [isDriverOnline]);
+    if (!messaging) return;
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log('Message received in foreground:', payload);
+      if (payload.notification) {
+        addNotification({
+          title: payload.notification.title || 'Nueva Notificación',
+          message: payload.notification.body || '',
+          type: 'SYSTEM'
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, [addNotification]);
 
   // Sync User Profile from AuthContext
   useEffect(() => {
@@ -233,7 +266,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const storesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Store));
       setStores(storesData);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'stores');
+      console.warn('Stores listener error:', error.message);
+      // Don't throw for public collections, just log
     });
 
     // Listen to Orders (Filtered by role)
@@ -243,7 +277,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } else if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
       ordersQuery = query(collection(db, 'orders'), where('storeId', '==', authProfile.ownedStoreId));
     } else if (authProfile?.role === 'DRIVER' && authUser?.uid) {
-      ordersQuery = query(collection(db, 'orders'), where('driverId', '==', authUser.uid));
+      ordersQuery = query(collection(db, 'orders'), or(
+        where('driverId', '==', authUser.uid),
+        where('status', 'in', ['READY', 'PREPARING', 'ACCEPTED'])
+      ));
     } else if (authUser?.uid) {
       // Default to CLIENT
       ordersQuery = query(collection(db, 'orders'), where('customerId', '==', authUser.uid));
@@ -288,20 +325,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setOrders(ordersData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
         initialLoadRef.current.orders = false;
       }, (error) => {
-        handleFirestoreError(error, OperationType.GET, 'orders');
+        if (error.code === 'permission-denied') {
+          console.warn('Orders permission denied - user might not have access yet');
+        } else {
+          handleFirestoreError(error, OperationType.GET, 'orders');
+        }
       });
     }
 
-    // Listen to Users (Admin only)
-    let unsubscribeUsers = () => {};
+    // Listen to Users (Admins see all, others see drivers for tracking)
+    let usersQuery;
     if (authProfile?.role === 'ADMIN') {
-      unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
-        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-        setUsers(usersData);
-      }, (error) => {
-        handleFirestoreError(error, OperationType.GET, 'users');
-      });
+      usersQuery = collection(db, 'users');
+    } else {
+      // Everyone can see drivers for real-time tracking
+      usersQuery = query(collection(db, 'users'), where('role', '==', 'DRIVER'));
     }
+
+    let unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+      setUsers(usersData);
+    }, (error) => {
+      if (error.code === 'permission-denied') {
+        console.warn('Users permission denied - access not yet propagated');
+      } else {
+        handleFirestoreError(error, OperationType.GET, 'users');
+      }
+    });
 
     // Listen to Reviews (Optimized by role)
     let reviewsQuery;
@@ -320,7 +370,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const reviewsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review));
         setReviews(reviewsData);
       }, (error) => {
-        handleFirestoreError(error, OperationType.GET, 'reviews');
+        console.warn('Reviews listener error:', error.message);
       });
     }
 
@@ -332,7 +382,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     // Listen to Coupons
-    const unsubscribeCoupons = onSnapshot(collection(db, 'coupons'), (snapshot) => {
+    let couponsQuery;
+    if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+      couponsQuery = query(collection(db, 'coupons'), where('storeId', '==', authProfile.ownedStoreId));
+    } else {
+      // Clients and Admins see all coupons (Clients will filter by storeId in UI)
+      couponsQuery = collection(db, 'coupons');
+    }
+
+    const unsubscribeCoupons = onSnapshot(couponsQuery, (snapshot) => {
       const couponsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Coupon));
       setCoupons(couponsData);
     });
@@ -496,11 +554,41 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   };
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
       setCart([]);
       saveCart([]);
       setCartStoreId(null);
       localStorage.removeItem('codex_cart_store_v1');
+  }, []);
+
+  const updateCartItemQuantity = (index: number, quantity: number) => {
+      setCart(prev => {
+          const newCart = [...prev];
+          if (quantity <= 0) {
+              newCart.splice(index, 1);
+          } else {
+              newCart[index].quantity = quantity;
+          }
+          saveCart(newCart);
+          if (newCart.length === 0) {
+              setCartStoreId(null);
+              localStorage.removeItem('codex_cart_store_v1');
+          }
+          return newCart;
+      });
+  };
+
+  const removeFromCart = (index: number) => {
+      setCart(prev => {
+          const newCart = [...prev];
+          newCart.splice(index, 1);
+          saveCart(newCart);
+          if (newCart.length === 0) {
+              setCartStoreId(null);
+              localStorage.removeItem('codex_cart_store_v1');
+          }
+          return newCart;
+      });
   };
 
   const resetOrders = () => {
@@ -517,6 +605,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     });
   };
+
+  // Payment Callback Handler
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('id');
+    const path = window.location.pathname;
+
+    if (path === '/order-success' && orderId) {
+      // Update order status to PAID
+      const updateRef = doc(db, 'orders', orderId);
+      updateDoc(updateRef, { paymentStatus: 'PAID' }).then(() => {
+          clearCart();
+          setSelectedStore(null);
+          setClientViewState('TRACKING');
+          showToast('¡Pago exitoso! Tu pedido está siendo procesado.', 'success');
+          // Clean URL
+          window.history.replaceState({}, '', '/');
+      });
+    } else if (path === '/order-failure' && orderId) {
+      const updateRef = doc(db, 'orders', orderId);
+      updateDoc(updateRef, { paymentStatus: 'FAILED' }).then(() => {
+          showToast('El pago ha fallado. Intenta de nuevo.', 'error');
+          setClientViewState('CHECKOUT');
+          window.history.replaceState({}, '', '/');
+      });
+    } else if (path === '/order-pending' && orderId) {
+      showToast('Pago pendiente de acreditación.', 'info');
+      setClientViewState('TRACKING');
+      window.history.replaceState({}, '', '/');
+    }
+  }, [clearCart, showToast, setClientViewState]);
 
   const placeOrder = async (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount: number = 0) => {
     const subtotal = cart.reduce((sum, item) => sum + (item.totalPrice * item.quantity), 0);
@@ -542,10 +661,41 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       paymentMethod,
       notes,
       type,
-      isReviewed: false
+      isReviewed: false,
+      paymentStatus: paymentMethod === PaymentMethod.MERCADO_PAGO ? 'PENDING' : 'PAID'
     };
     
     try {
+      // If payment is Mercado Pago, we create the preference but don't clear cart yet
+      // The actual order creation happens after the user returns from MP or we create it as PENDING
+      if (paymentMethod === PaymentMethod.MERCADO_PAGO) {
+          const items = cart.map(item => ({
+              name: item.product.name,
+              price: item.totalPrice,
+              quantity: item.quantity
+          }));
+          
+          // Add delivery fee as an item if applicable
+          if (deliveryFee > 0) {
+              items.push({
+                  name: 'Costo de Envío',
+                  price: deliveryFee,
+                  quantity: 1
+              });
+          }
+
+          const preference = await createPaymentPreference(orderId, items, storeId);
+          if (preference) {
+              // Save order as PENDING with preferenceId
+              await setDoc(doc(db, 'orders', orderId), { ...newOrder, preferenceId: preference.id });
+              // Redirect to Mercado Pago
+              window.location.href = preference.init_point;
+              return;
+          } else {
+              throw new Error('Error al crear la preferencia de pago');
+          }
+      }
+
       await setDoc(doc(db, 'orders', orderId), newOrder);
       clearCart();
       setSelectedStore(null);
@@ -553,6 +703,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } catch (error) {
       console.error('Error placing order:', error);
       showToast('Error al realizar el pedido', 'error');
+    }
+  };
+
+  const createPaymentPreference = async (orderId: string, items: any[], storeId: string) => {
+    try {
+      const store = stores.find(s => s.id === storeId);
+      const customAccessToken = config.paymentMode === 'DECENTRALIZED' ? store?.mpAccessToken : null;
+
+      const response = await fetch('/api/create-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, items, customAccessToken })
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating payment preference:', error);
+      return null;
     }
   };
 
@@ -760,6 +928,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       toggleSettings,
       toggleFavorite,
       addToCart, 
+      updateCartItemQuantity,
+      removeFromCart,
       clearCart,
       placeOrder,
       updateOrder,
@@ -776,7 +946,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       toggleCoupon,
       addReview,
       reviews,
+      createPaymentPreference,
       updateStore,
+      updateLocation,
       clientViewState,
       setClientViewState,
       merchantViewState,

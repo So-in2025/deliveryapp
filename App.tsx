@@ -20,6 +20,8 @@ import { AdminLayout } from './components/layouts/AdminLayout';
 import { PWAInstallPrompt } from './components/ui/PWAInstallPrompt';
 import { NotificationOverlay } from './components/ui/NotificationOverlay';
 
+import { APP_CONFIG } from './constants';
+
 // Modern Splash Screen Component
 const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   useEffect(() => {
@@ -45,8 +47,8 @@ const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         }}
         className="flex flex-col items-center gap-6"
       >
-        <div className="w-48 h-48 flex items-center justify-center relative overflow-hidden">
-            <img src="/logo.jpg" alt="Te lo Llevo" className="w-full h-full object-contain drop-shadow-2xl" />
+        <div className="w-64 h-64 flex items-center justify-center relative overflow-hidden">
+            <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain drop-shadow-2xl" />
         </div>
         
         <div className="text-center">

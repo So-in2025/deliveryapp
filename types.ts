@@ -20,6 +20,9 @@ export interface UserProfile {
   ownedStoreId?: string; // Has completed merchant onboarding
   addresses?: string[]; // Saved addresses
   isOnline?: boolean; // New: For Driver availability in real-time
+  fcmToken?: string; // New: For Push Notifications
+  lat?: number; // New: For real-time tracking
+  lng?: number; // New: For real-time tracking
 }
 
 export enum OrderStatus {
@@ -84,6 +87,10 @@ export interface Store {
   customColor?: string; // New: Store customization
   isActive?: boolean; // New: For Admin suspension/approval
   isOpen?: boolean; // New: For Merchant to toggle store status
+  mpAccessToken?: string; // New: For Decentralized Payment Mode
+  ownerId?: string; // New: For ownership check
+  lat?: number; // New: For map placement
+  lng?: number; // New: For map placement
 }
 
 export interface CartItem {
@@ -111,6 +118,8 @@ export interface Order {
   driverId?: string; // New: For Manual Dispatch
   driverName?: string; // New: For Manual Dispatch UI
   isReviewed?: boolean; // New: To check if user already rated this order
+  preferenceId?: string; // New: For Mercado Pago integration
+  paymentStatus?: 'PENDING' | 'PAID' | 'FAILED'; // New: For Mercado Pago integration
   tip?: number; // New: Driver Tip
   cutlery?: boolean; // New: Request Cutlery
   cancelledReason?: string; // Audit: Why it was cancelled
@@ -136,6 +145,7 @@ export interface Coupon {
     discountPct: number; // 0.10 for 10%
     active: boolean;
     description: string;
+    storeId?: string; // Optional: if null, it's a platform-wide coupon
 }
 
 export interface AppNotification {
@@ -153,6 +163,7 @@ export interface GlobalConfig {
   baseDeliveryFee: number; // e.g., 45
   supportEmail: string;
   maintenanceMode: boolean;
+  paymentMode: 'CENTRALIZED' | 'DECENTRALIZED'; // New: For Payment Strategy
 }
 
 // UI State Types - Standardized

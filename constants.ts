@@ -38,7 +38,8 @@ export const INITIAL_ORDERS: Order[] = [];
 
 export const APP_CONFIG = {
   currency: '$',
-  appName: 'Mazamitla'
+  appName: 'Te lo Llevo',
+  logoUrl: 'https://res.cloudinary.com/dfrb7fkni/image/upload/v1775205995/117a5ec6-76ad-444d-ade2-7077d936ded3_ubbnbi.jpg'
 };
 
 export const formatCurrency = (amount: number | undefined | null) => {

@@ -7,6 +7,7 @@ import { ShoppingBag, Store, Bike, Terminal, ArrowRight, Shield, LogIn, User as 
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
+import { APP_CONFIG } from '../constants';
 
 export const AuthView: React.FC = () => {
   const { setRole } = useApp();
@@ -14,6 +15,16 @@ export const AuthView: React.FC = () => {
   const { user, login, signOut, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  const handleLogin = async () => {
+      setIsLoggingIn(true);
+      try {
+          await login();
+      } finally {
+          setIsLoggingIn(false);
+      }
+  };
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -146,8 +157,8 @@ export const AuthView: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-5"
             >
-                <div className="w-14 h-14 bg-brand-500 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,237,0,0.3)] p-2.5">
-                    <img src="/logo.jpg" alt="Logo" className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
+                <div className="w-20 h-20 bg-brand-500 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,237,0,0.3)] overflow-hidden">
+                    <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-cover" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
                 </div>
                 <div className="flex flex-col">
                     <h1 className="text-2xl font-black text-white tracking-tighter leading-none">TE LO LLEVO</h1>
@@ -235,8 +246,8 @@ export const AuthView: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-10"
             >
-                <div className="lg:hidden w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center shadow-xl p-2.5 mb-8 mx-auto">
-                    <img src="/logo.jpg" alt="Logo" className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
+                <div className="lg:hidden w-24 h-24 bg-brand-500 rounded-2xl flex items-center justify-center shadow-xl mb-8 mx-auto overflow-hidden">
+                    <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-cover" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
                 </div>
                 <h3 className="text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight text-center lg:text-left leading-tight">
                     Tu puerta a la <br/><span className="text-brand-500 italic">Excelencia.</span>
@@ -256,12 +267,16 @@ export const AuthView: React.FC = () => {
                 {!user ? (
                     <>
                         <button
-                            onClick={login}
-                            disabled={loading}
+                            onClick={handleLogin}
+                            disabled={loading || isLoggingIn}
                             className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-950 font-bold py-4 px-6 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-base border border-stone-800 dark:border-white"
                         >
-                            <LogIn size={20} className="text-brand-500" />
-                            {loading ? 'Procesando...' : 'Acceder con Google'}
+                            {isLoggingIn ? (
+                                <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <LogIn size={20} className="text-brand-500" />
+                            )}
+                            {loading || isLoggingIn ? 'Procesando...' : 'Acceder con Google'}
                         </button>
                         
                         <div className="relative">

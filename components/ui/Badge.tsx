@@ -36,3 +36,19 @@ export const Badge: React.FC<BadgeProps> = ({ status }) => {
     </span>
   );
 };
+
+interface PaymentBadgeProps {
+  status?: 'PENDING' | 'PAID' | 'FAILED';
+  method: string;
+}
+
+export const PaymentBadge: React.FC<PaymentBadgeProps> = ({ status, method }) => {
+  if (method !== 'MERCADO_PAGO') return <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Efectivo/Tarjeta</span>;
+  
+  const isPaid = status === 'PAID';
+  return (
+    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${isPaid ? 'bg-green-100 text-green-700 border-green-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+      {isPaid ? 'Pagado' : 'Pendiente Pago'}
+    </span>
+  );
+};

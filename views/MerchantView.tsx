@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
 import { OrderStatus, Order, PaymentMethod, OrderType, Product, ModifierGroup, Modifier, Store } from '../types';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
+import { Badge, PaymentBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
 import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight, Upload, Download, FileText, Image as ImageIcon } from 'lucide-react';
 import { formatCurrency } from '../constants';
@@ -61,6 +61,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
       <div className="p-4 border-b border-stone-100 dark:border-stone-700 flex justify-between items-center bg-stone-50/50 dark:bg-stone-800/50">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs font-bold text-stone-500 dark:text-stone-400">#{order.id.slice(-6)}</span>
+          <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
           {order.type === OrderType.PICKUP ? (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-stone-800 dark:bg-stone-700 text-white text-[10px] font-bold uppercase shadow-sm">
               <StoreIcon size={10} /> Retiro
@@ -189,7 +190,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
 };
 
 const CouponManager: React.FC = () => {
-    const { addCoupon, coupons, deleteCoupon, toggleCoupon } = useApp();
+    const { addCoupon, coupons, deleteCoupon, toggleCoupon, user } = useApp();
     const { showToast } = useToast();
     const [newCode, setNewCode] = useState('');
     const [newDiscount, setNewDiscount] = useState('');
@@ -202,7 +203,8 @@ const CouponManager: React.FC = () => {
             code: newCode.toUpperCase(),
             discountPct: Number(newDiscount) / 100,
             active: true,
-            description: newDesc
+            description: newDesc,
+            storeId: user.ownedStoreId
         });
         setNewCode('');
         setNewDiscount('');
@@ -570,11 +572,12 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
     const { showToast } = useToast();
     const [font, setFont] = useState(store.customFont || 'Inter');
     const [color, setColor] = useState(store.customColor || '#FACC15'); // Default brand yellow
+    const [mpToken, setMpToken] = useState(store.mpAccessToken || '');
 
     const fonts = ['Inter', 'Roboto', 'Montserrat', 'Playfair Display', 'Courier New', 'Georgia'];
 
     const handleSave = () => {
-        updateStore(store.id, { customFont: font, customColor: color });
+        updateStore(store.id, { customFont: font, customColor: color, mpAccessToken: mpToken });
         showToast('Configuración guardada', 'success');
     };
 
@@ -615,6 +618,23 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
                             <p className="font-mono text-xs mt-1 font-bold text-stone-400 uppercase">{color}</p>
                         </div>
                     </div>
+                </div>
+
+                <div className="border-t dark:border-stone-700 pt-6">
+                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider flex items-center gap-2">
+                        <CreditCard size={16} className="text-brand-800" /> Mercado Pago Access Token
+                    </label>
+                    <p className="text-xs text-stone-500 dark:text-stone-400 mb-3">
+                        Si la plataforma está en modo "Descentralizado", los pagos irán directamente a tu cuenta. 
+                        Pega tu Access Token de producción aquí.
+                    </p>
+                    <input 
+                        type="password" 
+                        value={mpToken}
+                        onChange={e => setMpToken(e.target.value)}
+                        placeholder="APP_USR-..."
+                        className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"
+                    />
                 </div>
 
                 <div className="pt-4">

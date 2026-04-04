@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
 import { OrderStatus, Store, OrderType, UserRole, Order } from '../types';
 import { formatCurrency } from '../constants';
-import { Badge } from '../components/ui/Badge';
+import { Badge, PaymentBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
 import { Button } from '../components/ui/Button';
 import { 
@@ -75,7 +75,10 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
                         </div>
                         <div className="text-right">
                             <p className="font-bold text-stone-900 text-sm">{formatCurrency(order.total)}</p>
-                            <Badge status={order.status} />
+                            <div className="flex flex-col items-end gap-1">
+                                <Badge status={order.status} />
+                                <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -200,7 +203,7 @@ export const AdminView: React.FC = () => {
                       {formatCurrency(order.total)}
                     </p>
                     <p className="text-[10px] text-stone-400 flex items-center gap-1">
-                      Hace 2 min • {order.items.length} items
+                      Hace 2 min • {order.items.length} items • <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
                     </p>
                  </div>
               </div>
@@ -241,7 +244,10 @@ export const AdminView: React.FC = () => {
                    {dispatchableOrders.map(order => (
                        <div key={order.id} className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden h-full flex flex-col">
                            <div className="p-3 bg-stone-50 border-b border-stone-100 flex justify-between items-center">
-                                <span className="text-xs font-mono font-bold text-stone-500">{order.id.slice(-6)}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-mono font-bold text-stone-500">{order.id.slice(-6)}</span>
+                                    <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
+                                </div>
                                 <Badge status={order.status} />
                            </div>
                            <div className="p-4">
@@ -678,6 +684,26 @@ export const AdminView: React.FC = () => {
                                                 onChange={(e) => setLocalConfig({...localConfig, supportEmail: e.target.value})}
                                                 className="w-48 p-2 bg-stone-50 border border-stone-200 rounded-lg text-right text-sm" 
                                             />
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-bold text-stone-800">Modo de Pago</p>
+                                                <p className="text-xs text-stone-500">Centralizado (App) o Descentralizado (Comercio)</p>
+                                            </div>
+                                            <div className="flex bg-stone-100 p-1 rounded-lg gap-1">
+                                                <button 
+                                                    onClick={() => setLocalConfig({...localConfig, paymentMode: 'CENTRALIZED'})}
+                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'CENTRALIZED' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                                >
+                                                    Centralizado
+                                                </button>
+                                                <button 
+                                                    onClick={() => setLocalConfig({...localConfig, paymentMode: 'DECENTRALIZED'})}
+                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'DECENTRALIZED' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                                >
+                                                    Descentralizado
+                                                </button>
+                                            </div>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <div>
