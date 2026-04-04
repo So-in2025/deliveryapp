@@ -339,23 +339,6 @@ export const AuthView: React.FC = () => {
                             )}
                             {loading || isLoggingIn ? 'Procesando...' : 'Acceder con Google'}
                         </button>
-                        
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-stone-200 dark:border-stone-800"></div>
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-white dark:bg-stone-950 px-2 text-stone-500">o</span>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => handleRoleSelection(UserRole.CLIENT, true)}
-                            className="w-full bg-transparent text-stone-600 dark:text-stone-400 font-bold py-4 px-6 rounded-2xl border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-900 transition-all flex items-center justify-center gap-3 text-base"
-                        >
-                            <UserIcon size={20} />
-                            Entrar como Invitado (Demo)
-                        </button>
                     </>
                 ) : (
                     <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200 dark:border-stone-800 flex items-center justify-between shadow-sm">
@@ -401,7 +384,7 @@ export const AuthView: React.FC = () => {
                             title="Realizar Pedido" 
                             subtitle="Cliente Final" 
                             variant="primary"
-                            onClick={() => handleRoleSelection(UserRole.CLIENT, true)}
+                            onClick={() => handleRoleSelection(UserRole.CLIENT, false)}
                             delay={0.2}
                         />
                         <div className="grid grid-cols-2 gap-4">
@@ -410,7 +393,7 @@ export const AuthView: React.FC = () => {
                                 title="Vender" 
                                 subtitle="Comercio" 
                                 variant="secondary"
-                                onClick={() => handleRoleSelection(UserRole.MERCHANT, true)}
+                                onClick={() => handleRoleSelection(UserRole.MERCHANT, false)}
                                 delay={0.3}
                             />
                             <RoleButton 
@@ -418,7 +401,7 @@ export const AuthView: React.FC = () => {
                                 title="Repartir" 
                                 subtitle="Driver" 
                                 variant="secondary"
-                                onClick={() => handleRoleSelection(UserRole.DRIVER, true)}
+                                onClick={() => handleRoleSelection(UserRole.DRIVER, false)}
                                 delay={0.4}
                             />
                         </div>
@@ -427,7 +410,14 @@ export const AuthView: React.FC = () => {
                             title="Panel Administrativo" 
                             subtitle="Gestión de Plataforma" 
                             variant="dark"
-                            onClick={() => handleRoleSelection(UserRole.ADMIN, true)}
+                            onClick={() => {
+                                const pin = window.prompt("Ingrese PIN de administrador:", "");
+                                if (pin === "125478") {
+                                    handleRoleSelection(UserRole.ADMIN, false);
+                                } else if (pin !== null) {
+                                    showToast("PIN Incorrecto", "error");
+                                }
+                            }}
                             delay={0.5}
                         />
                     </motion.div>
