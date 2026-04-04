@@ -696,6 +696,10 @@ export const MerchantView: React.FC = () => {
                   <Button 
                       fullWidth 
                       onClick={() => {
+                          if (user.uid === 'guest') {
+                              showToast('Debes iniciar sesión con Google para crear una tienda real.', 'error');
+                              return;
+                          }
                           const name = (document.getElementById('new-store-name') as HTMLInputElement).value;
                           const category = (document.getElementById('new-store-category') as HTMLSelectElement).value;
                           if (name) {

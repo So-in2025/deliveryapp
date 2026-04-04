@@ -103,6 +103,10 @@ export const SettingsOverlay: React.FC = () => {
   };
 
   const handleRegisterMerchant = () => {
+      if (user.uid === 'guest') {
+          showToast('Debes iniciar sesión con Google para crear una tienda real.', 'error');
+          return;
+      }
       const newStore: Store = {
           id: `store-${Date.now()}`,
           name: storeName || 'Mi Nuevo Local',

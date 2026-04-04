@@ -514,7 +514,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         showToast('Tienda creada con éxito', 'success');
       } catch (error) {
         console.error('Error creating store:', error);
-        showToast('Error al crear la tienda', 'error');
+        showToast('Error al crear la tienda. Verifica que hayas iniciado sesión.', 'error');
       }
   };
 
