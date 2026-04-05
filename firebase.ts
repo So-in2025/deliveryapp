@@ -46,8 +46,6 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-export { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, or, onSnapshot, serverTimestamp, Timestamp, getDocFromServer, addDoc };
-
 export interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
@@ -103,6 +101,6 @@ async function testConnection() {
 testConnection();
 
 export { 
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, or, onSnapshot, serverTimestamp, Timestamp, onAuthStateChanged, addDoc, getToken, onMessage 
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, or, onSnapshot, serverTimestamp, Timestamp, onAuthStateChanged, addDoc, getToken, onMessage, getDocFromServer
 };
 export type { User };
