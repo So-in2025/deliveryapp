@@ -10,6 +10,10 @@ import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store
 import { formatCurrency } from '../constants';
 import { extractProductsFromMenu } from '../services/geminiService';
 import * as XLSX from 'xlsx';
+import { uploadImageToCloudinary } from '../services/cloudinaryService';
+import { soundService } from '../services/soundService';
+
+import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
 
 const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
   const { updateOrder, cancelOrder } = useApp();
@@ -309,7 +313,7 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws) as any[];
+        const data = XLSX.utils.sheet_to_json(ws) as Record<string, unknown>[];
 
         const newProducts: Product[] = [];
         data.forEach(item => {
@@ -421,6 +425,7 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
   const [formData, setFormData] = useState<Partial<Product>>({
     name: '', description: '', price: 0, image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c', modifierGroups: []
   });
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const handleOpenEdit = (product?: Product) => {
     if (product) {
@@ -531,6 +536,26 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
                    <input className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Precio" type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
                    <textarea className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Descripción" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                    
+                   <div className="flex flex-col gap-2">
+                       <label className="text-sm font-bold dark:text-white">Imagen del Producto</label>
+                       {formData.image && <img src={formData.image} alt="Preview" className="w-24 h-24 object-cover rounded-lg" />}
+                       <input type="file" accept="image/*" onChange={async (e) => {
+                           if (e.target.files && e.target.files[0]) {
+                               try {
+                                   setIsUploadingImage(true);
+                                   showToast('Subiendo imagen...', 'info');
+                                   const url = await uploadImageToCloudinary(e.target.files[0]);
+                                   setFormData({...formData, image: url});
+                                   showToast('Imagen subida', 'success');
+                               } catch {
+                                   showToast('Error al subir imagen', 'error');
+                               } finally {
+                                   setIsUploadingImage(false);
+                               }
+                           }
+                       }} className="text-sm dark:text-white" disabled={isUploadingImage} />
+                   </div>
+                   
                    <div className="border-t dark:border-stone-700 pt-4">
                        <div className="flex justify-between mb-2">
                            <h4 className="font-bold text-sm dark:text-white">Opciones (Modifiers)</h4>
@@ -573,11 +598,13 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
     const [font, setFont] = useState(store.customFont || 'Inter');
     const [color, setColor] = useState(store.customColor || '#FACC15'); // Default brand yellow
     const [mpToken, setMpToken] = useState(store.mpAccessToken || '');
+    const [storeImage, setStoreImage] = useState(store.image || '');
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     const fonts = ['Inter', 'Roboto', 'Montserrat', 'Playfair Display', 'Courier New', 'Georgia'];
 
     const handleSave = () => {
-        updateStore(store.id, { customFont: font, customColor: color, mpAccessToken: mpToken });
+        updateStore(store.id, { customFont: font, customColor: color, mpAccessToken: mpToken, image: storeImage });
         showToast('Configuración guardada', 'success');
     };
 
@@ -588,6 +615,28 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
             </h3>
 
             <div className="space-y-6">
+                <div>
+                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Logo / Imagen de la Tienda</label>
+                    <div className="flex items-center gap-4">
+                        {storeImage && <img src={storeImage} alt="Store Logo" className="w-16 h-16 rounded-xl object-cover border border-stone-200 dark:border-stone-700" />}
+                        <input type="file" accept="image/*" onChange={async (e) => {
+                            if (e.target.files && e.target.files[0]) {
+                                try {
+                                    setIsUploadingImage(true);
+                                    showToast('Subiendo imagen...', 'info');
+                                    const url = await uploadImageToCloudinary(e.target.files[0]);
+                                    setStoreImage(url);
+                                    showToast('Imagen subida', 'success');
+                                } catch {
+                                    showToast('Error al subir imagen', 'error');
+                                } finally {
+                                    setIsUploadingImage(false);
+                                }
+                            }
+                        }} className="text-sm dark:text-white" disabled={isUploadingImage} />
+                    </div>
+                </div>
+
                 <div>
                     <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Fuente de la Tienda</label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -656,8 +705,48 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
 };
 
 export const MerchantView: React.FC = () => {
-  const { user, orders, stores, merchantViewState, setMerchantViewState, createStore } = useApp();
+  const { user, orders, stores, merchantViewState, setMerchantViewState, createStore, updateStore, completeTour } = useApp();
   const { showToast } = useToast();
+  const lastOrderCountRef = useRef(0);
+
+  const merchantTourSteps: TourStep[] = [
+    {
+        targetId: 'store-status',
+        title: 'Estado de tu Tienda',
+        description: 'Cambia entre ONLINE y OFFLINE para controlar cuándo recibes pedidos.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'orders-tab',
+        title: 'Gestión de Pedidos',
+        description: 'Aquí verás todos los pedidos entrantes y podrás cambiar su estado (Aceptar, Preparar, Listo).',
+        position: 'bottom'
+    },
+    {
+        targetId: 'menu-tab',
+        title: 'Tu Menú Digital',
+        description: 'Carga tus productos manualmente o usa nuestra IA para escanear tu carta física.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'settings-tab',
+        title: 'Personalización',
+        description: 'Ajusta los colores de tu marca, logo y configuración de pagos.',
+        position: 'bottom'
+    }
+  ];
+
+  const showTour = !user.completedTours?.includes('merchant-onboarding') && !!stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid);
+
+  // Sound alert for new orders
+  React.useEffect(() => {
+    const pendingOrders = orders.filter(o => o.status === OrderStatus.PENDING && o.storeId === user.ownedStoreId);
+    if (pendingOrders.length > lastOrderCountRef.current) {
+        soundService.playNewOrder();
+        showToast('¡Nuevo pedido recibido!', 'info');
+    }
+    lastOrderCountRef.current = pendingOrders.length;
+  }, [orders, user.ownedStoreId, showToast]);
 
   // IDENTITY INTEGRATION:
   // If user owns a store, use it. If not, show "No Store" state.
@@ -754,6 +843,7 @@ export const MerchantView: React.FC = () => {
             <h2 className="text-2xl font-bold text-stone-900 dark:text-white">{myStore.name}</h2>
             <div className="flex items-center gap-3 mt-1">
               <button 
+                id="store-status"
                 onClick={() => updateStore(myStore.id, { isOpen: !myStore.isOpen })}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 w-fit transition-all ${myStore.isOpen !== false ? 'bg-brand-500 text-brand-950' : 'bg-stone-200 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}
               >
@@ -772,6 +862,7 @@ export const MerchantView: React.FC = () => {
 
         <div className="flex p-1 mx-4 mb-2 mt-2 bg-stone-100 dark:bg-stone-700/50 rounded-xl border border-stone-200 dark:border-stone-700 overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-2xl lg:mx-auto">
           <button
+            id="orders-tab"
             onClick={() => setMerchantViewState('ORDERS')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap relative ${merchantViewState === 'ORDERS' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
           >
@@ -785,6 +876,7 @@ export const MerchantView: React.FC = () => {
             )}
           </button>
           <button
+            id="menu-tab"
             onClick={() => setMerchantViewState('MENU')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'MENU' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
           >
@@ -803,6 +895,7 @@ export const MerchantView: React.FC = () => {
             <Clock size={16} /> Historial
           </button>
           <button
+            id="settings-tab"
             onClick={() => setMerchantViewState('SETTINGS')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'SETTINGS' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
           >
@@ -853,6 +946,13 @@ export const MerchantView: React.FC = () => {
           </div>
         )}
       </div>
+      {showTour && (
+          <OnboardingTour 
+              tourId="merchant-onboarding" 
+              steps={merchantTourSteps} 
+              onComplete={() => completeTour('merchant-onboarding')} 
+          />
+      )}
     </div>
   );
 };

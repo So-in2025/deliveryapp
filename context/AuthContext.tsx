@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth, onAuthStateChanged, User, loginWithGoogle, logout, db, doc, getDoc, setDoc, updateDoc, messaging, getToken } from '../firebase';
+import { auth, onAuthStateChanged, User, loginWithGoogle, logout, db, doc, setDoc, updateDoc, messaging, getToken } from '../firebase';
 import { UserRole, UserProfile } from '../types';
 import { useToast } from './ToastContext';
 import { Capacitor } from '@capacitor/core';
@@ -88,43 +88,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubscribeProfile: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       console.log('Auth state changed:', currentUser);
       setUser(currentUser);
+
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = null;
+      }
+
       if (currentUser) {
-        // Fetch profile from Firestore
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        let data: UserProfile;
-        if (userDoc.exists()) {
-          data = userDoc.data() as UserProfile;
-          // Auto-upgrade to ADMIN if email matches
-          const isAdminEmail = currentUser.email === "ofeliaacevedo41@gmail.com";
-          if (isAdminEmail && data.role !== UserRole.ADMIN) {
-            data = { ...data, role: UserRole.ADMIN };
-            await updateDoc(doc(db, 'users', currentUser.uid), { role: UserRole.ADMIN });
+        // Use onSnapshot for real-time profile updates
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        unsubscribeProfile = onSnapshot(userDocRef, async (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data() as UserProfile;
+            setProfile(data);
+          } else {
+            // Create profile if it doesn't exist
+            const data: UserProfile = {
+              uid: currentUser.uid,
+              name: currentUser.displayName || 'Usuario',
+              email: currentUser.email || '',
+              avatar: currentUser.photoURL || undefined,
+              role: UserRole.CLIENT,
+            };
+            try {
+              await setDoc(userDocRef, data);
+              // setProfile will be called by the next snapshot
+            } catch (error) {
+              handleFirestoreError(error, OperationType.WRITE, `users/${currentUser.uid}`);
+            }
           }
-          setProfile(data);
-        } else {
-          // Create profile
-          const isAdminEmail = currentUser.email === "ofeliaacevedo41@gmail.com";
-          data = {
-            uid: currentUser.uid,
-            name: currentUser.displayName || 'Usuario',
-            email: currentUser.email || '',
-            avatar: currentUser.photoURL || undefined,
-            role: isAdminEmail ? UserRole.ADMIN : UserRole.CLIENT,
-          };
-          await setDoc(doc(db, 'users', currentUser.uid), data);
-          setProfile(data);
-        }
+          setLoading(false);
+          setIsAuthReady(true);
+        }, (error) => {
+          handleFirestoreError(error, OperationType.GET, `users/${currentUser.uid}`);
+          setLoading(false);
+          setIsAuthReady(true);
+        });
       } else {
         setProfile(null);
+        setLoading(false);
+        setIsAuthReady(true);
       }
-      setLoading(false);
-      setIsAuthReady(true);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, []);
 
   const login = async () => {
@@ -154,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

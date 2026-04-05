@@ -6,13 +6,13 @@ import { MapSelector } from '../components/ui/MapSelector';
 import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order } from '../types';
 import { Button } from '../components/ui/Button';
 import { LazyImage } from '../components/ui/LazyImage';
-import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Coffee, Pizza, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings, Trash2, FileText, DollarSign, Camera, Share, Mail } from 'lucide-react';
+import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Coffee, Pizza, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings, Trash2, FileText, DollarSign, Camera, Share, Mail, HelpCircle } from 'lucide-react';
 import { formatCurrency, APP_CONFIG } from '../constants';
 import { useToast } from '../context/ToastContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import confetti from 'canvas-confetti';
-import { motion } from 'motion/react';
+import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -28,7 +28,7 @@ const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
     return null;
 };
 
-const TrackingMap: React.FC<{ driverLat?: number; driverLng?: number; storeLat?: number; storeLng?: number; customerLat?: number; customerLng?: number }> = ({ driverLat, driverLng, storeLat, storeLng, customerLat, customerLng }) => {
+const TrackingMap: React.FC<{ driverLat?: number; driverLng?: number; storeLat?: number; storeLng?: number }> = ({ driverLat, driverLng, storeLat, storeLng }) => {
     const defaultCenter: [number, number] = [-34.6037, -58.3816];
     const center: [number, number] = driverLat && driverLng ? [driverLat, driverLng] : defaultCenter;
 
@@ -191,9 +191,38 @@ const ProductRow = React.memo(({ product, onAdd, onCustomize, accentColor }: { p
 
 export const ClientView: React.FC = () => {
   // Consume Global State for navigation
-  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, cancelOrder, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users } = useApp();
+  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour } = useApp();
   const { showToast } = useToast();
   const { signOut } = useAuth();
+
+  const clientTourSteps: TourStep[] = [
+    {
+        targetId: 'location-selector',
+        title: 'Tu Ubicación',
+        description: 'Asegúrate de configurar tu dirección correctamente para que los pedidos lleguen a tu puerta.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'search-bar',
+        title: 'Buscador Inteligente',
+        description: 'Busca platos específicos, categorías o tus comercios favoritos en segundos.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'history-button',
+        title: 'Tus Pedidos',
+        description: 'Accede rápidamente a tu historial y repite tus pedidos favoritos con un toque.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'profile-button',
+        title: 'Tu Perfil',
+        description: 'Gestiona tus datos, métodos de pago y preferencias desde aquí.',
+        position: 'bottom'
+    }
+  ];
+
+  const showTour = !user.completedTours?.includes('client-onboarding') && clientViewState === 'BROWSE';
 
   const handleShareStore = useCallback(async (e: React.MouseEvent, store: Store) => {
     e.stopPropagation();
@@ -210,11 +239,8 @@ export const ClientView: React.FC = () => {
         await navigator.clipboard.writeText(shareData.url);
         showToast("Enlace copiado al portapapeles", "success");
       }
-    } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('Error sharing:', err);
-        showToast("Error al compartir", "error");
-      }
+    } catch {
+      showToast("Error al compartir", "error");
     }
   }, [showToast]);
 
@@ -269,12 +295,6 @@ export const ClientView: React.FC = () => {
         }))
         .sort((a, b) => b.score - a.score) // Descending
         .slice(0, 5); // Top 5
-  }, [stores]);
-
-  const newStores = useMemo(() => {
-      return [...stores]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5);
   }, [stores]);
 
   const fastestStores = useMemo(() => {
@@ -737,7 +757,7 @@ export const ClientView: React.FC = () => {
     <div className="space-y-6 animate-fade-in pt-2 bg-transparent">
       <div className="px-6 py-6 flex flex-col gap-6 sticky top-0 z-20 bg-white/70 dark:bg-stone-950/70 backdrop-blur-2xl border-b border-black/[0.03] dark:border-white/[0.03]">
           <div className="flex justify-between items-center">
-              <div onClick={() => setShowLocationSelector(true)} className="cursor-pointer group">
+              <div id="location-selector" onClick={() => setShowLocationSelector(true)} className="cursor-pointer group">
                   <p className="text-stone-400 dark:text-stone-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1.5">Entregar en</p>
                   <div className="flex items-center gap-2 text-stone-950 dark:text-white font-black text-lg group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors tracking-tight">
                       <div className="w-8 h-8 bg-brand-500/10 rounded-lg flex items-center justify-center">
@@ -749,6 +769,17 @@ export const ClientView: React.FC = () => {
               </div>
               <div className="flex items-center gap-4">
                   <button 
+                    onClick={() => {
+                        window.dispatchEvent(new CustomEvent('open-help'));
+                        toggleSettings();
+                    }}
+                    className="w-12 h-12 bg-stone-100 dark:bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center hover:bg-brand-500/10 hover:text-brand-600 transition-all border border-transparent hover:border-brand-500/20"
+                    title="Ayuda"
+                  >
+                      <HelpCircle size={20} className="text-stone-900 dark:text-white" />
+                  </button>
+                  <button 
+                    id="history-button"
                     onClick={() => setClientViewState('HISTORY')}
                     className="flex items-center gap-2 bg-stone-100 dark:bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl hover:bg-brand-500/10 hover:text-brand-600 transition-all border border-transparent hover:border-brand-500/20"
                   >
@@ -756,6 +787,7 @@ export const ClientView: React.FC = () => {
                       <span className="font-black text-xs text-stone-900 dark:text-white hidden sm:block uppercase tracking-widest">Pedidos</span>
                   </button>
                   <button 
+                    id="profile-button"
                     onClick={toggleSettings}
                     className="w-12 h-12 bg-stone-950 dark:bg-white text-white dark:text-stone-950 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl lg:hidden"
                   >
@@ -767,7 +799,7 @@ export const ClientView: React.FC = () => {
           </div>
 
           <div className="w-full">
-             <div className="bg-stone-100 dark:bg-white/5 backdrop-blur-xl p-1.5 rounded-[2rem] flex items-center gap-3 transition-all focus-within:bg-white dark:focus-within:bg-stone-900 focus-within:ring-4 focus-within:ring-brand-500/10 border border-transparent focus-within:border-brand-500/20 shadow-inner group/search">
+             <div id="search-bar" className="bg-stone-100 dark:bg-white/5 backdrop-blur-xl p-1.5 rounded-[2rem] flex items-center gap-3 transition-all focus-within:bg-white dark:focus-within:bg-stone-900 focus-within:ring-4 focus-within:ring-brand-500/10 border border-transparent focus-within:border-brand-500/20 shadow-inner group/search">
                  <div className="p-3.5 bg-white dark:bg-stone-800 rounded-[1.5rem] shadow-xl shadow-black/5 group-focus-within/search:bg-brand-500 group-focus-within/search:text-brand-950 transition-colors">
                      <Search size={20} className="text-stone-900 dark:text-white group-focus-within/search:text-inherit" />
                  </div>
@@ -1011,10 +1043,10 @@ export const ClientView: React.FC = () => {
   const CheckoutView = () => {
     const subtotal = cart.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
     const addresses = user.addresses || ['Mi Ubicación Actual'];
-    const [deliveryAddr, setDeliveryAddr] = useState(addresses[0]);
+    const [deliveryAddr] = useState(addresses[0]);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CARD);
     const [orderType, setOrderType] = useState<OrderType>(OrderType.DELIVERY);
-    const [notes, setNotes] = useState('');
+    const [notes] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState<{code: string, discountPct: number} | null>(null);
@@ -1022,21 +1054,62 @@ export const ClientView: React.FC = () => {
     const [tip, setTip] = useState<number>(0);
     const [requestCutlery, setRequestCutlery] = useState<boolean>(false);
 
-    const deliveryFee = orderType === OrderType.DELIVERY ? (selectedStore?.deliveryFee ?? 45) : 0;
+    const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState(orderType === OrderType.DELIVERY ? (selectedStore?.deliveryFee ?? config.baseDeliveryFee) : 0);
+    const [distanceKm, setDistanceKm] = useState<number | null>(null);
+
+    useEffect(() => {
+        const calculateFee = async () => {
+            if (orderType === OrderType.PICKUP || !selectedStore || !selectedStore.lat || !selectedStore.lng) {
+                setDynamicDeliveryFee(0);
+                return;
+            }
+
+            // Try to get user coordinates from primary address or browser
+            // Heuristic: If address has (lat, lng) format, use it.
+            let userCoords = { lat: -34.6037, lng: -58.3816 }; // Default fallback
+            const match = deliveryAddr.match(/\((-?\d+\.\d+),\s*(-?\d+\.\d+)\)/);
+            if (match) {
+                userCoords = { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+            } else if (navigator.geolocation) {
+                // Fallback to browser geolocation if available
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                });
+            }
+
+            const distance = await getRouteDistance({ lat: selectedStore.lat, lng: selectedStore.lng }, userCoords);
+            if (distance > 0) {
+                setDistanceKm(distance);
+                const fee = config.baseDeliveryFee + (distance * config.feePerKm);
+                setDynamicDeliveryFee(Math.round(fee));
+            } else {
+                setDynamicDeliveryFee(selectedStore.deliveryFee || config.baseDeliveryFee);
+            }
+        };
+
+        calculateFee();
+    }, [orderType, selectedStore, deliveryAddr, config.baseDeliveryFee, config.feePerKm, getRouteDistance]);
 
     const handleApplyCoupon = () => {
         const found = coupons.find(c => c.code === couponCode.toUpperCase() && c.active);
         if (found) { setAppliedCoupon({ code: found.code, discountPct: found.discountPct }); showToast('¡Cupón aplicado!', 'success'); } else { showToast('Cupón inválido.', 'error'); setAppliedCoupon(null); }
     };
-    const discountAmount = appliedCoupon ? (subtotal + deliveryFee) * appliedCoupon.discountPct : 0;
-    const total = subtotal + deliveryFee + tip - discountAmount;
+    const discountAmount = appliedCoupon ? (subtotal + dynamicDeliveryFee) * appliedCoupon.discountPct : 0;
+    const total = subtotal + dynamicDeliveryFee + tip - discountAmount;
 
     const handlePlaceOrder = async () => {
         if (!selectedStore) return;
         setIsProcessing(true);
         
         try {
-            await placeOrder(selectedStore.id, selectedStore.name, deliveryAddr, paymentMethod, notes, orderType, discountAmount);
+            // Extract coordinates for the order
+            let orderCoords = undefined;
+            const match = deliveryAddr.match(/\((-?\d+\.\d+),\s*(-?\d+\.\d+)\)/);
+            if (match) {
+                orderCoords = { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+            }
+
+            await placeOrder(selectedStore.id, selectedStore.name, deliveryAddr, paymentMethod, notes, orderType, discountAmount, orderCoords);
             // If it's not Mercado Pago, we handle the UI change here. 
             // If it IS Mercado Pago, placeOrder will redirect the window.
             if (paymentMethod !== PaymentMethod.MERCADO_PAGO) {
@@ -1754,7 +1827,7 @@ export const ClientView: React.FC = () => {
                     <button onClick={(e) => selectedStore && handleShareStore(e, selectedStore)} className="w-12 h-12 bg-white/10 backdrop-blur-2xl rounded-2xl text-white flex items-center justify-center hover:bg-white/20 transition-all border border-white/10 shadow-2xl">
                         <Share size={24} />
                     </button>
-                    <button onClick={(e) => selectedStore && toggleFavorite(selectedStore.id)} className="w-12 h-12 bg-white/10 backdrop-blur-2xl rounded-2xl text-white flex items-center justify-center hover:bg-white/20 transition-all border border-white/10 shadow-2xl">
+                    <button onClick={() => selectedStore && toggleFavorite(selectedStore.id)} className="w-12 h-12 bg-white/10 backdrop-blur-2xl rounded-2xl text-white flex items-center justify-center hover:bg-white/20 transition-all border border-white/10 shadow-2xl">
                         <Heart size={24} className={selectedStore && favorites.includes(selectedStore.id) ? "fill-red-500 text-red-500" : "text-white"} />
                     </button>
                 </div>
@@ -1989,6 +2062,13 @@ export const ClientView: React.FC = () => {
             </div>
          )}
         </div>
+        {showTour && (
+            <OnboardingTour 
+                tourId="client-onboarding" 
+                steps={clientTourSteps} 
+                onComplete={() => completeTour('client-onboarding')} 
+            />
+        )}
       </div>
   );
 };

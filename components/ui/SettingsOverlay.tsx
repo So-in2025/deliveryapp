@@ -5,17 +5,27 @@ import { useToast } from '../../context/ToastContext';
 import { resetAppData } from '../../services/dataService';
 import { UserRole, Store } from '../../types';
 import { Button } from './Button';
-import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Sparkles, Download } from 'lucide-react';
-import { APP_CONFIG } from '../../constants';
+import { uploadImageToCloudinary } from '../../services/cloudinaryService';
+import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText } from 'lucide-react';
 
 // Internal navigation state for the overlay
-type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER' | 'PRIVACY';
+type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER' | 'PRIVACY' | 'TERMS' | 'HELP';
 
 export const SettingsOverlay: React.FC = () => {
-  const { isSettingsOpen, toggleSettings, role, setRole, user, updateUser, createStore, darkMode, toggleDarkMode, stores, isDriverOnline, toggleDriverStatus } = useApp();
+  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, darkMode, toggleDarkMode, role, verifyAdminPin } = useApp();
   const { signOut, requestNotificationPermission } = useAuth();
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState<SettingsView>('MAIN');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  // Listen for custom event to open help directly
+  useEffect(() => {
+    const handleOpenHelp = () => {
+      setCurrentView('HELP');
+    };
+    window.addEventListener('open-help', handleOpenHelp);
+    return () => window.removeEventListener('open-help', handleOpenHelp);
+  }, []);
 
   // Temporary State for forms
   const [editName, setEditName] = useState(user.name);
@@ -33,12 +43,10 @@ export const SettingsOverlay: React.FC = () => {
   const [driverVehicle, setDriverVehicle] = useState('Moto');
   const [driverPlate, setDriverPlate] = useState('');
 
-  // Demo State
-  const [demoStoreId, setDemoStoreId] = useState(user.ownedStoreId || (stores.length > 0 ? stores[0].id : 's1'));
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
+    const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
@@ -69,7 +77,6 @@ export const SettingsOverlay: React.FC = () => {
   const handleLogout = async () => {
       await signOut();
       toggleSettings();
-      setRole(UserRole.NONE);
       setCurrentView('MAIN');
   };
 
@@ -102,6 +109,23 @@ export const SettingsOverlay: React.FC = () => {
       setCurrentView('MAIN');
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+          try {
+              setIsUploadingAvatar(true);
+              showToast('Subiendo foto...', 'info');
+              const url = await uploadImageToCloudinary(e.target.files[0]);
+              updateUser({ avatar: url });
+              showToast('Foto de perfil actualizada', 'success');
+          } catch (error) {
+              console.error('Error uploading avatar:', error);
+              showToast('Error al subir la foto', 'error');
+          } finally {
+              setIsUploadingAvatar(false);
+          }
+      }
+  };
+
   const handleRegisterMerchant = () => {
       if (user.uid === 'guest') {
           showToast('Debes iniciar sesión con Google para crear una tienda real.', 'error');
@@ -120,41 +144,35 @@ export const SettingsOverlay: React.FC = () => {
           createdAt: new Date().toISOString() // Triggers "NEW" badge
       };
       createStore(newStore);
-      updateUser({ ownedStoreId: newStore.id });
+      updateUser({ ownedStoreId: newStore.id, role: UserRole.MERCHANT });
       showToast('¡Local creado exitosamente!', 'success');
-      setRole(UserRole.MERCHANT);
       toggleSettings();
       setCurrentView('MAIN');
   };
 
   const handleRegisterDriver = () => {
-      updateUser({ isDriver: true });
+      updateUser({ isDriver: true, role: UserRole.DRIVER });
       showToast('¡Registro de Driver completo!', 'success');
-      setRole(UserRole.DRIVER);
       toggleSettings();
       setCurrentView('MAIN');
   };
 
-  const switchToRole = (newRole: UserRole, storeId?: string) => {
-      // DEMO AUTOMATION: Ensure user has necessary permissions/data for the role
-      if (newRole === UserRole.MERCHANT) {
-          const targetStoreId = storeId || user.ownedStoreId || 's1';
-          const targetStore = stores.find(s => s.id === targetStoreId);
-          updateUser({ ownedStoreId: targetStoreId });
-          showToast(`Modo Demo: Tienda "${targetStore?.name || targetStoreId}" asignada.`, 'info');
-      } else if (newRole === UserRole.DRIVER) {
-          const updates: Partial<typeof user> = {};
-          if (!user.isDriver) updates.isDriver = true;
-          updateUser(updates);
-          
-          // Auto-connect driver
-          if (!isDriverOnline) {
-             toggleDriverStatus();
+  const switchRole = async (newRole: UserRole) => {
+      if (newRole === UserRole.ADMIN) {
+          const pin = prompt('Ingrese el PIN de administrador:');
+          if (pin) {
+              const isValid = await verifyAdminPin(pin);
+              if (isValid) {
+                  updateUser({ role: UserRole.ADMIN });
+                  showToast('Modo Administrador activado', 'success');
+                  toggleSettings();
+              } else {
+                  showToast('PIN incorrecto', 'error');
+              }
           }
-          showToast('Modo Demo: Driver activado y conectado.', 'info');
+          return;
       }
-
-      setRole(newRole);
+      updateUser({ role: newRole });
       toggleSettings();
   };
 
@@ -169,7 +187,7 @@ export const SettingsOverlay: React.FC = () => {
                     
                     {/* Merchant Option */}
                     <div 
-                        onClick={() => user.ownedStoreId ? switchToRole(UserRole.MERCHANT) : setCurrentView('REGISTER_MERCHANT')}
+                        onClick={() => user.ownedStoreId ? switchRole(UserRole.MERCHANT) : setCurrentView('REGISTER_MERCHANT')}
                         className="flex items-center justify-between p-4 border-b border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
                     >
                         <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
@@ -190,7 +208,7 @@ export const SettingsOverlay: React.FC = () => {
 
                     {/* Driver Option */}
                     <div 
-                        onClick={() => user.isDriver ? switchToRole(UserRole.DRIVER) : setCurrentView('REGISTER_DRIVER')}
+                        onClick={() => user.isDriver ? switchRole(UserRole.DRIVER) : setCurrentView('REGISTER_DRIVER')}
                         className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
                     >
                         <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
@@ -225,7 +243,13 @@ export const SettingsOverlay: React.FC = () => {
                         <SettingItem icon={<Moon size={18} />} label="Modo Oscuro" hasSwitch active={darkMode} />
                     </div>
                     <div onClick={handlePrivacy}>
-                        <SettingItem icon={<Shield size={18} />} label="Privacidad y Seguridad" />
+                        <SettingItem icon={<Shield size={18} />} label="Privacidad y Datos" />
+                    </div>
+                    <div onClick={() => setCurrentView('HELP')}>
+                        <SettingItem icon={<HelpCircle size={18} />} label="Ayuda y Soporte" />
+                    </div>
+                    <div onClick={() => setCurrentView('TERMS')}>
+                        <SettingItem icon={<FileText size={18} />} label="Términos y Condiciones" />
                     </div>
                     <div onClick={handleInstallApp}>
                         <SettingItem icon={<Download size={18} />} label="Instalar Aplicación" />
@@ -244,40 +268,6 @@ export const SettingsOverlay: React.FC = () => {
                         <span className="font-medium text-sm">Restaurar Datos de Fábrica</span>
                     </div>
                 </div>
-            </div>
-
-            {/* Demo Role Switcher (For Client Demo) */}
-            <div className="bg-stone-900 rounded-2xl shadow-sm border border-stone-800 overflow-hidden p-4">
-                <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Sparkles size={12} className="text-yellow-400" /> Demo: Cambiar Rol
-                </h3>
-                <div className="grid grid-cols-4 gap-2 mb-3">
-                    <button onClick={() => switchToRole(UserRole.CLIENT)} className="p-2 bg-stone-800 rounded-lg text-xs font-bold text-stone-300 hover:bg-stone-700 hover:text-white transition-colors">Cliente</button>
-                    <button onClick={() => switchToRole(UserRole.MERCHANT, demoStoreId)} className="p-2 bg-stone-800 rounded-lg text-xs font-bold text-stone-300 hover:bg-stone-700 hover:text-white transition-colors">Comercio</button>
-                    <button onClick={() => switchToRole(UserRole.DRIVER)} className="p-2 bg-stone-800 rounded-lg text-xs font-bold text-stone-300 hover:bg-stone-700 hover:text-white transition-colors">Driver</button>
-                    <button onClick={() => switchToRole(UserRole.ADMIN)} className="p-2 bg-stone-800 rounded-lg text-xs font-bold text-stone-300 hover:bg-stone-700 hover:text-white transition-colors">Admin</button>
-                </div>
-                {role === UserRole.MERCHANT && (
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-stone-500 uppercase font-bold">Tienda Demo:</span>
-                        <select 
-                            value={demoStoreId}
-                            onChange={(e) => {
-                                const newStoreId = e.target.value;
-                                setDemoStoreId(newStoreId);
-                                if (role === UserRole.MERCHANT) {
-                                    updateUser({ ownedStoreId: newStoreId });
-                                    showToast(`Tienda cambiada a ${stores.find(s => s.id === newStoreId)?.name}`, 'info');
-                                }
-                            }}
-                            className="flex-1 bg-stone-800 border border-stone-700 text-stone-300 text-xs rounded p-1 outline-none focus:border-brand-500"
-                        >
-                            {stores.map(s => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
             </div>
 
             <div className="px-2">
@@ -304,9 +294,20 @@ export const SettingsOverlay: React.FC = () => {
                           <User size={32} />
                       </div>
                   )}
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                      <Camera size={20} className="text-white" />
-                  </div>
+                  <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      {isUploadingAvatar ? (
+                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                          <Camera size={20} className="text-white" />
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleAvatarUpload} 
+                        disabled={isUploadingAvatar}
+                      />
+                  </label>
               </div>
               <h3 className="font-bold text-stone-900 dark:text-white">Foto de Perfil</h3>
               <p className="text-xs text-stone-500 dark:text-stone-400">Toca para cambiar</p>
@@ -443,60 +444,145 @@ export const SettingsOverlay: React.FC = () => {
   );
 
   const renderPrivacyView = () => (
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-900 animate-slide-in-right">
-          <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 text-center">
-              <div className="w-16 h-16 mx-auto bg-brand-500 rounded-full flex items-center justify-center mb-4">
-                  <Shield size={32} className="text-brand-950" />
-              </div>
-              <h3 className="font-bold text-stone-900 dark:text-white">Protección de Datos</h3>
-              <p className="text-xs text-stone-500 dark:text-stone-400 mt-2">Tus datos están encriptados y almacenados localmente en tu dispositivo.</p>
-          </div>
-
-          <div className="bg-white dark:bg-stone-800 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 overflow-hidden">
-              <div className="p-4 border-b border-stone-50 dark:border-stone-700 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                      <MapPin size={18} className="text-stone-400" />
-                      <div>
-                          <p className="font-medium text-sm text-stone-900 dark:text-white">Ubicación Precisa</p>
-                          <p className="text-[10px] text-stone-400">Usada para calcular entregas</p>
-                      </div>
-                  </div>
-                  <div className="w-10 h-6 bg-brand-500 rounded-full relative cursor-pointer">
-                      <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div>
-                  </div>
-              </div>
-              <div className="p-4 border-b border-stone-50 dark:border-stone-700 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                      <User size={18} className="text-stone-400" />
-                      <div>
-                          <p className="font-medium text-sm text-stone-900 dark:text-white">Perfil Público</p>
-                          <p className="text-[10px] text-stone-400">Visible para comercios</p>
-                      </div>
-                  </div>
-                  <div className="w-10 h-6 bg-brand-500 rounded-full relative cursor-pointer">
-                      <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div>
-                  </div>
-              </div>
-              <div className="p-4 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                      <Bell size={18} className="text-stone-400" />
-                      <div>
-                          <p className="font-medium text-sm text-stone-900 dark:text-white">Alertas de Seguridad</p>
-                          <p className="text-[10px] text-stone-400">Notificar accesos sospechosos</p>
-                      </div>
-                  </div>
-                  <div className="w-10 h-6 bg-brand-500 rounded-full relative cursor-pointer">
-                      <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div>
-                  </div>
-              </div>
-          </div>
-          
-          <div className="bg-stone-100 dark:bg-stone-800 p-4 rounded-xl flex gap-3 items-start text-xs text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700">
-               <HelpCircle size={16} className="shrink-0 mt-0.5" />
-               <p>Esta aplicación cumple con los estándares de privacidad GDPR y CCPA. Puedes solicitar la eliminación de tus datos en cualquier momento.</p>
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white dark:bg-stone-950 animate-slide-in-right">
+          <div className="prose prose-stone dark:prose-invert max-w-none text-sm space-y-4 text-stone-600 dark:text-stone-400">
+              <p className="font-bold text-stone-900 dark:text-white">Última actualización: 4 de Abril, 2026</p>
+              <p>En <span className="font-bold text-brand-600">Te lo Llevo</span>, valoramos tu privacidad. Esta política describe cómo recopilamos, usamos y protegemos tu información personal.</p>
+              
+              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">1. Información que recopilamos</h4>
+              <p>Recopilamos información que nos proporcionas directamente, como tu nombre, correo electrónico, dirección de entrega y número de teléfono cuando te registras o realizas un pedido.</p>
+              
+              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">2. Uso de la información</h4>
+              <p>Utilizamos tu información para procesar pedidos, facilitar la entrega, mejorar nuestros servicios y comunicarnos contigo sobre actualizaciones de tus pedidos.</p>
+              
+              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">3. Compartir información</h4>
+              <p>Compartimos los datos necesarios con los comercios y repartidores para completar la entrega de tus pedidos. No vendemos tu información a terceros.</p>
+              
+              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">4. Seguridad</h4>
+              <p>Implementamos medidas de seguridad técnicas y organizativas para proteger tus datos contra el acceso no autorizado o la pérdida.</p>
           </div>
       </div>
   );
+
+  const renderTermsView = () => (
+    <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white dark:bg-stone-950 animate-slide-in-right">
+        <div className="prose prose-stone dark:prose-invert max-w-none text-sm space-y-4 text-stone-600 dark:text-stone-400">
+            <p className="font-bold text-stone-900 dark:text-white">Última actualización: 4 de Abril, 2026</p>
+            <p>Al utilizar la plataforma <span className="font-bold text-brand-600">Te lo Llevo</span>, aceptas los siguientes términos y condiciones:</p>
+            
+            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">1. Uso del Servicio</h4>
+            <p>Debes tener al menos 18 años para utilizar este servicio. Eres responsable de mantener la confidencialidad de tu cuenta.</p>
+            
+            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">2. Pagos y Reembolsos</h4>
+            <p>Los pagos se procesan a través de Mercado Pago. Las cancelaciones están sujetas a la política de cada comercio una vez que el pedido ha sido aceptado.</p>
+            
+            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">3. Responsabilidades</h4>
+            <p><span className="font-bold">Te lo Llevo</span> actúa como intermediario entre clientes, comercios y repartidores independientes. No somos responsables de la calidad de los productos preparados por los comercios.</p>
+            
+            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">4. Modificaciones</h4>
+            <p>Nos reservamos el derecho de modificar estos términos en cualquier momento. El uso continuado de la plataforma constituye la aceptación de los nuevos términos.</p>
+        </div>
+    </div>
+);
+
+  const renderHelpView = () => {
+    const helpContent = {
+      [UserRole.CLIENT]: (
+        <div className="space-y-6">
+          <section>
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              <ShoppingBag size={16} className="text-brand-500" /> Realizar un Pedido
+            </h4>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><b>Exploración:</b> Navega por categorías o usa el buscador.</li>
+              <li><b>Selección:</b> Elige un comercio y personaliza tus productos.</li>
+              <li><b>Pago:</b> Usa Mercado Pago para pagos online o efectivo al recibir.</li>
+            </ul>
+          </section>
+          <section>
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              <MapPin size={16} className="text-brand-500" /> Seguimiento en Vivo
+            </h4>
+            <p>En "Mis Pedidos", verás un mapa con la ubicación del repartidor cuando el pedido esté "En Camino".</p>
+          </section>
+        </div>
+      ),
+      [UserRole.MERCHANT]: (
+        <div className="space-y-6">
+          <section>
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              <Bell size={16} className="text-brand-500" /> Gestión de Pedidos
+            </h4>
+            <p>Recibirás una alerta sonora con cada pedido nuevo. Debes aceptarlo para iniciar la preparación.</p>
+          </section>
+          <section>
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              <ChefHat size={16} className="text-brand-500" /> Tu Menú
+            </h4>
+            <p>Puedes añadir fotos reales usando Cloudinary y configurar modificadores para tus platos.</p>
+          </section>
+        </div>
+      ),
+      [UserRole.DRIVER]: (
+        <div className="space-y-6">
+          <section>
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              <Bike size={16} className="text-brand-500" /> Aceptar Entregas
+            </h4>
+            <p>Verás la distancia al comercio y al cliente antes de aceptar cualquier pedido disponible.</p>
+          </section>
+          <section>
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              <Check size={16} className="text-brand-500" /> Proceso de Entrega
+            </h4>
+            <p>Marca como "Retirado" al salir del local y "Entregado" al llegar con el cliente.</p>
+          </section>
+        </div>
+      ),
+      [UserRole.ADMIN]: (
+        <div className="space-y-6">
+          <section>
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              <Shield size={16} className="text-brand-500" /> Seguridad Global
+            </h4>
+            <p>El acceso a configuraciones críticas requiere validación de PIN en el servidor.</p>
+          </section>
+          <section>
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
+              <RefreshCcw size={16} className="text-brand-500" /> Mantenimiento
+            </h4>
+            <p>Asegúrate de que las API Keys de Mercado Pago y Cloudinary estén configuradas en las variables de entorno.</p>
+          </section>
+        </div>
+      )
+    };
+
+    return (
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white dark:bg-stone-950 animate-slide-in-right">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-2xl">
+            <HelpCircle size={24} />
+          </div>
+          <div>
+            <h3 className="font-bold text-lg text-stone-900 dark:text-white">Centro de Ayuda</h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400">Guía rápida para tu rol actual</p>
+          </div>
+        </div>
+        
+        <div className="text-stone-600 dark:text-stone-400 text-sm">
+          {helpContent[role as UserRole] || helpContent[UserRole.CLIENT]}
+        </div>
+
+        <div className="mt-8 p-4 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800">
+          <p className="text-xs font-bold text-stone-400 uppercase mb-2">¿Necesitas más ayuda?</p>
+          <p className="text-sm text-stone-600 dark:text-stone-400 mb-4">Consulta el manual completo en formato PDF o contacta a soporte técnico.</p>
+          <button className="w-full py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
+            <Download size={14} /> Descargar Manual Completo
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col pointer-events-none">
@@ -547,6 +633,8 @@ export const SettingsOverlay: React.FC = () => {
                         {currentView === 'REGISTER_MERCHANT' && 'Registro'}
                         {currentView === 'REGISTER_DRIVER' && 'Registro'}
                         {currentView === 'PRIVACY' && 'Privacidad'}
+                        {currentView === 'TERMS' && 'Términos'}
+                        {currentView === 'HELP' && 'Ayuda'}
                      </h2>
                  </div>
              )}
@@ -558,6 +646,8 @@ export const SettingsOverlay: React.FC = () => {
         {currentView === 'REGISTER_MERCHANT' && renderRegisterMerchantView()}
         {currentView === 'REGISTER_DRIVER' && renderRegisterDriverView()}
         {currentView === 'PRIVACY' && renderPrivacyView()}
+        {currentView === 'TERMS' && renderTermsView()}
+        {currentView === 'HELP' && renderHelpView()}
       </div>
       
       <style>{`

@@ -2,12 +2,11 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { Truck, Map, History, Settings, LogOut, WifiOff, Navigation, ShieldCheck, Bell } from 'lucide-react';
-import { UserRole } from '../../types';
+import { Truck, Map, History, Settings, LogOut, WifiOff, Navigation, ShieldCheck, Bell, HelpCircle } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, driverViewState, setDriverViewState, notifications, setIsNotificationsOpen, setRole } = useApp();
+  const { toggleSettings, driverViewState, setDriverViewState, notifications, setIsNotificationsOpen } = useApp();
   const { signOut } = useAuth();
   const { isOnline } = useConnectivity();
 
@@ -15,7 +14,6 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleSignOut = async () => {
     await signOut();
-    setRole(UserRole.NONE);
   };
 
   return (
@@ -47,6 +45,7 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
             <DesktopNavItem icon={<Map />} label="Mapa de Ruta" active={driverViewState === 'MAP'} onClick={() => setDriverViewState('MAP')} />
             <DesktopNavItem icon={<Navigation />} label="Pedidos Disponibles" active={driverViewState === 'DELIVERIES'} onClick={() => setDriverViewState('DELIVERIES')} />
             <DesktopNavItem icon={<History />} label="Mis Entregas" active={driverViewState === 'HISTORY'} onClick={() => setDriverViewState('HISTORY')} />
+            <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
             <DesktopNavItem icon={<ShieldCheck />} label="Seguridad" active={driverViewState === 'PROFILE'} onClick={() => setDriverViewState('PROFILE')} />
           </nav>
 
@@ -67,6 +66,16 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
             </div>
             
             <div className="flex items-center gap-2">
+                <button 
+                    onClick={() => {
+                        window.dispatchEvent(new CustomEvent('open-help'));
+                        toggleSettings();
+                    }}
+                    className="p-2 rounded-full bg-white/5 text-stone-400 hover:text-white transition-colors"
+                    title="Ayuda"
+                >
+                    <HelpCircle size={18} />
+                </button>
                 <button 
                     onClick={() => setIsNotificationsOpen(true)}
                     className="p-2 rounded-full bg-white/5 text-stone-400 hover:text-white transition-colors relative"
@@ -107,7 +116,7 @@ const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean
     onClick={onClick}
     className={`flex flex-col items-center gap-1 p-2 transition-colors ${active ? 'text-brand-500' : 'text-stone-600 hover:text-stone-300'}`}
   >
-    {React.cloneElement(icon as React.ReactElement<any>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
+    {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
     <span className="text-[10px] font-medium uppercase tracking-tighter">{label}</span>
   </button>
 );
@@ -124,7 +133,7 @@ const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: 
 
   return (
     <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
-      {React.cloneElement(icon as React.ReactElement<any>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
+      {React.cloneElement(icon as React.ReactElement<unknown>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
       <span className="text-sm">{label}</span>
     </button>
   );

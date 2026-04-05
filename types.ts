@@ -3,7 +3,6 @@
 
 export enum UserRole {
   NONE = 'NONE', // Initial Landing State
-  DEV = 'DEV', // Project Management Dashboard
   CLIENT = 'CLIENT',
   MERCHANT = 'MERCHANT',
   DRIVER = 'DRIVER',
@@ -23,6 +22,7 @@ export interface UserProfile {
   fcmToken?: string; // New: For Push Notifications
   lat?: number; // New: For real-time tracking
   lng?: number; // New: For real-time tracking
+  completedTours?: string[]; // New: Track which onboarding tours have been seen
 }
 
 export enum OrderStatus {
@@ -105,13 +105,18 @@ export interface Order {
   storeId: string;
   storeName: string;
   total: number;
+  subtotal: number; // New: Base amount before fees
   deliveryFee: number; // New: Business logic requirement
+  platformCommission: number; // New: Platform's cut
+  driverEarnings: number; // New: Driver's cut
+  merchantEarnings: number; // New: Merchant's net
   status: OrderStatus;
   type: OrderType; // New field for Delivery vs Pickup
   items: CartItem[]; // Updated to use CartItem structure
   createdAt: Date;
   address: string;
   customerName: string;
+  customerId: string; // Required for security rules
   paymentMethod: PaymentMethod;
   notes?: string;
   isOfflinePending?: boolean; // Phase 6: Sync Queue Flag
@@ -127,6 +132,7 @@ export interface Order {
   deliveredAt?: Date; // Audit: When it was delivered
   claimReason?: string; // Audit: Why it is disputed
   claimStatus?: 'OPEN' | 'RESOLVED' | 'REJECTED'; // Audit: Dispute status
+  coordinates?: { lat: number; lng: number }; // New: For precise delivery
 }
 
 export interface Review {
@@ -159,8 +165,10 @@ export interface AppNotification {
 }
 
 export interface GlobalConfig {
-  platformCommission: number; // e.g., 15 for 15%
+  platformCommissionPct: number; // e.g., 0.15 for 15%
+  driverCommissionPct: number; // e.g., 0.80 for 80% of delivery fee
   baseDeliveryFee: number; // e.g., 45
+  feePerKm: number; // e.g., 12
   supportEmail: string;
   maintenanceMode: boolean;
   paymentMode: 'CENTRALIZED' | 'DECENTRALIZED'; // New: For Payment Strategy

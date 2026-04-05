@@ -50,7 +50,7 @@ export const extractProductsFromMenu = async (base64Image: string): Promise<Prod
     });
 
     const products = JSON.parse(response.text);
-    return products.map((p: any) => ({
+    return products.map((p: { name: string, description: string, price: number, category: string }) => ({
       ...p,
       id: Math.random().toString(36).substr(2, 9),
       image: 'https://picsum.photos/seed/food/400/300' // Placeholder image

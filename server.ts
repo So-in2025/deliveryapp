@@ -3,14 +3,10 @@ import { createServer as createViteServer } from 'vite';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import { db, doc, updateDoc } from './firebase.js';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
@@ -84,7 +80,7 @@ async function startServer() {
       const preference = new Preference(client);
       const result = await preference.create({
         body: {
-          items: items.map((item: any) => ({
+          items: items.map((item: { name: string, price: number, quantity: number }) => ({
             title: item.name,
             unit_price: Number(item.price),
             quantity: Number(item.quantity),

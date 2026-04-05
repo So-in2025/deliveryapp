@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { soundService } from '../services/soundService';
 import { UserRole, Order, Store, Product, OrderStatus, CartItem, Modifier, PaymentMethod, OrderType, Coupon, UserProfile, ViewState, Review, MerchantViewState, DriverViewState, AdminViewState, AppNotification, GlobalConfig } from '../types';
 import { loadCart, saveCart } from '../services/dataService';
+import { APP_CONFIG } from '../constants';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
 import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage } from '../firebase';
@@ -10,7 +11,6 @@ import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimes
 // App Context Type and Provider
 interface AppContextType {
   role: UserRole;
-  setRole: (role: UserRole) => void;
   user: UserProfile; 
   users: UserProfile[];
   updateUser: (data: Partial<UserProfile>) => void;
@@ -29,7 +29,9 @@ interface AppContextType {
   updateCartItemQuantity: (index: number, quantity: number) => void;
   removeFromCart: (index: number) => void;
   clearCart: () => void;
-  placeOrder: (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount?: number) => void;
+  placeOrder: (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount?: number, coordinates?: { lat: number, lng: number }) => void;
+  getRouteDistance: (start: { lat: number, lng: number }, end: { lat: number, lng: number }) => Promise<number>;
+  verifyAdminPin: (pin: string) => Promise<boolean>;
   updateOrder: (orderId: string, status: OrderStatus) => void;
   cancelOrder: (orderId: string, reason: string) => void;
   submitClaim: (orderId: string, reason: string) => void;
@@ -44,7 +46,7 @@ interface AppContextType {
   toggleCoupon: (id: string) => void;
   addReview: (review: Review) => void;
   reviews: Review[];
-  createPaymentPreference: (orderId: string, items: any[]) => Promise<{ id: string, init_point: string } | null>;
+  createPaymentPreference: (orderId: string, items: { name: string, price: number, quantity: number }[]) => Promise<{ id: string, init_point: string } | null>;
   updateStore: (storeId: string, data: Partial<Store>) => void;
   updateLocation: (lat: number, lng: number) => void;
   
@@ -85,6 +87,7 @@ interface AppContextType {
   // Driver GPS Simulation
   driverLocation: { lat: number, lng: number };
   setDriverLocation: (loc: { lat: number, lng: number }) => void;
+  completeTour: (tourId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -105,17 +108,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const { user: authUser, profile: authProfile, isAuthReady } = useAuth();
 
   const [role, setRoleState] = useState<UserRole>(UserRole.NONE);
-
-  const setRole = useCallback(async (newRole: UserRole) => {
-    setRoleState(newRole);
-    if (authUser) {
-      try {
-        await updateDoc(doc(db, 'users', authUser.uid), { role: newRole });
-      } catch (error) {
-        console.error('Error updating role:', error);
-      }
-    }
-  }, [authUser]);
   
   const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
 
@@ -129,8 +121,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Global Config State
   const [config, setConfig] = useState<GlobalConfig>({
-    platformCommission: 15,
-    baseDeliveryFee: 45,
+    platformCommissionPct: APP_CONFIG.platformCommissionPct,
+    driverCommissionPct: APP_CONFIG.driverCommissionPct,
+    baseDeliveryFee: APP_CONFIG.baseDeliveryFee,
+    feePerKm: APP_CONFIG.feePerKm,
     supportEmail: 'soporte@telollevo.com',
     maintenanceMode: false,
     paymentMode: 'CENTRALIZED'
@@ -140,7 +134,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const stored = localStorage.getItem('codex_notifications_v1');
       if (!stored) return [];
-      return JSON.parse(stored).map((n: any) => ({ ...n, timestamp: new Date(n.timestamp) }));
+      return JSON.parse(stored).map((n: { timestamp: string | number | Date }) => ({ ...n, timestamp: new Date(n.timestamp) }));
     } catch {
       return [];
     }
@@ -342,7 +336,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       usersQuery = query(collection(db, 'users'), where('role', '==', 'DRIVER'));
     }
 
-    let unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
       setUsers(usersData);
     }, (error) => {
@@ -447,7 +441,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const loaded = loadCart();
       if (!loaded) return [];
       // Safety check for legacy cart items
-      if (loaded.length > 0 && typeof (loaded[0] as any).totalPrice === 'undefined') {
+      if (loaded.length > 0 && typeof (loaded[0] as unknown as { totalPrice?: number }).totalPrice === 'undefined') {
           return [];
       }
       return loaded as unknown as CartItem[];
@@ -637,7 +631,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [clearCart, showToast, setClientViewState]);
 
-  const placeOrder = async (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount: number = 0) => {
+  const getRouteDistance = async (start: { lat: number, lng: number }, end: { lat: number, lng: number }): Promise<number> => {
+    try {
+      const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=false`);
+      const data = await response.json();
+      if (data.code === 'Ok' && data.routes.length > 0) {
+        return data.routes[0].distance / 1000; // Convert meters to km
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error fetching OSRM route:', error);
+      return 0;
+    }
+  };
+
+  const verifyAdminPin = async (pin: string): Promise<boolean> => {
+    try {
+      if (!authUser) return false;
+      // We attempt to update the user role to ADMIN by providing the PIN in a temporary field
+      // The Firestore rules will validate this PIN and allow the update if correct.
+      await updateDoc(doc(db, 'users', authUser.uid), { 
+        role: UserRole.ADMIN,
+        _adminPin: pin // Temporary field for rule validation
+      });
+      return true;
+    } catch (error) {
+      console.error('Error verifying admin pin:', error);
+      return false;
+    }
+  };
+
+  const placeOrder = async (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount: number = 0, coordinates?: { lat: number, lng: number }) => {
     const subtotal = cart.reduce((sum, item) => sum + (item.totalPrice * item.quantity), 0);
     
     // Dynamic Delivery Fee Logic
@@ -645,13 +669,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const deliveryFee = type === OrderType.DELIVERY ? (store?.deliveryFee ?? config.baseDeliveryFee) : 0;
     
     const total = Math.max(0, subtotal + deliveryFee - (discount || 0));
+
+    // Commissions Calculation
+    const platformCommission = subtotal * config.platformCommissionPct;
+    const driverEarnings = deliveryFee * config.driverCommissionPct;
+    const merchantEarnings = subtotal - platformCommission;
     
     const orderId = `ord-${Date.now()}`;
-    const newOrder: any = {
+    const newOrder: Partial<Order> = {
       storeId,
       storeName,
       total,
+      subtotal,
       deliveryFee,
+      platformCommission,
+      driverEarnings,
+      merchantEarnings,
       status: OrderStatus.PENDING,
       items: cart,
       createdAt: serverTimestamp(),
@@ -662,7 +695,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       notes,
       type,
       isReviewed: false,
-      paymentStatus: paymentMethod === PaymentMethod.MERCADO_PAGO ? 'PENDING' : 'PAID'
+      paymentStatus: paymentMethod === PaymentMethod.MERCADO_PAGO ? 'PENDING' : 'PAID',
+      coordinates
     };
     
     try {
@@ -706,7 +740,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const createPaymentPreference = async (orderId: string, items: any[], storeId: string) => {
+  const createPaymentPreference = async (orderId: string, items: { name: string, price: number, quantity: number }[], storeId: string) => {
     try {
       const store = stores.find(s => s.id === storeId);
       const customAccessToken = config.paymentMode === 'DECENTRALIZED' ? store?.mpAccessToken : null;
@@ -726,7 +760,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateOrder = async (orderId: string, status: OrderStatus) => {
     try {
-      const updateData: any = { status };
+      const updateData: Partial<Order> = { status };
       if (status === OrderStatus.DELIVERED) {
         updateData.deliveredAt = serverTimestamp();
       }
@@ -909,10 +943,68 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // FCM Integration
+  useEffect(() => {
+    if (!messaging || !authUser) return;
+
+    const setupFCM = async () => {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const { getToken } = await import('firebase/messaging');
+          const token = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY });
+          if (token) {
+            await updateDoc(doc(db, 'users', authUser.uid), { fcmToken: token });
+          }
+        }
+      } catch (error) {
+        console.error('Error setting up FCM:', error);
+      }
+    };
+
+    setupFCM();
+
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log('Message received. ', payload);
+      if (payload.notification) {
+        addNotification({
+          title: payload.notification.title || 'Nueva Notificación',
+          message: payload.notification.body || '',
+          type: 'INFO'
+        });
+        showToast(payload.notification.title || 'Nueva Notificación', 'info');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [authUser, addNotification, showToast]);
+
+  // Listen to Driver Location if there's an active order
+  useEffect(() => {
+    const activeOrder = orders.find(o => o.customerId === authUser?.uid && (o.status === OrderStatus.PREPARING || o.status === OrderStatus.PICKED_UP));
+    if (activeOrder && activeOrder.driverId) {
+      const unsubscribe = onSnapshot(doc(db, 'users', activeOrder.driverId), (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          if (data.lat && data.lng) {
+            setDriverLocation({ lat: data.lat, lng: data.lng });
+          }
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [orders, authUser]);
+
+  const completeTour = useCallback((tourId: string) => {
+    const currentTours = user.completedTours || [];
+    if (!currentTours.includes(tourId)) {
+      updateUser({ completedTours: [...currentTours, tourId] });
+    }
+  }, [user.completedTours, updateUser]);
+
   return (
     <AppContext.Provider value={{ 
       role, 
-      setRole,
       user,
       users,
       updateUser,
@@ -932,6 +1024,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       removeFromCart,
       clearCart,
       placeOrder,
+      getRouteDistance,
+      verifyAdminPin,
       updateOrder,
       cancelOrder,
       submitClaim,
@@ -976,13 +1070,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       config,
       updateConfig,
       driverLocation,
-      setDriverLocation
+      setDriverLocation,
+      completeTour
     }}>
       {children}
     </AppContext.Provider>
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useApp = () => {
   const context = useContext(AppContext);
   if (context === undefined) {

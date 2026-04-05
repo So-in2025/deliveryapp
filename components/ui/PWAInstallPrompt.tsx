@@ -7,7 +7,7 @@ import { APP_CONFIG } from '../../constants';
 export const PWAInstallPrompt: React.FC = () => {
   const [showPrompt, setShowPrompt] = useState(false);
   const [platform, setPlatform] = useState<'ios' | 'android' | 'other' | null>(null);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
   useEffect(() => {
     // Detect Platform
@@ -16,7 +16,7 @@ export const PWAInstallPrompt: React.FC = () => {
     const isAndroid = /android/.test(userAgent);
     
     // Detect if already installed (standalone mode)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || ('standalone' in window.navigator && window.navigator.standalone);
 
     if (isStandalone) return;
 
@@ -27,7 +27,7 @@ export const PWAInstallPrompt: React.FC = () => {
       return () => clearTimeout(timer);
     } else {
       // Handle Android/Chrome beforeinstallprompt
-      const handleBeforeInstallPrompt = (e: any) => {
+      const handleBeforeInstallPrompt = (e: Event) => {
         // Prevent Chrome 67 and earlier from automatically showing the prompt
         e.preventDefault();
         // Stash the event so it can be triggered later.

@@ -70,7 +70,7 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && 
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN' ||
-         request.auth.token.email == "ofeliaacevedo41@gmail.com");
+         (request.auth.token.email == "ofeliaacevedo41@gmail.com" && request.auth.token.email_verified == true));
     }
 
     function hasRequiredFields(fields) {
@@ -85,21 +85,33 @@ service cloud.firestore {
       return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
 
+    function validString(field, maxLen) {
+      return request.resource.data[field] is string && request.resource.data[field].size() <= maxLen;
+    }
+
+    function isRecent(field) {
+      return request.resource.data[field] is timestamp && 
+             request.resource.data[field] > request.time - duration.value(5, 'm') &&
+             request.resource.data[field] <= request.time;
+    }
+
     // ===============================================================
     // Domain Validators
     // ===============================================================
 
     function isValidUser(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
              isValidEmail(data.email) &&
-             data.role in ['CLIENT', 'MERCHANT', 'DRIVER', 'ADMIN'];
+             data.role in ['CLIENT', 'MERCHANT', 'DRIVER', 'ADMIN'] &&
+             (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 500)) &&
+             (!('fcmToken' in data) || (data.fcmToken is string && data.fcmToken.size() <= 300));
     }
 
     function isValidStore(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.category is string &&
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.category is string && data.category.size() <= 50 &&
              data.ownerId is string &&
-             data.createdAt is timestamp;
+             (!('image' in data) || (data.image is string && data.image.size() <= 500));
     }
 
     function isValidOrder(data) {
@@ -107,12 +119,18 @@ service cloud.firestore {
              data.total is number && data.total >= 0 &&
              data.status is string &&
              data.customerId is string &&
-             data.createdAt is timestamp &&
-             data.items is list;
+             data.items is list && data.items.size() <= 50;
+    }
+
+    function isValidReview(data) {
+      return data.storeId is string &&
+             data.customerId is string &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+             (!('comment' in data) || (data.comment is string && data.comment.size() <= 500));
     }
 
     function isValidCoupon(data) {
-      return data.code is string && data.code.size() > 0 && data.code.size() < 20 &&
+      return data.code is string && data.code.size() > 0 && data.code.size() <= 20 &&
              data.discountPct is number && data.discountPct >= 0 && data.discountPct <= 1 &&
              data.active is bool &&
              (!('storeId' in data) || data.storeId is string);
@@ -134,10 +152,15 @@ service cloud.firestore {
                     (request.resource.data.role in ['CLIENT', 'DRIVER'] || isAdmin());
       
       // Allow update if owner or admin
-      // Owner cannot change their own role unless admin
-      // Owner CAN update their own lat/lng/isOnline status
-      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && 
-                        (request.resource.data.role == resource.data.role || isAdmin())) || isAdmin();
+      // Owner cannot change their own role to ADMIN unless they are already an admin
+      // OR they provide the correct _adminPin (validated against system/security)
+      allow update: if isAuthenticated() && (
+        (isOwner(userId) && (
+          (request.resource.data.role == resource.data.role || (request.resource.data.role != 'ADMIN' && resource.data.role != 'ADMIN') || isAdmin()) ||
+          (request.resource.data.role == 'ADMIN' && request.resource.data._adminPin == get(/databases/$(database)/documents/system/security).data.adminPin)
+        )) || 
+        isAdmin()
+      );
     }
 
     match /stores/{storeId} {
@@ -149,7 +172,11 @@ service cloud.firestore {
                     (request.resource.data.ownerId == request.auth.uid || isAdmin());
       
       // Only owner or admin can update
-      allow update: if (isAuthenticated() && resource.data.ownerId == request.auth.uid && isValidStore(request.resource.data)) || isAdmin();
+      allow update: if isAuthenticated() && (
+        (resource.data.ownerId == request.auth.uid && isValidStore(request.resource.data) &&
+         request.resource.data.ownerId == resource.data.ownerId) || 
+        isAdmin()
+      );
 
       match /products/{productId} {
         allow read: if true;
@@ -175,14 +202,15 @@ service cloud.firestore {
 
       // Update rules for status changes
       allow update: if isAuthenticated() && (
-        // Customer can cancel or update their own order
-        (resource.data.customerId == request.auth.uid && isValidOrder(request.resource.data)) ||
+        // Customer can cancel or update their own order if not yet accepted
+        (resource.data.customerId == request.auth.uid && isValidOrder(request.resource.data) && 
+         resource.data.status in ['PENDING', 'DISPUTED']) ||
         // Driver can update status if assigned
         (resource.data.driverId == request.auth.uid && 
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'driverName'])) ||
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'driverName', 'deliveredAt'])) ||
         // Merchant can update status for their store
         (get(/databases/$(database)/documents/stores/$(resource.data.storeId)).data.ownerId == request.auth.uid &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'driverId', 'driverName'])) ||
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'paymentStatus'])) ||
         isAdmin()
       );
     }
@@ -191,7 +219,8 @@ service cloud.firestore {
       // Reviews are publicly readable
       allow read: if true;
       // Authenticated users can create reviews
-      allow create: if isAuthenticated() && request.resource.data.customerId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidReview(request.resource.data) &&
+                    request.resource.data.customerId == request.auth.uid;
       // Only admin can delete or update reviews
       allow update, delete: if isAdmin();
     }
@@ -200,9 +229,16 @@ service cloud.firestore {
       // Coupons are publicly readable (to check validity)
       allow read: if true;
       // Only admin or the store owner can manage coupons
-      allow create: if isAdmin() || (isAuthenticated() && 'storeId' in request.resource.data && isStoreOwner(request.resource.data.storeId) && isValidCoupon(request.resource.data));
-      allow update: if isAdmin() || (isAuthenticated() && 'storeId' in resource.data && isStoreOwner(resource.data.storeId) && isValidCoupon(request.resource.data));
+      allow create: if (isAdmin() || (isAuthenticated() && 'storeId' in request.resource.data && isStoreOwner(request.resource.data.storeId))) && isValidCoupon(request.resource.data);
+      allow update: if (isAdmin() || (isAuthenticated() && 'storeId' in resource.data && isStoreOwner(resource.data.storeId))) && isValidCoupon(request.resource.data);
       allow delete: if isAdmin() || (isAuthenticated() && 'storeId' in resource.data && isStoreOwner(resource.data.storeId));
+    }
+
+    match /system/security {
+      // Security document is NEVER readable by non-admins
+      allow read: if isAdmin();
+      // Only admin can update the PIN
+      allow write: if isAdmin();
     }
 
     match /config/{configId} {

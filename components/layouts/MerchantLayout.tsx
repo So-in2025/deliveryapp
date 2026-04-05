@@ -2,12 +2,11 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, BarChart3, Bell, Utensils, Tag } from 'lucide-react';
-import { UserRole } from '../../types';
+import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, Bell, Utensils, Tag, HelpCircle } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, merchantViewState, setMerchantViewState, notifications, setIsNotificationsOpen, setRole } = useApp();
+  const { toggleSettings, merchantViewState, setMerchantViewState, notifications, setIsNotificationsOpen } = useApp();
   const { signOut } = useAuth();
   const { isOnline } = useConnectivity();
 
@@ -15,7 +14,6 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const handleSignOut = async () => {
     await signOut();
-    setRole(UserRole.NONE);
   };
 
   return (
@@ -49,6 +47,7 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
             <DesktopNavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
             <DesktopNavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
             <DesktopNavItem icon={<Settings />} label="Ajustes Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
+            <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-2">
@@ -67,6 +66,16 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
             </div>
             
             <div className="flex items-center gap-2">
+                <button 
+                    onClick={() => {
+                        window.dispatchEvent(new CustomEvent('open-help'));
+                        toggleSettings();
+                    }}
+                    className="p-2 rounded-lg bg-white/5 text-stone-400 hover:text-white transition-colors"
+                    title="Ayuda"
+                >
+                    <HelpCircle size={18} />
+                </button>
                 <button 
                     onClick={() => setIsNotificationsOpen(true)}
                     className="p-2 rounded-lg bg-white/5 text-stone-400 hover:text-white transition-colors relative"
@@ -108,7 +117,7 @@ const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean
     onClick={onClick}
     className={`flex flex-col items-center gap-1 p-2 transition-colors ${active ? 'text-brand-500' : 'text-stone-500 hover:text-stone-300'}`}
   >
-    {React.cloneElement(icon as React.ReactElement<any>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
+    {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
     <span className="text-[10px] font-medium">{label}</span>
   </button>
 );
@@ -125,7 +134,7 @@ const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: 
 
   return (
     <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
-      {React.cloneElement(icon as React.ReactElement<any>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
+      {React.cloneElement(icon as React.ReactElement<unknown>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
       <span className="text-sm">{label}</span>
     </button>
   );

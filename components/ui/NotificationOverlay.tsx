@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, X, Check, ShoppingBag, Info, Tag, Trash2 } from 'lucide-react';
+import { Bell, X, ShoppingBag, Info, Tag, Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

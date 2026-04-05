@@ -12,6 +12,8 @@ import {
   AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail
 } from 'lucide-react';
 
+import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
+
 interface KpiCardProps {
   title: string;
   value: string | number;
@@ -88,8 +90,37 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
 };
 
 export const AdminView: React.FC = () => {
-  const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState, updateAnyUser, updateStore, config, updateConfig } = useApp();
+  const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState, updateAnyUser, updateStore, config, updateConfig, user, completeTour } = useApp();
   const { showToast } = useToast();
+
+  const adminTourSteps: TourStep[] = [
+    {
+        targetId: 'admin-stats',
+        title: 'Métricas del Negocio',
+        description: 'Visualiza las ventas totales, pedidos activos y el rendimiento general de la plataforma.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'stores-tab',
+        title: 'Gestión de Comercios',
+        description: 'Administra todos los locales, revisa sus productos y ajusta sus configuraciones.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'users-tab',
+        title: 'Control de Usuarios',
+        description: 'Gestiona los roles de Clientes, Merchants, Drivers y otros Administradores.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'config-tab',
+        title: 'Configuración Global',
+        description: 'Ajusta comisiones, tarifas de envío y el modo de mantenimiento de la app.',
+        position: 'bottom'
+    }
+  ];
+
+  const showTour = !user.completedTours?.includes('admin-onboarding') && adminViewState === 'DASHBOARD';
   
   // Local settings state for the form
   const [localConfig, setLocalConfig] = useState(config);
@@ -103,7 +134,7 @@ export const AdminView: React.FC = () => {
   // --- ANALYTICS LOGIC ---
   const kpis = useMemo(() => {
     const totalSales = orders.reduce((acc, o) => acc + o.total, 0);
-    const platformCommission = totalSales * (config.platformCommission / 100);
+    const platformCommission = orders.reduce((acc, o) => acc + (o.platformCommission || 0), 0);
     const activeOrders = orders.filter(o => o.status !== OrderStatus.DELIVERED && o.status !== OrderStatus.CANCELLED).length;
     const completedOrders = orders.filter(o => o.status === OrderStatus.DELIVERED).length;
 
@@ -114,7 +145,7 @@ export const AdminView: React.FC = () => {
       completedOrders,
       totalStores: stores.length
     };
-  }, [orders, stores, config.platformCommission]);
+  }, [orders, stores]);
 
   const recentActivity = useMemo(() => {
     return [...orders]
@@ -154,7 +185,7 @@ export const AdminView: React.FC = () => {
 
   const renderDashboardTab = () => (
     <div className="space-y-6 animate-fade-in pb-20">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 pt-2 lg:max-w-7xl lg:mx-auto lg:w-full">
+      <div id="admin-stats" className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 pt-2 lg:max-w-7xl lg:mx-auto lg:w-full">
         <KpiCard 
           title="Revenue Global" 
           value={formatCurrency(kpis.totalSales)}
@@ -599,12 +630,14 @@ export const AdminView: React.FC = () => {
                             Pedidos
                         </button>
                         <button 
+                            id="stores-tab"
                             onClick={() => setAdminViewState('STORES')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'STORES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Comercios
                         </button>
                         <button 
+                            id="users-tab"
                             onClick={() => setAdminViewState('USERS')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'USERS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
@@ -615,6 +648,13 @@ export const AdminView: React.FC = () => {
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'DISPUTES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Reclamos
+                        </button>
+                        <button 
+                            id="config-tab"
+                            onClick={() => setAdminViewState('SETTINGS')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'SETTINGS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
+                        >
+                            Config
                         </button>
                     </div>
                     </div>
@@ -638,22 +678,37 @@ export const AdminView: React.FC = () => {
                                         <div className="flex justify-between items-center">
                                             <div>
                                                 <p className="text-sm font-bold text-stone-800">Comisión de Plataforma</p>
-                                                <p className="text-xs text-stone-500">Porcentaje cobrado a los comercios</p>
+                                                <p className="text-xs text-stone-500">Porcentaje cobrado a los comercios (0.15 = 15%)</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <input 
                                                     type="number" 
-                                                    value={localConfig.platformCommission} 
-                                                    onChange={(e) => setLocalConfig({...localConfig, platformCommission: Number(e.target.value)})}
+                                                    step="0.01"
+                                                    value={localConfig.platformCommissionPct} 
+                                                    onChange={(e) => setLocalConfig({...localConfig, platformCommissionPct: Number(e.target.value)})}
                                                     className="w-16 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
                                                 />
-                                                <span className="font-bold text-stone-400">%</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-bold text-stone-800">Comisión de Driver</p>
+                                                <p className="text-xs text-stone-500">Porcentaje del envío para el driver (0.80 = 80%)</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <input 
+                                                    type="number" 
+                                                    step="0.01"
+                                                    value={localConfig.driverCommissionPct} 
+                                                    onChange={(e) => setLocalConfig({...localConfig, driverCommissionPct: Number(e.target.value)})}
+                                                    className="w-16 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
+                                                />
                                             </div>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <div>
                                                 <p className="text-sm font-bold text-stone-800">Costo de Envío Base</p>
-                                                <p className="text-xs text-stone-500">Tarifa mínima para el driver</p>
+                                                <p className="text-xs text-stone-500">Tarifa mínima</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-bold text-stone-400">$</span>
@@ -661,6 +716,21 @@ export const AdminView: React.FC = () => {
                                                     type="number" 
                                                     value={localConfig.baseDeliveryFee} 
                                                     onChange={(e) => setLocalConfig({...localConfig, baseDeliveryFee: Number(e.target.value)})}
+                                                    className="w-20 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-bold text-stone-800">Costo por KM</p>
+                                                <p className="text-xs text-stone-500">Tarifa adicional por distancia</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-stone-400">$</span>
+                                                <input 
+                                                    type="number" 
+                                                    value={localConfig.feePerKm} 
+                                                    onChange={(e) => setLocalConfig({...localConfig, feePerKm: Number(e.target.value)})}
                                                     className="w-20 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
                                                 />
                                             </div>
@@ -742,6 +812,13 @@ export const AdminView: React.FC = () => {
                     )}
                 </div>
             </>
+        )}
+        {showTour && (
+            <OnboardingTour 
+                tourId="admin-onboarding" 
+                steps={adminTourSteps} 
+                onComplete={() => completeTour('admin-onboarding')} 
+            />
         )}
     </div>
   );

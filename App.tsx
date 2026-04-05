@@ -8,7 +8,6 @@ import { ClientView } from './views/ClientView';
 import { MerchantView } from './views/MerchantView';
 import { DriverView } from './views/DriverView';
 import { AdminView } from './views/AdminView';
-import { DevDashboard } from './views/DevDashboard';
 import { AuthView } from './views/AuthView';
 import { UserRole } from './types';
 import { useApp } from './context/AppContext';
@@ -91,8 +90,6 @@ const ViewRouter = () => {
         switch (role) {
           case UserRole.NONE:
             return <AuthView />;
-          case UserRole.DEV:
-            return <DevDashboard />;
           case UserRole.CLIENT:
             return (
               <ClientLayout>

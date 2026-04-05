@@ -13,7 +13,7 @@ const KEYS = {
 // --- PERSISTENCE LAYER ---
 
 // Helper to revive Dates from JSON
-const dateReviver = (key: string, value: any) => {
+const dateReviver = (key: string, value: unknown) => {
   if (key === 'createdAt' && typeof value === 'string') {
     return new Date(value);
   }
@@ -42,7 +42,7 @@ export const loadCart = (): { product: Product; quantity: number }[] | null => {
   try {
     const stored = localStorage.getItem(KEYS.CART);
     return stored ? JSON.parse(stored) : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -74,7 +74,7 @@ export const loadStores = (): Store[] => {
     const parsed = JSON.parse(stored);
     
     return parsed; 
-  } catch (e) {
+  } catch {
     return MOCK_STORES;
   }
 };

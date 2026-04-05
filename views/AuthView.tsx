@@ -3,16 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Store } from '../types';
-import { ShoppingBag, Store as StoreIcon, Bike, Terminal, ArrowRight, Shield, LogIn, User as UserIcon, Globe, Sparkles, Download, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, LogIn, User as UserIcon, Globe, Sparkles, Download, ArrowLeft } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
 
 export const AuthView: React.FC = () => {
-  const { setRole, user: appUser, createStore, updateUser } = useApp();
+  const { user: appUser, createStore, updateUser } = useApp();
   const { showToast } = useToast();
   const { user: authUser, login, signOut, loading } = useAuth();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<'NONE' | 'MERCHANT' | 'DRIVER'>('NONE');
@@ -34,7 +34,7 @@ export const AuthView: React.FC = () => {
   };
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
+    const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallButton(true);
@@ -43,7 +43,7 @@ export const AuthView: React.FC = () => {
     
     // Check if iOS
     const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || ('standalone' in window.navigator && window.navigator.standalone);
     
     if (isIOS && !isStandalone) {
       setShowInstallButton(true);
@@ -76,7 +76,7 @@ export const AuthView: React.FC = () => {
     }
     
     if (isGuest) {
-      setRole(role);
+      updateUser({ role });
       return;
     }
 
@@ -95,7 +95,7 @@ export const AuthView: React.FC = () => {
         }
     }
 
-    setRole(role);
+    updateUser({ role });
   };
 
   const handleRegisterMerchant = () => {
@@ -118,7 +118,7 @@ export const AuthView: React.FC = () => {
       };
       createStore(newStore);
       showToast('¡Tienda creada exitosamente!', 'success');
-      setRole(UserRole.MERCHANT);
+      updateUser({ role: UserRole.MERCHANT });
   };
 
   const handleRegisterDriver = () => {
@@ -126,18 +126,8 @@ export const AuthView: React.FC = () => {
           showToast('El número de teléfono es requerido', 'error');
           return;
       }
-      updateUser({ isDriver: true }); // We could save vehicle/phone here if added to UserProfile
+      updateUser({ isDriver: true, role: UserRole.DRIVER }); // We could save vehicle/phone here if added to UserProfile
       showToast('¡Registro de Repartidor completo!', 'success');
-      setRole(UserRole.DRIVER);
-  };
-
-  const handleDevAccess = () => {
-      const pin = window.prompt("Ingrese PIN de acceso:", "");
-      if (pin === "125478") {
-          setRole(UserRole.DEV);
-      } else if (pin !== null) {
-          showToast("PIN Incorrecto", "error");
-      }
   };
 
   return (
@@ -405,21 +395,16 @@ export const AuthView: React.FC = () => {
                                 delay={0.4}
                             />
                         </div>
-                        <RoleButton 
-                            icon={<Shield />} 
-                            title="Panel Administrativo" 
-                            subtitle="Gestión de Plataforma" 
-                            variant="dark"
-                            onClick={() => {
-                                const pin = window.prompt("Ingrese PIN de administrador:", "");
-                                if (pin === "125478") {
-                                    handleRoleSelection(UserRole.ADMIN, false);
-                                } else if (pin !== null) {
-                                    showToast("PIN Incorrecto", "error");
-                                }
-                            }}
-                            delay={0.5}
-                        />
+                        {appUser?.role === UserRole.ADMIN && (
+                            <RoleButton 
+                                icon={<Shield />} 
+                                title="Panel Administrativo" 
+                                subtitle="Gestión de Plataforma" 
+                                variant="dark"
+                                onClick={() => handleRoleSelection(UserRole.ADMIN, false)}
+                                delay={0.5}
+                            />
+                        )}
                     </motion.div>
                 ) : onboardingStep === 'MERCHANT' ? (
                     <motion.div 
@@ -552,13 +537,6 @@ export const AuthView: React.FC = () => {
                     <Globe size={12} />
                     <span className="text-xs font-bold uppercase tracking-widest">Global Network • Secure Access</span>
                 </div>
-                <button
-                    onClick={handleDevAccess}
-                    className="group flex items-center gap-2 text-xs font-bold text-stone-500 dark:text-stone-500 hover:text-brand-600 dark:hover:text-brand-400 transition-all uppercase tracking-wider"
-                >
-                    <Terminal size={14} className="group-hover:rotate-12 transition-transform" />
-                    Terminal de Desarrollador
-                </button>
             </motion.div>
         </div>
       </div>
@@ -591,7 +569,7 @@ const RoleButton: React.FC<RoleButtonProps> = ({ icon, title, subtitle, variant,
             className={`w-full p-5 rounded-3xl flex flex-col items-start gap-4 group transition-all active:scale-[0.98] ${variants[variant]}`}
         >
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 ${variant === 'primary' ? 'bg-brand-500/10 text-brand-500' : 'bg-stone-800 text-stone-400 group-hover:text-white'}`}>
-                {React.cloneElement(icon as React.ReactElement<any>, { size: 24, strokeWidth: 2 })}
+                {React.cloneElement(icon as React.ReactElement<unknown>, { size: 24, strokeWidth: 2 })}
             </div>
             <div className="w-full flex justify-between items-end">
                 <div className="text-left">

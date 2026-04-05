@@ -1,5 +1,5 @@
 
-import { Store, Order, OrderStatus, UserRole, PaymentMethod, OrderType } from './types';
+import { Store, Order } from './types';
 
 // --- PROJECT METADATA ---
 export const PROJECT_METRICS = {
@@ -29,9 +29,6 @@ export const PROJECT_METRICS = {
 // --- MOCK DATA ---
 // Images sourced from Unsplash for High Fidelity
 
-const NOW = new Date();
-const ONE_DAY = 24 * 60 * 60 * 1000;
-
 export const MOCK_STORES: Store[] = [];
 
 export const INITIAL_ORDERS: Order[] = [];
@@ -39,7 +36,11 @@ export const INITIAL_ORDERS: Order[] = [];
 export const APP_CONFIG = {
   currency: '$',
   appName: 'Te lo Llevo',
-  logoUrl: 'https://res.cloudinary.com/dfrb7fkni/image/upload/v1775205995/117a5ec6-76ad-444d-ade2-7077d936ded3_ubbnbi.jpg'
+  logoUrl: 'https://res.cloudinary.com/dfrb7fkni/image/upload/v1775205995/117a5ec6-76ad-444d-ade2-7077d936ded3_ubbnbi.jpg',
+  platformCommissionPct: 0.10, // 10%
+  driverCommissionPct: 0.80, // 80% of delivery fee
+  baseDeliveryFee: 35,
+  feePerKm: 12
 };
 
 export const formatCurrency = (amount: number | undefined | null) => {

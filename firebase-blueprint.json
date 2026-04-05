@@ -65,10 +65,40 @@
         "driverName": { "type": "string", "description": "Name of the assigned driver" },
         "createdAt": { "type": "string", "format": "date-time", "description": "When the order was placed" },
         "address": { "type": "string", "description": "Delivery address" },
-        "paymentMethod": { "type": "string", "enum": ["CASH", "CARD"], "description": "Payment method used" },
-        "items": { "type": "array", "description": "List of items in the order" }
+        "paymentMethod": { "type": "string", "enum": ["CASH", "CARD", "MERCADO_PAGO"], "description": "Payment method used" },
+        "paymentStatus": { "type": "string", "enum": ["PENDING", "PAID", "FAILED"], "description": "Status of the payment" },
+        "preferenceId": { "type": "string", "description": "Mercado Pago preference ID" },
+        "items": { "type": "array", "description": "List of items in the order" },
+        "notes": { "type": "string", "description": "Order notes" },
+        "isReviewed": { "type": "boolean", "description": "Whether the order has been reviewed" }
       },
       "required": ["storeId", "total", "status", "customerId", "createdAt"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer review for a store",
+      "type": "object",
+      "properties": {
+        "storeId": { "type": "string", "description": "ID of the store" },
+        "customerId": { "type": "string", "description": "UID of the customer" },
+        "customerName": { "type": "string", "description": "Name of the customer" },
+        "rating": { "type": "number", "description": "Rating given" },
+        "comment": { "type": "string", "description": "Review comment" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the review was created" }
+      },
+      "required": ["storeId", "customerId", "rating", "createdAt"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount coupon",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "description": "Coupon code" },
+        "discountPct": { "type": "number", "description": "Discount percentage (0-1)" },
+        "active": { "type": "boolean", "description": "Whether the coupon is active" },
+        "storeId": { "type": "string", "description": "ID of the store (optional, for store-specific coupons)" }
+      },
+      "required": ["code", "discountPct", "active"]
     }
   },
   "firestore": {
@@ -87,6 +117,18 @@
     "/orders/{orderId}": {
       "schema": "Order",
       "description": "Order documents"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Review documents"
+    },
+    "/coupons/{couponId}": {
+      "schema": "Coupon",
+      "description": "Coupon documents"
+    },
+    "/config/global": {
+      "schema": "object",
+      "description": "Global platform configuration"
     }
   }
 }

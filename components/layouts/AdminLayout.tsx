@@ -1,19 +1,17 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, Settings, LogOut, WifiOff, Users, Store, Truck, Database, AlertTriangle, Bell } from 'lucide-react';
-import { UserRole } from '../../types';
+import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, adminViewState, setAdminViewState, notifications, setIsNotificationsOpen, setRole } = useApp();
+  const { adminViewState, setAdminViewState, notifications, setIsNotificationsOpen, toggleSettings } = useApp();
   const { signOut } = useAuth();
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleSignOut = async () => {
     await signOut();
-    setRole(UserRole.NONE);
   };
 
   return (
@@ -40,6 +38,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <DesktopNavItem icon={<Store />} label="Comercios" active={adminViewState === 'STORES'} onClick={() => setAdminViewState('STORES')} />
             <DesktopNavItem icon={<Truck />} label="Flota" active={adminViewState === 'FLEET'} onClick={() => setAdminViewState('FLEET')} />
             <DesktopNavItem icon={<AlertTriangle />} label="Reclamos" active={adminViewState === 'DISPUTES'} onClick={() => setAdminViewState('DISPUTES')} />
+            <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-1">
@@ -59,6 +58,16 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             </div>
             
             <div className="flex items-center gap-2">
+                <button 
+                    onClick={() => {
+                        window.dispatchEvent(new CustomEvent('open-help'));
+                        toggleSettings();
+                    }}
+                    className="p-2 rounded bg-white/5 text-stone-400 hover:text-white transition-colors"
+                    title="Ayuda"
+                >
+                    <HelpCircle size={16} />
+                </button>
                 <button 
                     onClick={() => setIsNotificationsOpen(true)}
                     className="p-2 rounded bg-white/5 text-stone-400 hover:text-white transition-colors relative"
@@ -98,7 +107,7 @@ const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: 
 
   return (
     <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
-      {React.cloneElement(icon as React.ReactElement<any>, { size: 16, strokeWidth: active ? 2.5 : 2 })}
+      {React.cloneElement(icon as React.ReactElement<unknown>, { size: 16, strokeWidth: active ? 2.5 : 2 })}
       <span className="text-xs uppercase tracking-wider">{label}</span>
     </button>
   );

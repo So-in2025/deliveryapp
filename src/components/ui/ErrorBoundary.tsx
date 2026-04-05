@@ -30,7 +30,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     let parsedInfo = null;
     try {
       parsedInfo = JSON.parse(error.message);
-    } catch (e) {
+    } catch {
       // Not a JSON string, ignore
     }
 

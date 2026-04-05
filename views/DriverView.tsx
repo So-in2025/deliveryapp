@@ -5,12 +5,43 @@ import { useToast } from '../context/ToastContext';
 import { OrderStatus, PaymentMethod, OrderType, Order } from '../types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Navigation, DollarSign, LocateFixed, Bike, Banknote, CreditCard, Shield, MapPin, Truck, ChevronRight, FileText, X, Clock, Eye } from 'lucide-react';
+import { Navigation, DollarSign, LocateFixed, Bike, Banknote, Shield, MapPin, Truck, FileText, X, Clock, Eye } from 'lucide-react';
 import { formatCurrency } from '../constants';
 
+import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
+
 export const DriverView: React.FC = () => {
-  const { user, orders, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, updateLocation } = useApp();
+  const { user, orders, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, updateLocation, completeTour } = useApp();
   const { showToast } = useToast();
+
+  const driverTourSteps: TourStep[] = [
+    {
+        targetId: 'driver-status',
+        title: 'Estado de Conexión',
+        description: 'Toca aquí para ponerte en línea y empezar a recibir pedidos de delivery.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'deliveries-tab',
+        title: 'Pedidos Disponibles',
+        description: 'Aquí aparecerán todos los pedidos listos para ser recogidos en los locales.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'route-tab',
+        title: 'Tu Ruta Activa',
+        description: 'Cuando aceptes un pedido, aquí verás el mapa y las instrucciones de entrega.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'earnings-card',
+        title: 'Tus Ganancias',
+        description: 'Lleva el control de tus ingresos diarios por entregas y propinas.',
+        position: 'bottom'
+    }
+  ];
+
+  const showTour = !user.completedTours?.includes('driver-onboarding') && driverViewState === 'DELIVERIES';
 
   const [selectedTask, setSelectedTask] = useState<Order | null>(null);
   const [vehicleType, setVehicleType] = useState<'MOTO' | 'BICI' | 'AUTO'>('MOTO');
@@ -50,7 +81,7 @@ export const DriverView: React.FC = () => {
 
     // Simulation Logic (Only if user explicitly wants it for testing)
     useEffect(() => {
-        let interval: any;
+        let interval: ReturnType<typeof setInterval> | undefined;
         if (isSimulating && isDriverOnline) {
             interval = setInterval(() => {
                 updateLocation(
@@ -115,14 +146,14 @@ export const DriverView: React.FC = () => {
         <div className="flex justify-between items-center mb-4">
             <div>
                 <h2 className="text-2xl font-bold text-stone-900 dark:text-white">Panel Driver</h2>
-                <div onClick={toggleDriverStatus} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                <div id="driver-status" onClick={toggleDriverStatus} className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
                     <span className={`w-2.5 h-2.5 rounded-full transition-colors ${isDriverOnline ? 'bg-green-500 animate-pulse' : 'bg-stone-400 dark:bg-stone-600'}`}></span>
                     <p className={`text-sm font-bold ${isDriverOnline ? 'text-green-600 dark:text-green-400' : 'text-stone-500 dark:text-stone-400'}`}>
                         {isDriverOnline ? 'En línea para recibir' : 'Desconectado'}
                     </p>
                 </div>
             </div>
-            <div className="bg-stone-100 dark:bg-stone-700 p-2 rounded-lg flex items-center gap-1 border border-stone-200 dark:border-stone-600">
+            <div id="earnings-card" className="bg-stone-100 dark:bg-stone-700 p-2 rounded-lg flex items-center gap-1 border border-stone-200 dark:border-stone-600">
                 <DollarSign size={16} className="text-brand-950 dark:text-brand-400" />
                 <span className="font-bold text-stone-900 dark:text-white">{formatCurrency(totalEarnings)}</span>
             </div>
@@ -130,6 +161,7 @@ export const DriverView: React.FC = () => {
         
         <div className="flex p-1 bg-stone-100 dark:bg-stone-700/50 rounded-xl border border-stone-200 dark:border-stone-700 lg:max-w-2xl lg:mx-auto lg:justify-center">
             <button 
+                id="deliveries-tab"
                 onClick={() => setDriverViewState('DELIVERIES')}
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all relative ${driverViewState === 'DELIVERIES' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
@@ -142,6 +174,7 @@ export const DriverView: React.FC = () => {
                 )}
             </button>
             <button 
+                id="route-tab"
                 onClick={() => setDriverViewState('MAP')}
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'MAP' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
@@ -715,6 +748,13 @@ export const DriverView: React.FC = () => {
             </div>
         </div>
       )}
+        {showTour && (
+            <OnboardingTour 
+                tourId="driver-onboarding" 
+                steps={driverTourSteps} 
+                onComplete={() => completeTour('driver-onboarding')} 
+            />
+        )}
     </div>
   );
 };

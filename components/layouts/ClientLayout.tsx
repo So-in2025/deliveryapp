@@ -3,12 +3,11 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
 import { ShoppingBag, Settings, LogOut, WifiOff, Heart, History, User, Bell } from 'lucide-react';
-import { UserRole } from '../../types';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { APP_CONFIG } from '../../constants';
 
 export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, setClientViewState, setSelectedStore, clientViewState, notifications, setIsNotificationsOpen, setRole } = useApp();
+  const { toggleSettings, setClientViewState, setSelectedStore, clientViewState, notifications, setIsNotificationsOpen } = useApp();
   const { signOut } = useAuth();
   const { isOnline } = useConnectivity();
 
@@ -21,7 +20,6 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleSignOut = async () => {
     await signOut();
-    setRole(UserRole.NONE);
   };
 
   return (
@@ -106,7 +104,7 @@ const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean
     onClick={onClick}
     className={`flex flex-col items-center gap-1 p-2 transition-colors ${active ? 'text-brand-950 dark:text-brand-400' : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'}`}
   >
-    {React.cloneElement(icon as React.ReactElement<any>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
+    {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
     <span className="text-[10px] font-medium">{label}</span>
   </button>
 );
@@ -123,7 +121,7 @@ const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: 
 
   return (
     <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
-      {React.cloneElement(icon as React.ReactElement<any>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
+      {React.cloneElement(icon as React.ReactElement<unknown>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
       <span className="text-sm">{label}</span>
     </button>
   );

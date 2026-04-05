@@ -56,7 +56,7 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
   const [searchQuery, setSearchQuery] = useState('');
   const [address, setAddress] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<unknown[]>([]);
 
   const defaultCenter: L.LatLngExpression = initialLocation 
     ? [initialLocation.lat, initialLocation.lng] 
@@ -101,7 +101,7 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
     }
   };
 
-  const selectSearchResult = (result: any) => {
+  const selectSearchResult = (result: { lat: string; lon: string; display_name: string }) => {
     const newPos = new L.LatLng(parseFloat(result.lat), parseFloat(result.lon));
     setPosition(newPos);
     setAddress(result.display_name);

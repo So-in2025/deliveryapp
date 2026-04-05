@@ -39,6 +39,7 @@ export const ConnectivityProvider: React.FC<{ children: ReactNode }> = ({ childr
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useConnectivity = () => {
   const context = useContext(ConnectivityContext);
   if (context === undefined) {
