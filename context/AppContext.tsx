@@ -481,7 +481,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setUser(prev => ({ ...prev, ...data }));
       if (authUser) {
         try {
-          await updateDoc(doc(db, 'users', authUser.uid), data);
+          await setDoc(doc(db, 'users', authUser.uid), data, { merge: true });
         } catch (error) {
           console.error('Error updating user:', error);
         }
