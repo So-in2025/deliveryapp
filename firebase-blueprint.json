@@ -11,7 +11,11 @@
         "isDriver": { "type": "boolean", "description": "Whether the user is a driver" },
         "ownedStoreId": { "type": "string", "description": "ID of the store owned by the user" },
         "addresses": { "type": "array", "items": { "type": "string" }, "description": "Saved delivery addresses" },
-        "role": { "type": "string", "enum": ["CLIENT", "MERCHANT", "DRIVER", "ADMIN"], "description": "User's role in the platform" }
+        "role": { "type": "string", "enum": ["CLIENT", "MERCHANT", "DRIVER", "ADMIN"], "description": "User's role in the platform" },
+        "phone": { "type": "string", "description": "User's phone number" },
+        "driverLicense": { "type": "string", "description": "Driver's license number" },
+        "driverInsurance": { "type": "string", "description": "Driver's insurance policy number" },
+        "driverPlate": { "type": "string", "description": "Driver's vehicle plate number" }
       },
       "required": ["name", "email", "role"]
     },
@@ -31,7 +35,11 @@
         "ownerId": { "type": "string", "description": "UID of the store owner" },
         "createdAt": { "type": "string", "format": "date-time", "description": "When the store was created" },
         "customFont": { "type": "string", "description": "Custom font for store UI" },
-        "customColor": { "type": "string", "description": "Custom color for store UI" }
+        "customColor": { "type": "string", "description": "Custom color for store UI" },
+        "legalName": { "type": "string", "description": "Legal name of the store owner" },
+        "taxId": { "type": "string", "description": "Tax ID of the store" },
+        "phone": { "type": "string", "description": "Store contact phone" },
+        "bankAccount": { "type": "string", "description": "Bank account for payouts" }
       },
       "required": ["name", "category", "ownerId", "createdAt"]
     },

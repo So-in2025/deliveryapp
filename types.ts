@@ -24,6 +24,9 @@ export interface UserProfile {
   lat?: number; // New: For real-time tracking
   lng?: number; // New: For real-time tracking
   completedTours?: string[]; // New: Track which onboarding tours have been seen
+  driverLicense?: string; // Strict: Licencia de conducir
+  vehicleInsurance?: string; // Strict: Seguro del vehículo
+  vehiclePlate?: string; // Strict: Placa del vehículo
 }
 
 export enum OrderStatus {
@@ -92,6 +95,10 @@ export interface Store {
   ownerId?: string; // New: For ownership check
   lat?: number; // New: For map placement
   lng?: number; // New: For map placement
+  legalName?: string; // Strict: Razón Social
+  taxId?: string; // Strict: RFC/CUIT/RUT
+  phone?: string; // Strict: Teléfono de contacto
+  bankAccount?: string; // Strict: Cuenta Bancaria (CLABE/CBU)
 }
 
 export interface CartItem {

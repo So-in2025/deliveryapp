@@ -33,16 +33,30 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           </div>
           
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            <DesktopNavItem icon={<Database />} label="Dashboard" active={adminViewState === 'DASHBOARD'} onClick={() => setAdminViewState('DASHBOARD')} />
-            <DesktopNavItem icon={<Users />} label="Usuarios" active={adminViewState === 'USERS'} onClick={() => setAdminViewState('USERS')} />
-            <DesktopNavItem icon={<Store />} label="Comercios" active={adminViewState === 'STORES'} onClick={() => setAdminViewState('STORES')} />
-            <DesktopNavItem icon={<Truck />} label="Flota" active={adminViewState === 'FLEET'} onClick={() => setAdminViewState('FLEET')} />
-            <DesktopNavItem icon={<AlertTriangle />} label="Reclamos" active={adminViewState === 'DISPUTES'} onClick={() => setAdminViewState('DISPUTES')} />
-            <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
+            <div id="dashboard-tab">
+                <DesktopNavItem icon={<Database />} label="Dashboard" active={adminViewState === 'DASHBOARD'} onClick={() => setAdminViewState('DASHBOARD')} />
+            </div>
+            <div id="users-tab">
+                <DesktopNavItem icon={<Users />} label="Usuarios" active={adminViewState === 'USERS'} onClick={() => setAdminViewState('USERS')} />
+            </div>
+            <div id="stores-tab">
+                <DesktopNavItem icon={<Store />} label="Comercios" active={adminViewState === 'STORES'} onClick={() => setAdminViewState('STORES')} />
+            </div>
+            <div id="fleet-tab">
+                <DesktopNavItem icon={<Truck />} label="Flota" active={adminViewState === 'FLEET'} onClick={() => setAdminViewState('FLEET')} />
+            </div>
+            <div id="disputes-tab">
+                <DesktopNavItem icon={<AlertTriangle />} label="Reclamos" active={adminViewState === 'DISPUTES'} onClick={() => setAdminViewState('DISPUTES')} />
+            </div>
+            <div id="help-tab">
+                <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
+            </div>
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-1">
-            <DesktopNavItem icon={<Settings />} label="Configuración" active={adminViewState === 'SETTINGS'} onClick={() => setAdminViewState('SETTINGS')} />
+            <div id="config-tab">
+                <DesktopNavItem icon={<Settings />} label="Configuración" active={adminViewState === 'SETTINGS'} onClick={() => setAdminViewState('SETTINGS')} />
+            </div>
             <DesktopNavItem icon={<LogOut />} label="Logout" active={false} onClick={handleSignOut} isDanger />
           </div>
         </aside>

@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
 
 export const AuthView: React.FC = () => {
-  const { user: appUser, createStore, updateUser } = useApp();
+  const { user: appUser, createStore, updateUser, setRole } = useApp();
   const { showToast } = useToast();
   const { user: authUser, login, signOut, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
@@ -21,8 +21,16 @@ export const AuthView: React.FC = () => {
   const [storeName, setStoreName] = useState('');
   const [storeCategory, setStoreCategory] = useState('Comida');
   const [storeTime, setStoreTime] = useState('30');
+  const [storeLegalName, setStoreLegalName] = useState('');
+  const [storeTaxId, setStoreTaxId] = useState('');
+  const [storePhone, setStorePhone] = useState('');
+  const [storeBankAccount, setStoreBankAccount] = useState('');
+
   const [vehicleType, setVehicleType] = useState('Moto');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [driverLicense, setDriverLicense] = useState('');
+  const [vehicleInsurance, setVehicleInsurance] = useState('');
+  const [vehiclePlate, setVehiclePlate] = useState('');
 
   const handleLogin = async () => {
       setIsLoggingIn(true);
@@ -77,6 +85,7 @@ export const AuthView: React.FC = () => {
     
     if (isGuest) {
       updateUser({ role });
+      setRole(role);
       return;
     }
 
@@ -96,11 +105,12 @@ export const AuthView: React.FC = () => {
     }
 
     updateUser({ role });
+    setRole(role);
   };
 
   const handleRegisterMerchant = () => {
-      if (!storeName) {
-          showToast('El nombre de la tienda es requerido', 'error');
+      if (!storeName || !storeLegalName || !storeTaxId || !storePhone) {
+          showToast('Por favor completa todos los campos obligatorios', 'error');
           return;
       }
       const newStore: Store = {
@@ -111,24 +121,38 @@ export const AuthView: React.FC = () => {
           reviewsCount: 0,
           deliveryTimeMin: Number(storeTime),
           deliveryTimeMax: Number(storeTime) + 15,
+          deliveryFee: 45,
           image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
           products: [],
           createdAt: new Date().toISOString(),
-          ownerId: authUser?.uid || 'guest'
+          ownerId: authUser?.uid || 'guest',
+          legalName: storeLegalName,
+          taxId: storeTaxId,
+          phone: storePhone,
+          bankAccount: storeBankAccount
       };
       createStore(newStore);
       showToast('¡Tienda creada exitosamente!', 'success');
-      updateUser({ role: UserRole.MERCHANT });
+      updateUser({ role: UserRole.MERCHANT, ownedStoreId: newStore.id });
+      setRole(UserRole.MERCHANT);
   };
 
   const handleRegisterDriver = () => {
       const phoneRegex = /^[0-9]{7,15}$/;
-      if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
-          showToast('Por favor, ingresa un número de teléfono válido (solo números, 7-15 dígitos)', 'error');
+      if (!phoneNumber || !phoneRegex.test(phoneNumber) || !driverLicense || !vehiclePlate) {
+          showToast('Por favor completa todos los campos obligatorios correctamente', 'error');
           return;
       }
-      updateUser({ isDriver: true, role: UserRole.DRIVER, phone: phoneNumber });
+      updateUser({ 
+          isDriver: true, 
+          role: UserRole.DRIVER, 
+          phone: phoneNumber,
+          driverLicense: driverLicense,
+          vehicleInsurance: vehicleInsurance,
+          vehiclePlate: vehiclePlate
+      });
       showToast('¡Registro de Repartidor completo!', 'success');
+      setRole(UserRole.DRIVER);
   };
 
   return (
@@ -425,14 +449,56 @@ export const AuthView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Nombre del Local</label>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Nombre del Local *</label>
                                 <input 
                                     type="text" 
                                     value={storeName}
                                     onChange={(e) => setStoreName(e.target.value)}
                                     placeholder="Ej. Tacos El Gordo"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Razón Social *</label>
+                                <input 
+                                    type="text" 
+                                    value={storeLegalName}
+                                    onChange={(e) => setStoreLegalName(e.target.value)}
+                                    placeholder="Ej. Tacos El Gordo S.A. de C.V."
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">RFC/CUIT/RUT *</label>
+                                    <input 
+                                        type="text" 
+                                        value={storeTaxId}
+                                        onChange={(e) => setStoreTaxId(e.target.value)}
+                                        placeholder="Identificación fiscal"
+                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Teléfono *</label>
+                                    <input 
+                                        type="tel" 
+                                        value={storePhone}
+                                        onChange={(e) => setStorePhone(e.target.value)}
+                                        placeholder="Teléfono de contacto"
+                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Cuenta Bancaria (CLABE/CBU)</label>
+                                <input 
+                                    type="text" 
+                                    value={storeBankAccount}
+                                    onChange={(e) => setStoreBankAccount(e.target.value)}
+                                    placeholder="Para recibir tus pagos"
                                     className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
@@ -466,7 +532,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <button 
                                 onClick={handleRegisterMerchant}
-                                disabled={!storeName}
+                                disabled={!storeName || !storeLegalName || !storeTaxId || !storePhone}
                                 className="w-full mt-4 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:hover:bg-brand-500 text-brand-950 font-black py-4 px-6 rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
                             >
                                 <StoreIcon size={20} />
@@ -492,9 +558,9 @@ export const AuthView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Vehículo</label>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Vehículo *</label>
                                 <select 
                                     value={vehicleType}
                                     onChange={(e) => setVehicleType(e.target.value)}
@@ -506,7 +572,7 @@ export const AuthView: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Teléfono de Contacto</label>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Teléfono de Contacto *</label>
                                 <input 
                                     type="tel" 
                                     value={phoneNumber}
@@ -515,9 +581,39 @@ export const AuthView: React.FC = () => {
                                     className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
+                            <div>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Licencia de Conducir *</label>
+                                <input 
+                                    type="text" 
+                                    value={driverLicense}
+                                    onChange={(e) => setDriverLicense(e.target.value)}
+                                    placeholder="Número de licencia"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Placa del Vehículo *</label>
+                                <input 
+                                    type="text" 
+                                    value={vehiclePlate}
+                                    onChange={(e) => setVehiclePlate(e.target.value)}
+                                    placeholder="Placa"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Póliza de Seguro</label>
+                                <input 
+                                    type="text" 
+                                    value={vehicleInsurance}
+                                    onChange={(e) => setVehicleInsurance(e.target.value)}
+                                    placeholder="Número de póliza (Opcional)"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
                             <button 
                                 onClick={handleRegisterDriver}
-                                disabled={!phoneNumber}
+                                disabled={!phoneNumber || !driverLicense || !vehiclePlate}
                                 className="w-full mt-4 bg-stone-900 dark:bg-white disabled:opacity-50 text-white dark:text-stone-900 font-black py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
                             >
                                 <Bike size={20} />

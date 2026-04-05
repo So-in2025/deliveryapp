@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronRight, ChevronLeft, X, Sparkles } from 'lucide-react';
 import { Button } from './Button';
@@ -82,8 +83,8 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
         tooltipStyle.left = targetRect.right + margin;
     }
 
-    return (
-        <div className="fixed inset-0 z-[999] pointer-events-none overflow-hidden">
+    const content = (
+        <div className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden">
             {/* Backdrop with cutout */}
             <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] transition-all duration-500" style={{
                 clipPath: `polygon(
@@ -158,4 +159,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
             </AnimatePresence>
         </div>
     );
+
+    return createPortal(content, document.body);
 };

@@ -1,14 +1,45 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, or, onSnapshot, serverTimestamp, Timestamp, getDocFromServer, addDoc } from 'firebase/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged,
+  type User
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  doc, 
+  getDoc, 
+  getDocs, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  or, 
+  onSnapshot, 
+  serverTimestamp, 
+  Timestamp,
+  addDoc,
+  getDocFromServer
+} from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import appletConfig from './firebase-applet-config.json';
 
-// Firebase configuration with environment variable support for Vercel/Node
+// Helper to get environment variables safely in both Vite and Node environments
 const getEnv = (key: string) => {
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
-    return import.meta.env[key];
+  try {
+    // @ts-expect-error - Vite specific environment variables
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+      // @ts-expect-error - Vite specific environment variables
+      return import.meta.env[key];
+    }
+  } catch {
+    // Ignore error if import.meta is not available
   }
+  
   if (typeof process !== 'undefined' && process.env && process.env[key]) {
     return process.env[key];
   }
@@ -23,20 +54,39 @@ const config = {
   messagingSenderId: getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID') || appletConfig.messagingSenderId,
   appId: getEnv('VITE_FIREBASE_APP_ID') || appletConfig.appId,
   measurementId: getEnv('VITE_FIREBASE_MEASUREMENT_ID') || appletConfig.measurementId,
-  firestoreDatabaseId: appletConfig.firestoreDatabaseId || "(default)"
+  firestoreDatabaseId: getEnv('VITE_FIREBASE_DATABASE_ID') || appletConfig.firestoreDatabaseId || '(default)'
 };
 
-// Initialize Firebase SDK
-const app = initializeApp(config);
-export const db = getFirestore(app, config.firestoreDatabaseId);
-export const auth = getAuth(app);
-export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
-export const googleProvider = new GoogleAuthProvider();
+// Initialize Firebase
+const app = getApps().length === 0 ? initializeApp(config) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app, config.firestoreDatabaseId);
 
-// Auth Helpers
-export const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
+// Messaging setup (only in browser)
+let messaging: any = null;
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  try {
+    messaging = getMessaging(app);
+  } catch (err) {
+    console.warn('Firebase Messaging not supported in this browser:', err);
+  }
+}
+
+const googleProvider = new GoogleAuthProvider();
+
+export const loginWithGoogle = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (error) {
+    console.error('Error during Google login:', error);
+    throw error;
+  }
+};
+
 export const logout = () => signOut(auth);
 
+// Error Handling Spec for Firestore Operations
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -88,19 +138,27 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw new Error(JSON.stringify(errInfo));
 }
 
-// Connection Test
-async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, '_internal_', 'connection_test'));
-  } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration. The client is offline.");
-    }
-  }
-}
-testConnection();
-
+// Re-exporting Firebase functions explicitly
 export { 
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, or, onSnapshot, serverTimestamp, Timestamp, onAuthStateChanged, addDoc, getToken, onMessage, getDocFromServer
+  collection, 
+  doc, 
+  getDoc, 
+  getDocs, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  where, 
+  or, 
+  onSnapshot, 
+  serverTimestamp, 
+  Timestamp, 
+  onAuthStateChanged, 
+  addDoc, 
+  getToken, 
+  onMessage, 
+  getDocFromServer,
+  type User
 };
-export type { User };
+
+export { auth, db, messaging };

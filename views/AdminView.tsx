@@ -9,8 +9,15 @@ import { Button } from '../components/ui/Button';
 import { 
   TrendingUp, Users, Store as StoreIcon, Activity, 
   DollarSign, Shield, Search, 
-  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail
+  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail,
+  BarChart3, PieChart as PieChartIcon, Filter
 } from 'lucide-react';
+import { 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell, AreaChart, Area
+} from 'recharts';
+import { format, subDays, startOfDay, isSameDay } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
 
@@ -93,30 +100,44 @@ export const AdminView: React.FC = () => {
   const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState, updateAnyUser, updateStore, config, updateConfig, user, completeTour } = useApp();
   const { showToast } = useToast();
 
+  const isMobile = window.innerWidth < 1024;
+
   const adminTourSteps: TourStep[] = [
     {
-        targetId: 'admin-stats',
+        targetId: isMobile ? 'admin-stats' : 'dashboard-tab',
         title: 'Métricas del Negocio',
-        description: 'Visualiza las ventas totales, pedidos activos y el rendimiento general de la plataforma.',
-        position: 'bottom'
+        description: 'Visualiza las ventas totales, pedidos activos y el rendimiento general de la plataforma en tiempo real.',
+        position: isMobile ? 'bottom' : 'right'
     },
     {
-        targetId: 'stores-tab',
+        targetId: isMobile ? 'stores-tab-mobile' : 'stores-tab',
         title: 'Gestión de Comercios',
-        description: 'Administra todos los locales, revisa sus productos y ajusta sus configuraciones.',
-        position: 'bottom'
+        description: 'Administra todos los locales, revisa sus productos, ajusta comisiones y aprueba nuevos registros.',
+        position: isMobile ? 'bottom' : 'right'
     },
     {
-        targetId: 'users-tab',
+        targetId: isMobile ? 'users-tab-mobile' : 'users-tab',
         title: 'Control de Usuarios',
-        description: 'Gestiona los roles de Clientes, Merchants, Drivers y otros Administradores.',
-        position: 'bottom'
+        description: 'Gestiona los roles de Clientes, Merchants, Drivers y otros Administradores. Bloquea o desbloquea cuentas.',
+        position: isMobile ? 'bottom' : 'right'
     },
     {
-        targetId: 'config-tab',
+        targetId: isMobile ? 'fleet-tab-mobile' : 'fleet-tab',
+        title: 'Logística y Flota',
+        description: 'Supervisa a los repartidores, asigna pedidos manualmente si es necesario y monitorea su ubicación.',
+        position: isMobile ? 'bottom' : 'right'
+    },
+    {
+        targetId: isMobile ? 'disputes-tab-mobile' : 'disputes-tab',
+        title: 'Resolución de Reclamos',
+        description: 'Atiende disputas entre clientes, comercios y repartidores. Reembolsa o compensa según sea necesario.',
+        position: isMobile ? 'bottom' : 'right'
+    },
+    {
+        targetId: isMobile ? 'config-tab-mobile' : 'config-tab',
         title: 'Configuración Global',
         description: 'Ajusta comisiones, tarifas de envío y el modo de mantenimiento de la app.',
-        position: 'bottom'
+        position: isMobile ? 'bottom' : 'right'
     }
   ];
 
@@ -130,8 +151,36 @@ export const AdminView: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<string | null>(null); // storing customerName for simplicity in MVP
   const [storeSearch, setStoreSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<UserRole | 'ALL'>('ALL');
 
   // --- ANALYTICS LOGIC ---
+  const chartData = useMemo(() => {
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = subDays(new Date(), i);
+      return startOfDay(date);
+    }).reverse();
+
+    return last7Days.map(date => {
+      const dayOrders = orders.filter(o => isSameDay(new Date(o.createdAt), date));
+      return {
+        name: format(date, 'EEE', { locale: es }),
+        sales: dayOrders.reduce((sum, o) => sum + o.total, 0),
+        orders: dayOrders.length,
+        commission: dayOrders.reduce((sum, o) => sum + (o.platformCommission || 0), 0)
+      };
+    });
+  }, [orders]);
+
+  const statusData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    orders.forEach(o => {
+      counts[o.status] = (counts[o.status] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [orders]);
+
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#6366f1'];
+
   const kpis = useMemo(() => {
     const totalSales = orders.reduce((acc, o) => acc + o.total, 0);
     const platformCommission = orders.reduce((acc, o) => acc + (o.platformCommission || 0), 0);
@@ -214,6 +263,82 @@ export const AdminView: React.FC = () => {
           icon={Users}
           color="text-orange-700"
         />
+      </div>
+
+      {/* Charts Section */}
+      <div className="px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:max-w-7xl lg:mx-auto lg:w-full">
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-stone-900 flex items-center gap-2">
+              <BarChart3 size={18} className="text-brand-800" /> Ventas (Últimos 7 días)
+            </h3>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-stone-400">
+              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-brand-500"></div> Ventas</span>
+              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-stone-300"></div> Pedidos</span>
+            </div>
+          </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#facc15" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#facc15" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 10, fontWeight: 600, fill: '#a8a29e'}}
+                  dy={10}
+                />
+                <YAxis hide />
+                <Tooltip 
+                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}}
+                  formatter={(value: number) => [formatCurrency(value), 'Ventas']}
+                />
+                <Area type="monotone" dataKey="sales" stroke="#facc15" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
+          <h3 className="font-bold text-stone-900 mb-6 flex items-center gap-2">
+            <PieChartIcon size={18} className="text-brand-800" /> Estado de Pedidos
+          </h3>
+          <div className="h-64 w-full flex flex-col items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 w-full">
+              {statusData.map((entry, index) => (
+                <div key={entry.name} className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
+                  <span className="text-[10px] font-bold text-stone-500 truncate">{entry.name}</span>
+                  <span className="text-[10px] font-bold text-stone-900 ml-auto">{entry.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="px-4 lg:max-w-7xl lg:mx-auto lg:w-full">
@@ -422,7 +547,9 @@ export const AdminView: React.FC = () => {
               <h4 className="font-bold text-stone-900">{store.name}</h4>
               <p className="text-xs text-stone-500">{store.category} • {store.createdAt ? 'Nuevo' : 'Veterano'}</p>
               <div className="flex items-center gap-3 mt-1">
-                 <span className="text-[10px] bg-brand-500 text-brand-950 px-1.5 py-0.5 rounded font-bold">Activo</span>
+                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${store.isActive ? 'bg-brand-500 text-brand-950' : 'bg-amber-100 text-amber-700'}`}>
+                    {store.isActive ? 'Activo' : 'Pendiente'}
+                 </span>
                  <span className="text-[10px] text-stone-400">ID: {store.id}</span>
               </div>
            </div>
@@ -507,21 +634,42 @@ export const AdminView: React.FC = () => {
 
   const renderUsersTab = () => (
     <div className="px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
-       <div className="bg-white p-2 rounded-xl border border-stone-200 flex items-center gap-2 lg:max-w-md mb-6">
-         <Search size={18} className="text-stone-400 ml-2" />
-         <input 
-            placeholder="Buscar usuario..." 
-            className="flex-1 outline-none text-sm" 
-            value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
-         />
-      </div>
+       <div className="flex flex-col lg:flex-row gap-4 mb-6">
+          <div className="bg-white p-2 rounded-xl border border-stone-200 flex items-center gap-2 flex-1">
+            <Search size={18} className="text-stone-400 ml-2" />
+            <input 
+                placeholder="Buscar usuario..." 
+                className="flex-1 outline-none text-sm" 
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button 
+                onClick={() => setRoleFilter('ALL')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap flex items-center gap-2 ${roleFilter === 'ALL' ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
+            >
+                <Filter size={14} /> Todos
+            </button>
+            {Object.values(UserRole).map(role => (
+                <button 
+                    key={role}
+                    onClick={() => setRoleFilter(role)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${roleFilter === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
+                >
+                    {role}
+                </button>
+            ))}
+          </div>
+       </div>
        
        <div className="bg-white rounded-xl shadow-sm border border-stone-100 text-left overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:bg-transparent lg:shadow-none lg:border-0">
            <div className="p-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center lg:hidden">
-              <span className="text-xs font-bold text-stone-500 uppercase">Lista de Clientes ({userList.length})</span>
+              <span className="text-xs font-bold text-stone-500 uppercase">Lista de Usuarios ({userList.filter(u => roleFilter === 'ALL' || u.role === roleFilter).length})</span>
            </div>
-           {userList.map((u, i) => (
+           {userList
+            .filter(u => roleFilter === 'ALL' || u.role === roleFilter)
+            .map((u, i) => (
                <div 
                     key={u.uid || i} 
                     onClick={() => setSelectedUser(u.uid || u.name)}
@@ -532,7 +680,10 @@ export const AdminView: React.FC = () => {
                            {u.name?.charAt(0) || '?'}
                        </div>
                        <div>
-                           <p className="text-sm font-bold text-stone-900">{u.name || 'Sin nombre'}</p>
+                           <div className="flex items-center gap-2">
+                             <p className="text-sm font-bold text-stone-900">{u.name || 'Sin nombre'}</p>
+                             <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{u.role}</span>
+                           </div>
                            <p className="text-[10px] text-stone-500">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>
                        </div>
                    </div>
@@ -618,6 +769,7 @@ export const AdminView: React.FC = () => {
                             Resumen
                         </button>
                         <button 
+                            id="fleet-tab-mobile"
                             onClick={() => setAdminViewState('FLEET')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'FLEET' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
@@ -630,27 +782,28 @@ export const AdminView: React.FC = () => {
                             Pedidos
                         </button>
                         <button 
-                            id="stores-tab"
+                            id="stores-tab-mobile"
                             onClick={() => setAdminViewState('STORES')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'STORES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Comercios
                         </button>
                         <button 
-                            id="users-tab"
+                            id="users-tab-mobile"
                             onClick={() => setAdminViewState('USERS')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'USERS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Usuarios
                         </button>
                         <button 
+                            id="disputes-tab-mobile"
                             onClick={() => setAdminViewState('DISPUTES')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'DISPUTES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >
                             Reclamos
                         </button>
                         <button 
-                            id="config-tab"
+                            id="config-tab-mobile"
                             onClick={() => setAdminViewState('SETTINGS')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'SETTINGS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
                         >

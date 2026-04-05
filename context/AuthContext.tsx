@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth, onAuthStateChanged, User, loginWithGoogle, logout, db, doc, setDoc, updateDoc, messaging, getToken } from '../firebase';
+import { auth, onAuthStateChanged, User, loginWithGoogle, logout, db, doc, setDoc, updateDoc, messaging, getToken, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
 import { UserRole, UserProfile } from '../types';
 import { useToast } from './ToastContext';
 import { Capacitor } from '@capacitor/core';

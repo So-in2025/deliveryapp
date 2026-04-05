@@ -14,30 +14,44 @@ export const DriverView: React.FC = () => {
   const { user, orders, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, updateLocation, completeTour } = useApp();
   const { showToast } = useToast();
 
+  const isMobile = window.innerWidth < 1024;
+
   const driverTourSteps: TourStep[] = [
     {
         targetId: 'driver-status',
         title: 'Estado de Conexión',
-        description: 'Toca aquí para ponerte en línea y empezar a recibir pedidos de delivery.',
+        description: 'Toca aquí para ponerte en línea y empezar a recibir pedidos de delivery. ¡Asegúrate de estar activo para ganar!',
         position: 'bottom'
     },
     {
-        targetId: 'deliveries-tab',
+        targetId: isMobile ? 'deliveries-tab-mobile' : 'deliveries-tab',
         title: 'Pedidos Disponibles',
-        description: 'Aquí aparecerán todos los pedidos listos para ser recogidos en los locales.',
-        position: 'bottom'
+        description: 'Aquí aparecerán todos los pedidos listos para ser recogidos en los locales. Acepta los que más te convengan.',
+        position: isMobile ? 'top' : 'right'
     },
     {
-        targetId: 'route-tab',
+        targetId: isMobile ? 'route-tab-mobile' : 'route-tab',
         title: 'Tu Ruta Activa',
-        description: 'Cuando aceptes un pedido, aquí verás el mapa y las instrucciones de entrega.',
-        position: 'bottom'
+        description: 'Cuando aceptes un pedido, aquí verás el mapa y las instrucciones paso a paso para la entrega.',
+        position: isMobile ? 'top' : 'right'
     },
     {
         targetId: 'earnings-card',
         title: 'Tus Ganancias',
-        description: 'Lleva el control de tus ingresos diarios por entregas y propinas.',
+        description: 'Lleva el control de tus ingresos diarios por entregas y propinas. ¡Transparencia total!',
         position: 'bottom'
+    },
+    {
+        targetId: isMobile ? 'history-tab-mobile' : 'history-tab',
+        title: 'Historial de Entregas',
+        description: 'Revisa el detalle de todas las entregas que has completado exitosamente.',
+        position: isMobile ? 'top' : 'right'
+    },
+    {
+        targetId: isMobile ? 'settings-tab-mobile' : 'settings-tab',
+        title: 'Ajustes y Soporte',
+        description: 'Modifica tu perfil, revisa tu vehículo y contacta a soporte si tienes algún problema en ruta.',
+        position: isMobile ? 'bottom' : 'right'
     }
   ];
 
@@ -711,7 +725,7 @@ export const DriverView: React.FC = () => {
                     <div>
                         <h4 className="text-xs font-bold text-stone-400 uppercase mb-2">Productos</h4>
                         <div className="space-y-2">
-                            {selectedTask.items.map((item, idx) => (
+                            {selectedTask.items?.map((item, idx) => (
                                 <div key={idx} className="flex justify-between text-sm">
                                     <span className="text-stone-900 dark:text-white"><span className="font-bold">{item.quantity}x</span> {item.product.name}</span>
                                     <span className="text-stone-500 dark:text-stone-400">{formatCurrency(item.totalPrice)}</span>

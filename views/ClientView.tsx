@@ -195,30 +195,38 @@ export const ClientView: React.FC = () => {
   const { showToast } = useToast();
   const { signOut } = useAuth();
 
+  const isMobile = window.innerWidth < 1024;
+
   const clientTourSteps: TourStep[] = [
     {
         targetId: 'location-selector',
         title: 'Tu Ubicación',
-        description: 'Asegúrate de configurar tu dirección correctamente para que los pedidos lleguen a tu puerta.',
+        description: 'Asegúrate de configurar tu dirección correctamente para que los pedidos lleguen a tu puerta sin demoras.',
         position: 'bottom'
     },
     {
         targetId: 'search-bar',
         title: 'Buscador Inteligente',
-        description: 'Busca platos específicos, categorías o tus comercios favoritos en segundos.',
+        description: 'Busca platos específicos, categorías o tus comercios favoritos en segundos. ¡Encuentra lo que se te antoja!',
         position: 'bottom'
     },
     {
-        targetId: 'history-button',
+        targetId: 'category-pills',
+        title: 'Explora por Categoría',
+        description: 'Filtra rápidamente los restaurantes por el tipo de comida que más te guste.',
+        position: 'bottom'
+    },
+    {
+        targetId: isMobile ? 'history-tab-mobile' : 'history-tab',
         title: 'Tus Pedidos',
-        description: 'Accede rápidamente a tu historial y repite tus pedidos favoritos con un toque.',
-        position: 'bottom'
+        description: 'Accede rápidamente a tu historial y repite tus pedidos favoritos con un solo toque.',
+        position: isMobile ? 'top' : 'right'
     },
     {
-        targetId: 'profile-button',
-        title: 'Tu Perfil',
-        description: 'Gestiona tus datos, métodos de pago y preferencias desde aquí.',
-        position: 'bottom'
+        targetId: isMobile ? 'profile-tab-mobile' : 'profile-tab',
+        title: 'Tu Perfil y Ajustes',
+        description: 'Gestiona tus datos, métodos de pago, direcciones y preferencias desde aquí.',
+        position: isMobile ? 'top' : 'right'
     }
   ];
 
@@ -528,7 +536,7 @@ export const ClientView: React.FC = () => {
                                 </span>
                             </div>
                             <div className="grid grid-cols-1 gap-3">
-                                {group.options.map(option => {
+                                {group.options?.map(option => {
                                     const isSelected = selectedModifiers[group.id]?.some(m => m.id === option.id);
                                     return (
                                         <button 
@@ -617,7 +625,7 @@ export const ClientView: React.FC = () => {
                   </div>
                   
                   <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
-                      {user.addresses.map((addr, idx) => (
+                      {user.addresses?.map((addr, idx) => (
                           <button 
                               key={idx}
                               onClick={() => handleSelectAddress(addr)}
@@ -704,7 +712,7 @@ export const ClientView: React.FC = () => {
   );
 
   const CategoryPills = () => (
-      <div className="flex gap-4 px-6 pb-4 overflow-x-auto scrollbar-hide">
+      <div id="category-pills" className="flex gap-4 px-6 pb-4 overflow-x-auto scrollbar-hide">
            {categories.map((cat) => {
               let Icon = Utensils;
               if(cat === 'Hamburguesas') Icon = Flame;
@@ -1011,7 +1019,7 @@ export const ClientView: React.FC = () => {
 
                  <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
                     <h3 className="font-bold text-sm text-stone-900 dark:text-white mb-3 uppercase tracking-wider">Detalle del Pedido</h3>
-                    {displayOrder.items.map((item, idx) => (
+                    {displayOrder.items?.map((item, idx) => (
                         <div key={idx} className="flex justify-between text-sm py-2 border-b border-stone-100 dark:border-stone-700 last:border-0">
                             <div>
                                 <div className="flex gap-2">
@@ -1403,7 +1411,7 @@ export const ClientView: React.FC = () => {
                           
                           <div className="flex items-center gap-2 mb-6">
                             <div className="flex -space-x-2">
-                                {order.items.slice(0, 3).map((item, i) => (
+                                {order.items?.slice(0, 3).map((item, i) => (
                                     <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-stone-900 bg-stone-100 dark:bg-stone-800 overflow-hidden shadow-sm">
                                         <img src={item.product.image} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                     </div>
@@ -1622,7 +1630,7 @@ export const ClientView: React.FC = () => {
                   </div>
                   
                   <div className="space-y-4">
-                      {user.addresses.map((addr, idx) => (
+                      {user.addresses?.map((addr, idx) => (
                           <div key={idx} className="bg-stone-100 dark:bg-white/5 p-5 rounded-[1.5rem] border border-black/[0.03] dark:border-white/[0.03] flex justify-between items-center group/addr hover:bg-white dark:hover:bg-stone-800 transition-all duration-300">
                               <div className="flex items-center gap-4 min-w-0">
                                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${idx === 0 ? 'bg-brand-500 text-brand-950' : 'bg-white dark:bg-stone-700 text-stone-400'}`}>
@@ -1770,7 +1778,7 @@ export const ClientView: React.FC = () => {
 
                       <div className="space-y-5 mb-8">
                           <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Productos</p>
-                          {order.items.map((item, idx) => (
+                          {order.items?.map((item, idx) => (
                               <div key={idx} className="flex justify-between text-sm">
                                   <span className="text-stone-600 dark:text-stone-400 font-bold"><span className="font-black text-stone-950 dark:text-white mr-2">{item.quantity}x</span> {item.product.name}</span>
                                   <span className="font-black text-stone-950 dark:text-white">{formatCurrency(item.totalPrice * item.quantity)}</span>

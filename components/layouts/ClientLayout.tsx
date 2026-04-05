@@ -42,14 +42,24 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
           </div>
           
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <DesktopNavItem icon={<ShoppingBag />} label="Explorar" active={clientViewState === 'BROWSE'} onClick={handleHomeClick} />
-            <DesktopNavItem icon={<Heart />} label="Favoritos" active={clientViewState === 'FAVORITES'} onClick={() => setClientViewState('FAVORITES')} />
-            <DesktopNavItem icon={<History />} label="Mis Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
-            <DesktopNavItem icon={<User />} label="Mi Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
+            <div id="browse-tab">
+                <DesktopNavItem icon={<ShoppingBag />} label="Explorar" active={clientViewState === 'BROWSE'} onClick={handleHomeClick} />
+            </div>
+            <div id="favorites-tab">
+                <DesktopNavItem icon={<Heart />} label="Favoritos" active={clientViewState === 'FAVORITES'} onClick={() => setClientViewState('FAVORITES')} />
+            </div>
+            <div id="history-tab">
+                <DesktopNavItem icon={<History />} label="Mis Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
+            </div>
+            <div id="profile-tab">
+                <DesktopNavItem icon={<User />} label="Mi Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
+            </div>
           </nav>
 
           <div className="p-4 border-t border-brand-100 dark:border-stone-800 space-y-2">
-            <DesktopNavItem icon={<Settings />} label="Ajustes" active={false} onClick={toggleSettings} />
+            <div id="settings-tab">
+                <DesktopNavItem icon={<Settings />} label="Ajustes" active={false} onClick={toggleSettings} />
+            </div>
             <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={handleSignOut} isDanger />
           </div>
         </aside>
@@ -74,6 +84,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
                   )}
               </button>
               <button 
+                  id="settings-tab-mobile"
                   onClick={toggleSettings}
                   className="p-2 rounded-lg bg-brand-950/10 dark:bg-white/10 text-brand-950 dark:text-white hover:bg-brand-950/20 transition-colors"
               >
@@ -88,10 +99,18 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
           {/* Mobile Bottom Navigation */}
           <nav className="lg:hidden shrink-0 w-full bg-white dark:bg-stone-900 border-t border-stone-100 dark:border-stone-800 pb-safe pt-2 px-6 flex justify-between items-center z-40 relative transition-colors duration-300">
-             <NavItem icon={<ShoppingBag />} label="Inicio" active={clientViewState === 'BROWSE'} onClick={handleHomeClick} />
-             <NavItem icon={<Heart />} label="Favoritos" active={clientViewState === 'FAVORITES'} onClick={() => setClientViewState('FAVORITES')} />
-             <NavItem icon={<History />} label="Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
-             <NavItem icon={<User />} label="Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
+             <div id="browse-tab-mobile" className="flex-1 flex justify-center">
+                 <NavItem icon={<ShoppingBag />} label="Inicio" active={clientViewState === 'BROWSE'} onClick={handleHomeClick} />
+             </div>
+             <div id="favorites-tab-mobile" className="flex-1 flex justify-center">
+                 <NavItem icon={<Heart />} label="Favoritos" active={clientViewState === 'FAVORITES'} onClick={() => setClientViewState('FAVORITES')} />
+             </div>
+             <div id="history-tab-mobile" className="flex-1 flex justify-center">
+                 <NavItem icon={<History />} label="Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
+             </div>
+             <div id="profile-tab-mobile" className="flex-1 flex justify-center">
+                 <NavItem icon={<User />} label="Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
+             </div>
           </nav>
         </div>
       </div>

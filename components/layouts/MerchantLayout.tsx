@@ -42,12 +42,24 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
           </div>
           
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            <DesktopNavItem icon={<LayoutDashboard />} label="Pedidos Activos" active={merchantViewState === 'ORDERS'} onClick={() => setMerchantViewState('ORDERS')} />
-            <DesktopNavItem icon={<Utensils />} label="Mi Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} />
-            <DesktopNavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
-            <DesktopNavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
-            <DesktopNavItem icon={<Settings />} label="Ajustes Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
-            <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
+            <div id="orders-tab">
+                <DesktopNavItem icon={<LayoutDashboard />} label="Pedidos Activos" active={merchantViewState === 'ORDERS'} onClick={() => setMerchantViewState('ORDERS')} />
+            </div>
+            <div id="menu-tab">
+                <DesktopNavItem icon={<Utensils />} label="Mi Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} />
+            </div>
+            <div id="coupons-tab">
+                <DesktopNavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
+            </div>
+            <div id="history-tab">
+                <DesktopNavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
+            </div>
+            <div id="settings-tab">
+                <DesktopNavItem icon={<Settings />} label="Ajustes Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
+            </div>
+            <div id="help-tab">
+                <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
+            </div>
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-2">
@@ -100,11 +112,11 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
 
           {/* Mobile Bottom Navigation */}
           <nav className="lg:hidden shrink-0 w-full bg-stone-950 border-t border-stone-800 pb-safe pt-2 px-6 flex justify-between items-center z-40 relative">
-             <NavItem icon={<LayoutDashboard />} label="Pedidos" active={merchantViewState === 'ORDERS'} onClick={() => setMerchantViewState('ORDERS')} />
-             <NavItem icon={<Utensils />} label="Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} />
-             <NavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
-             <NavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
-             <NavItem icon={<Settings />} label="Ajustes" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
+             <div id="orders-tab-mobile"><NavItem icon={<LayoutDashboard />} label="Pedidos" active={merchantViewState === 'ORDERS'} onClick={() => setMerchantViewState('ORDERS')} /></div>
+             <div id="menu-tab-mobile"><NavItem icon={<Utensils />} label="Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} /></div>
+             <div id="coupons-tab-mobile"><NavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} /></div>
+             <div id="history-tab-mobile"><NavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} /></div>
+             <div id="settings-tab-mobile"><NavItem icon={<Settings />} label="Ajustes" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} /></div>
           </nav>
         </div>
       </div>

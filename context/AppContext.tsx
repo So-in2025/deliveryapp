@@ -11,6 +11,7 @@ import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimes
 // App Context Type and Provider
 interface AppContextType {
   role: UserRole;
+  setRole: (role: UserRole) => void;
   user: UserProfile; 
   users: UserProfile[];
   updateUser: (data: Partial<UserProfile>) => void;
@@ -134,7 +135,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       const stored = localStorage.getItem('codex_notifications_v1');
       if (!stored) return [];
-      return JSON.parse(stored).map((n: { timestamp: string | number | Date }) => ({ ...n, timestamp: new Date(n.timestamp) }));
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed.map((n: any) => ({ ...n, timestamp: new Date(n.timestamp) })) : [];
     } catch {
       return [];
     }
@@ -233,7 +235,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     console.log('AuthProfile changed:', authProfile);
     if (authProfile) {
       setUser(authProfile);
-      setRoleState(authProfile.role);
+      // We don't automatically set the role here anymore, so the user can choose their role
+      // from the AuthView menu every time they open the app.
+      // setRoleState(authProfile.role);
       setIsDriverOnline(!!authProfile.isOnline);
     } else {
       setUser(DEFAULT_USER);
@@ -477,16 +481,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       showToast(nextStatus ? 'Ahora estás en línea' : 'Desconectado', 'info');
   };
 
-  const updateUser = async (data: Partial<UserProfile>) => {
+  const updateUser = useCallback(async (data: Partial<UserProfile>) => {
       setUser(prev => ({ ...prev, ...data }));
       if (authUser) {
         try {
-          await updateDoc(doc(db, 'users', authUser.uid), data);
+          await setDoc(doc(db, 'users', authUser.uid), data, { merge: true });
         } catch (error) {
           console.error('Error updating user:', error);
         }
       }
-  };
+  }, [authUser]);
 
   const updateAnyUser = async (userId: string, data: Partial<UserProfile>) => {
       try {
@@ -1005,6 +1009,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   return (
     <AppContext.Provider value={{ 
       role, 
+      setRole: setRoleState,
       user,
       users,
       updateUser,

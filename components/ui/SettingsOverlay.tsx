@@ -12,7 +12,7 @@ import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshC
 type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER' | 'PRIVACY' | 'TERMS' | 'HELP';
 
 export const SettingsOverlay: React.FC = () => {
-  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, darkMode, toggleDarkMode, role, verifyAdminPin } = useApp();
+  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, darkMode, toggleDarkMode, role, verifyAdminPin, setRole } = useApp();
   const { signOut, requestNotificationPermission } = useAuth();
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState<SettingsView>('MAIN');
@@ -36,12 +36,19 @@ export const SettingsOverlay: React.FC = () => {
   
   // Store Reg State
   const [storeName, setStoreName] = useState('');
+  const [storeLegalName, setStoreLegalName] = useState('');
+  const [storeTaxId, setStoreTaxId] = useState('');
+  const [storePhone, setStorePhone] = useState('');
+  const [storeBankAccount, setStoreBankAccount] = useState('');
   const [storeCategory, setStoreCategory] = useState('Hamburguesas');
   const [storeTime, setStoreTime] = useState('20');
   
   // Driver Reg State
   const [driverVehicle, setDriverVehicle] = useState('Moto');
   const [driverPlate, setDriverPlate] = useState('');
+  const [driverPhone, setDriverPhone] = useState('');
+  const [driverLicense, setDriverLicense] = useState('');
+  const [driverInsurance, setDriverInsurance] = useState('');
 
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
@@ -131,27 +138,54 @@ export const SettingsOverlay: React.FC = () => {
           showToast('Debes iniciar sesión con Google para crear una tienda real.', 'error');
           return;
       }
+      
+      if (!storeName || !storeLegalName || !storeTaxId || !storePhone) {
+          showToast('Por favor completa todos los campos obligatorios', 'error');
+          return;
+      }
+
       const newStore: Store = {
           id: `store-${Date.now()}`,
-          name: storeName || 'Mi Nuevo Local',
+          name: storeName,
           category: storeCategory,
           rating: 5.0, // Heuristic: New stores start high
           reviewsCount: 0,
           deliveryTimeMin: Number(storeTime),
           deliveryTimeMax: Number(storeTime) + 15,
+          deliveryFee: 45,
           image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80', // Default fancy image
           products: [],
-          createdAt: new Date().toISOString() // Triggers "NEW" badge
+          createdAt: new Date().toISOString(), // Triggers "NEW" badge
+          ownerId: user.uid,
+          legalName: storeLegalName,
+          taxId: storeTaxId,
+          phone: storePhone,
+          bankAccount: storeBankAccount
       };
       createStore(newStore);
       updateUser({ ownedStoreId: newStore.id, role: UserRole.MERCHANT });
+      setRole(UserRole.MERCHANT);
       showToast('¡Local creado exitosamente!', 'success');
       toggleSettings();
       setCurrentView('MAIN');
   };
 
   const handleRegisterDriver = () => {
-      updateUser({ isDriver: true, role: UserRole.DRIVER });
+      const phoneRegex = /^[0-9]{7,15}$/;
+      if (!driverPhone || !phoneRegex.test(driverPhone) || !driverLicense || !driverPlate) {
+          showToast('Por favor completa todos los campos obligatorios correctamente', 'error');
+          return;
+      }
+
+      updateUser({ 
+          isDriver: true, 
+          role: UserRole.DRIVER, 
+          phone: driverPhone,
+          driverLicense: driverLicense,
+          vehicleInsurance: driverInsurance,
+          vehiclePlate: driverPlate
+      });
+      setRole(UserRole.DRIVER);
       showToast('¡Registro de Driver completo!', 'success');
       toggleSettings();
       setCurrentView('MAIN');
@@ -164,6 +198,7 @@ export const SettingsOverlay: React.FC = () => {
               const isValid = await verifyAdminPin(pin);
               if (isValid) {
                   updateUser({ role: UserRole.ADMIN });
+                  setRole(UserRole.ADMIN);
                   showToast('Modo Administrador activado', 'success');
                   toggleSettings();
               } else {
@@ -173,6 +208,7 @@ export const SettingsOverlay: React.FC = () => {
           return;
       }
       updateUser({ role: newRole });
+      setRole(newRole);
       toggleSettings();
   };
 
@@ -182,9 +218,30 @@ export const SettingsOverlay: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right transition-colors duration-300">
             {/* Partners Hub */}
             <div>
-                <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">Zona Partners</h3>
+                <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">Cambiar de Rol</h3>
                 <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden transition-colors duration-300">
                     
+                    {/* Client Option */}
+                    <div 
+                        onClick={() => switchRole(UserRole.CLIENT)}
+                        className="flex items-center justify-between p-4 border-b border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
+                    >
+                        <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
+                            <div className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
+                                <User size={18} />
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm text-stone-900 dark:text-white">
+                                    Modo Cliente
+                                </p>
+                                <p className="text-[10px] text-stone-400 dark:text-stone-500">
+                                    Pedir comida a domicilio
+                                </p>
+                            </div>
+                        </div>
+                        <ChevronRight size={16} className="text-stone-300 dark:text-stone-600" />
+                    </div>
+
                     {/* Merchant Option */}
                     <div 
                         onClick={() => user.ownedStoreId ? switchRole(UserRole.MERCHANT) : setCurrentView('REGISTER_MERCHANT')}
@@ -354,6 +411,47 @@ export const SettingsOverlay: React.FC = () => {
                     className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
                   />
               </div>
+
+              <div>
+                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Razón Social / Nombre Legal</label>
+                  <input 
+                    placeholder="Ej: Burger King S.A."
+                    value={storeLegalName}
+                    onChange={(e) => setStoreLegalName(e.target.value)}
+                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
+                  />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                  <div>
+                      <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">CUIT / Tax ID</label>
+                      <input 
+                        placeholder="30-XXXXXXXX-X"
+                        value={storeTaxId}
+                        onChange={(e) => setStoreTaxId(e.target.value)}
+                        className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
+                      />
+                  </div>
+                  <div>
+                      <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Teléfono Comercial</label>
+                      <input 
+                        placeholder="11 1234 5678"
+                        value={storePhone}
+                        onChange={(e) => setStorePhone(e.target.value)}
+                        className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
+                      />
+                  </div>
+              </div>
+
+              <div>
+                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">CBU / Cuenta Bancaria (Pagos)</label>
+                  <input 
+                    placeholder="0000000000000000000000"
+                    value={storeBankAccount}
+                    onChange={(e) => setStoreBankAccount(e.target.value)}
+                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
+                  />
+              </div>
               
               <div>
                   <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Categoría</label>
@@ -422,7 +520,37 @@ export const SettingsOverlay: React.FC = () => {
               </div>
 
               <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Patente / ID (Opcional)</label>
+                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Teléfono de Contacto</label>
+                  <input 
+                    placeholder="11 1234 5678"
+                    value={driverPhone}
+                    onChange={(e) => setDriverPhone(e.target.value)}
+                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-amber-500 font-medium text-stone-900 dark:text-white transition-colors"
+                  />
+              </div>
+
+              <div>
+                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Número de Licencia</label>
+                  <input 
+                    placeholder="ABC-123456"
+                    value={driverLicense}
+                    onChange={(e) => setDriverLicense(e.target.value)}
+                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-amber-500 font-medium text-stone-900 dark:text-white transition-colors"
+                  />
+              </div>
+
+              <div>
+                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Póliza de Seguro (Opcional)</label>
+                  <input 
+                    placeholder="Nro de Póliza"
+                    value={driverInsurance}
+                    onChange={(e) => setDriverInsurance(e.target.value)}
+                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-amber-500 font-medium text-stone-900 dark:text-white transition-colors"
+                  />
+              </div>
+
+              <div>
+                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Patente / ID Vehículo</label>
                   <input 
                     placeholder="ABC-123"
                     value={driverPlate}

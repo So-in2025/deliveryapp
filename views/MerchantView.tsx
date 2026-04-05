@@ -105,7 +105,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
         )}
 
         <div className="space-y-2 mb-4">
-          {order.items.map((item, idx) => (
+          {order.items?.map((item, idx) => (
             <div key={idx} className="flex gap-3 text-sm">
               <div className="bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded text-stone-900 dark:text-white font-bold text-xs h-fit border border-stone-200 dark:border-stone-600">
                 {item.quantity}x
@@ -114,7 +114,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
                 <p className="text-stone-900 dark:text-white font-medium leading-tight">{item.product.name}</p>
                 {item.selectedModifiers.length > 0 && (
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                    {item.selectedModifiers.map(m => m.name).join(', ')}
+                    {item.selectedModifiers?.map(m => m.name).join(', ')}
                   </p>
                 )}
               </div>
@@ -568,7 +568,7 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
                                    <button onClick={() => _removeModifierGroup(g.id)} className="dark:text-white"><Trash2 size={12} /></button>
                                </div>
                                <div className="pl-2 border-l-2 dark:border-stone-600">
-                                   {g.options.map(o => (
+                                   {g.options?.map(o => (
                                        <div key={o.id} className="flex gap-2 mb-1">
                                            <input value={o.name} onChange={e => _updateOption(g.id, o.id, 'name', e.target.value)} className="text-xs border dark:border-stone-600 rounded p-1 flex-1 dark:bg-stone-700 dark:text-white" />
                                            <input type="number" value={o.price} onChange={e => _updateOption(g.id, o.id, 'price', Number(e.target.value))} className="text-xs border dark:border-stone-600 rounded p-1 w-12 dark:bg-stone-700 dark:text-white" />
@@ -709,30 +709,44 @@ export const MerchantView: React.FC = () => {
   const { showToast } = useToast();
   const lastOrderCountRef = useRef(0);
 
+  const isMobile = window.innerWidth < 1024;
+  
   const merchantTourSteps: TourStep[] = [
     {
         targetId: 'store-status',
         title: 'Estado de tu Tienda',
-        description: 'Cambia entre ONLINE y OFFLINE para controlar cuándo recibes pedidos.',
+        description: 'Cambia entre ONLINE y OFFLINE para controlar cuándo recibes pedidos. ¡Asegúrate de estar ONLINE para empezar a vender!',
         position: 'bottom'
     },
     {
-        targetId: 'orders-tab',
+        targetId: isMobile ? 'orders-tab-mobile' : 'orders-tab',
         title: 'Gestión de Pedidos',
-        description: 'Aquí verás todos los pedidos entrantes y podrás cambiar su estado (Aceptar, Preparar, Listo).',
-        position: 'bottom'
+        description: 'Aquí verás todos los pedidos entrantes. Podrás aceptarlos, marcarlos en preparación y listos para entregar.',
+        position: isMobile ? 'top' : 'right'
     },
     {
-        targetId: 'menu-tab',
+        targetId: isMobile ? 'menu-tab-mobile' : 'menu-tab',
         title: 'Tu Menú Digital',
-        description: 'Carga tus productos manualmente o usa nuestra IA para escanear tu carta física.',
-        position: 'bottom'
+        description: 'Carga tus productos, añade fotos y descripciones. ¡Incluso puedes usar nuestra IA para escanear tu carta física!',
+        position: isMobile ? 'top' : 'right'
     },
     {
-        targetId: 'settings-tab',
+        targetId: isMobile ? 'coupons-tab-mobile' : 'coupons-tab',
+        title: 'Cupones de Descuento',
+        description: 'Atrae más clientes creando cupones promocionales. Tú decides el descuento y las condiciones.',
+        position: isMobile ? 'top' : 'right'
+    },
+    {
+        targetId: isMobile ? 'history-tab-mobile' : 'history-tab',
+        title: 'Historial de Ventas',
+        description: 'Revisa tus ventas pasadas, analiza tus ingresos y mantén un control total de tu negocio.',
+        position: isMobile ? 'top' : 'right'
+    },
+    {
+        targetId: isMobile ? 'settings-tab-mobile' : 'settings-tab',
         title: 'Personalización',
-        description: 'Ajusta los colores de tu marca, logo y configuración de pagos.',
-        position: 'bottom'
+        description: 'Ajusta los colores de tu marca, logo, horarios de atención y configuración de pagos.',
+        position: isMobile ? 'top' : 'right'
     }
   ];
 

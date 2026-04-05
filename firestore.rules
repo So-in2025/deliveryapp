@@ -69,8 +69,10 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN' ||
-         (request.auth.token.email == "ofeliaacevedo41@gmail.com" && request.auth.token.email_verified == true));
+        ((request.auth.token.email == "ofeliaacevedo41@gmail.com" && request.auth.token.email_verified == true) ||
+         (request.auth.token.email == "jg.hardcore.builds@gmail.com" && request.auth.token.email_verified == true) ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN'));
     }
 
     function hasRequiredFields(fields) {
@@ -105,7 +107,10 @@ service cloud.firestore {
              (!('role' in data) || (data.role in ['CLIENT', 'MERCHANT', 'DRIVER', 'ADMIN'])) &&
              (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 500)) &&
              (!('fcmToken' in data) || (data.fcmToken is string && data.fcmToken.size() <= 300)) &&
-             (!('phone' in data) || (data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 15));
+             (!('phone' in data) || (data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 15)) &&
+             (!('driverLicense' in data) || (data.driverLicense is string && data.driverLicense.size() <= 50)) &&
+             (!('vehicleInsurance' in data) || (data.vehicleInsurance is string && data.vehicleInsurance.size() <= 100)) &&
+             (!('vehiclePlate' in data) || (data.vehiclePlate is string && data.vehiclePlate.size() <= 20));
     }
 
     function isValidStore(data) {
