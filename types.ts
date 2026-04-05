@@ -18,6 +18,7 @@ export interface UserProfile {
   isDriver?: boolean; // Has completed driver onboarding
   ownedStoreId?: string; // Has completed merchant onboarding
   addresses?: string[]; // Saved addresses
+  phone?: string; // New: Driver phone number
   isOnline?: boolean; // New: For Driver availability in real-time
   fcmToken?: string; // New: For Push Notifications
   lat?: number; // New: For real-time tracking

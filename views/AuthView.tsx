@@ -122,11 +122,12 @@ export const AuthView: React.FC = () => {
   };
 
   const handleRegisterDriver = () => {
-      if (!phoneNumber) {
-          showToast('El número de teléfono es requerido', 'error');
+      const phoneRegex = /^[0-9]{7,15}$/;
+      if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
+          showToast('Por favor, ingresa un número de teléfono válido (solo números, 7-15 dígitos)', 'error');
           return;
       }
-      updateUser({ isDriver: true, role: UserRole.DRIVER }); // We could save vehicle/phone here if added to UserProfile
+      updateUser({ isDriver: true, role: UserRole.DRIVER, phone: phoneNumber });
       showToast('¡Registro de Repartidor completo!', 'success');
   };
 

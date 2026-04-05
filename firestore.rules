@@ -104,7 +104,8 @@ service cloud.firestore {
              (!('email' in data) || isValidEmail(data.email)) &&
              (!('role' in data) || (data.role in ['CLIENT', 'MERCHANT', 'DRIVER', 'ADMIN'])) &&
              (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 500)) &&
-             (!('fcmToken' in data) || (data.fcmToken is string && data.fcmToken.size() <= 300));
+             (!('fcmToken' in data) || (data.fcmToken is string && data.fcmToken.size() <= 300)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 15));
     }
 
     function isValidStore(data) {
