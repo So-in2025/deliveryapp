@@ -37,7 +37,6 @@ export const googleProvider = new GoogleAuthProvider();
 export const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
 export const logout = () => signOut(auth);
 
-// Firestore Error Handling Spec
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -46,6 +45,8 @@ export enum OperationType {
   GET = 'get',
   WRITE = 'write',
 }
+
+export { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, or, onSnapshot, serverTimestamp, Timestamp, getDocFromServer, addDoc };
 
 export interface FirestoreErrorInfo {
   error: string;

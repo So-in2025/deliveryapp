@@ -100,9 +100,9 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidUser(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             isValidEmail(data.email) &&
-             data.role in ['CLIENT', 'MERCHANT', 'DRIVER', 'ADMIN'] &&
+      return (!('name' in data) || (data.name is string && data.name.size() > 0 && data.name.size() <= 100)) &&
+             (!('email' in data) || isValidEmail(data.email)) &&
+             (!('role' in data) || (data.role in ['CLIENT', 'MERCHANT', 'DRIVER', 'ADMIN'])) &&
              (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 500)) &&
              (!('fcmToken' in data) || (data.fcmToken is string && data.fcmToken.size() <= 300));
     }
