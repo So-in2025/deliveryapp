@@ -10,6 +10,9 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   login: () => Promise<void>;
+  loginEmail: (email: string, pass: string) => Promise<void>;
+  registerEmail: (email: string, pass: string, name: string) => Promise<void>;
+  resetPass: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAuthReady: boolean;
   requestNotificationPermission: () => Promise<void>;
@@ -152,6 +155,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginEmail = async (email: string, pass: string) => {
+    try {
+      await import('../firebase').then(m => m.loginWithEmail(email, pass));
+      showToast('Sesión iniciada correctamente', 'success');
+    } catch (error: any) {
+      console.error('Login email error:', error);
+      let msg = 'Error al iniciar sesión';
+      if (error.code === 'auth/user-not-found') msg = 'Usuario no encontrado';
+      if (error.code === 'auth/wrong-password') msg = 'Contraseña incorrecta';
+      showToast(msg, 'error');
+      throw error;
+    }
+  };
+
+  const registerEmail = async (email: string, pass: string, name: string) => {
+    try {
+      const { registerWithEmail, updateProfile } = await import('../firebase');
+      const userCredential = await registerWithEmail(email, pass);
+      await updateProfile(userCredential.user, { displayName: name });
+      showToast('Cuenta creada correctamente', 'success');
+    } catch (error: any) {
+      console.error('Register email error:', error);
+      let msg = 'Error al crear cuenta';
+      if (error.code === 'auth/email-already-in-use') msg = 'El correo ya está en uso';
+      showToast(msg, 'error');
+      throw error;
+    }
+  };
+
+  const resetPass = async (email: string) => {
+    try {
+      const { resetPassword } = await import('../firebase');
+      await resetPassword(email);
+      showToast('Correo de recuperación enviado', 'info');
+    } catch (error) {
+      console.error('Reset password error:', error);
+      showToast('Error al enviar correo de recuperación', 'error');
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       await logout();
@@ -163,7 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, login, signOut, isAuthReady, requestNotificationPermission }}>
+    <AuthContext.Provider value={{ user, profile, loading, login, loginEmail, registerEmail, resetPass, signOut, isAuthReady, requestNotificationPermission }}>
       {children}
     </AuthContext.Provider>
   );

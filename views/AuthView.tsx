@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Store } from '../types';
-import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, LogIn, User as UserIcon, Globe, Sparkles, Download, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, User as UserIcon, Globe, Sparkles, Download, ArrowLeft, Mail, Lock, User } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
@@ -11,11 +11,17 @@ import { APP_CONFIG } from '../constants';
 export const AuthView: React.FC = () => {
   const { user: appUser, createStore, updateUser, setRole } = useApp();
   const { showToast } = useToast();
-  const { user: authUser, login, signOut, loading } = useAuth();
+  const { user: authUser, login, loginEmail, registerEmail, resetPass, signOut, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<'NONE' | 'MERCHANT' | 'DRIVER'>('NONE');
+  const [authMode, setAuthMode] = useState<'GOOGLE' | 'EMAIL_LOGIN' | 'EMAIL_REGISTER' | 'FORGOT'>('GOOGLE');
+
+  // Email Auth States
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
 
   // Form states
   const [storeName, setStoreName] = useState('');
@@ -39,6 +45,25 @@ export const AuthView: React.FC = () => {
       } finally {
           setIsLoggingIn(false);
       }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    try {
+      if (authMode === 'EMAIL_LOGIN') {
+        await loginEmail(email, password);
+      } else if (authMode === 'EMAIL_REGISTER') {
+        await registerEmail(email, password, name);
+      } else if (authMode === 'FORGOT') {
+        await resetPass(email);
+        setAuthMode('EMAIL_LOGIN');
+      }
+    } catch (err) {
+      // Errors are handled in context
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   useEffect(() => {
@@ -341,20 +366,113 @@ export const AuthView: React.FC = () => {
                 className="mb-10 space-y-4"
             >
                 {!authUser ? (
-                    <>
-                        <button
-                            onClick={handleLogin}
-                            disabled={loading || isLoggingIn}
-                            className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-950 font-bold py-4 px-6 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-base border border-stone-800 dark:border-white"
-                        >
-                            {isLoggingIn ? (
-                                <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                                <LogIn size={20} className="text-brand-500" />
-                            )}
-                            {loading || isLoggingIn ? 'Procesando...' : 'Acceder con Google'}
-                        </button>
-                    </>
+                    <div className="space-y-4">
+                        {authMode === 'GOOGLE' ? (
+                            <div className="space-y-3">
+                                <button
+                                    onClick={handleLogin}
+                                    disabled={loading || isLoggingIn}
+                                    className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-950 font-bold py-4 px-6 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.08)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-base border border-stone-800 dark:border-white"
+                                >
+                                    {isLoggingIn ? (
+                                        <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="Google" />
+                                    )}
+                                    {loading || isLoggingIn ? 'Procesando...' : 'Acceder con Google'}
+                                </button>
+                                
+                                <button
+                                    onClick={() => setAuthMode('EMAIL_LOGIN')}
+                                    className="w-full bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-white font-bold py-4 px-6 rounded-2xl hover:bg-stone-200 dark:hover:bg-stone-700 transition-all flex items-center justify-center gap-3 text-base border border-stone-200 dark:border-stone-700"
+                                >
+                                    <Mail size={20} className="text-brand-500" />
+                                    Ingresar con Correo
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleEmailAuth} className="space-y-3">
+                                {authMode === 'EMAIL_REGISTER' && (
+                                    <div className="relative">
+                                        <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+                                        <input 
+                                            type="text" 
+                                            placeholder="Nombre completo" 
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            required
+                                            className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                )}
+                                
+                                <div className="relative">
+                                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+                                    <input 
+                                        type="email" 
+                                        placeholder="Correo electrónico" 
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                    />
+                                </div>
+
+                                {authMode !== 'FORGOT' && (
+                                    <div className="relative">
+                                        <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+                                        <input 
+                                            type="password" 
+                                            placeholder="Contraseña" 
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                            className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoggingIn}
+                                    className="w-full bg-brand-500 text-brand-950 font-bold py-4 px-6 rounded-2xl shadow-lg shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                >
+                                    {isLoggingIn ? (
+                                        <div className="w-5 h-5 border-2 border-brand-950 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        authMode === 'EMAIL_LOGIN' ? 'Iniciar Sesión' : 
+                                        authMode === 'EMAIL_REGISTER' ? 'Crear Cuenta' : 'Enviar Recuperación'
+                                    )}
+                                </button>
+
+                                <div className="flex flex-col gap-2 text-center pt-2">
+                                    {authMode === 'EMAIL_LOGIN' && (
+                                        <>
+                                            <button type="button" onClick={() => setAuthMode('EMAIL_REGISTER')} className="text-stone-500 dark:text-stone-400 hover:text-brand-500 text-xs font-bold transition-colors">
+                                                ¿No tienes cuenta? REGÍSTRATE
+                                            </button>
+                                            <button type="button" onClick={() => setAuthMode('FORGOT')} className="text-stone-400 dark:text-stone-500 hover:text-stone-600 text-[10px] uppercase tracking-widest transition-colors">
+                                                Olvidé mi contraseña
+                                            </button>
+                                        </>
+                                    )}
+                                    {authMode === 'EMAIL_REGISTER' && (
+                                        <button type="button" onClick={() => setAuthMode('EMAIL_LOGIN')} className="text-stone-500 dark:text-stone-400 hover:text-brand-500 text-xs font-bold transition-colors">
+                                            ¿Ya tienes cuenta? INICIA SESIÓN
+                                        </button>
+                                    )}
+                                    {authMode === 'FORGOT' && (
+                                        <button type="button" onClick={() => setAuthMode('EMAIL_LOGIN')} className="text-stone-500 dark:text-stone-400 hover:text-brand-500 text-xs font-bold transition-colors">
+                                            VOLVER AL INGRESO
+                                        </button>
+                                    )}
+                                    <button type="button" onClick={() => setAuthMode('GOOGLE')} className="text-stone-400 dark:text-stone-500 hover:text-stone-600 text-[10px] uppercase tracking-widest transition-colors mt-2">
+                                        OTRAS OPCIONES DE INGRESO
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </div>
                 ) : (
                     <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200 dark:border-stone-800 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-4">
