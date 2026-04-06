@@ -155,7 +155,7 @@ export const AuthView: React.FC = () => {
   };
 
   const handleRegisterMerchant = () => {
-      if (!storeName || !storeLegalName || !storeTaxId || !storePhone) {
+      if (!storeName || !storeTaxId || !storeBankAccount) {
           showToast('Por favor completa todos los campos obligatorios', 'error');
           return;
       }
@@ -172,9 +172,7 @@ export const AuthView: React.FC = () => {
           products: [],
           createdAt: new Date().toISOString(),
           ownerId: authUser?.uid || 'guest',
-          legalName: storeLegalName,
           taxId: storeTaxId,
-          phone: storePhone,
           bankAccount: storeBankAccount
       };
       createStore(newStore);
@@ -296,13 +294,13 @@ export const AuthView: React.FC = () => {
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 text-[10px] font-bold uppercase tracking-widest mb-6">
                         <Sparkles size={12} />
-                        <span>Nueva Experiencia 2026</span>
+                        <span>Orgullosamente Local</span>
                     </div>
                     <h2 className="text-8xl font-black text-white leading-[0.85] tracking-tighter uppercase">
-                        TU CIUDAD,<br/>A TU<br/><span className="text-brand-500">RITMO.</span>
+                        LO MEJOR<br/>DE NUESTRO<br/><span className="text-brand-500">PUEBLO.</span>
                     </h2>
                     <p className="text-stone-400 font-medium mt-8 text-xl max-w-md leading-relaxed">
-                        Conectamos los mejores comercios locales con personas que valoran su tiempo y la excelencia en el servicio.
+                        Apoya el comercio local y recibe tus productos favoritos con la confianza y calidez de nuestra gente.
                     </p>
                 </motion.div>
 
@@ -313,12 +311,12 @@ export const AuthView: React.FC = () => {
                     className="grid grid-cols-2 gap-8"
                 >
                     <div className="space-y-2">
-                        <div className="text-3xl font-black text-white tracking-tighter">Comercios</div>
-                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Verificados</div>
+                        <div className="text-3xl font-black text-white tracking-tighter">Negocios</div>
+                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Locales</div>
                     </div>
                     <div className="space-y-2">
-                        <div className="text-3xl font-black text-white tracking-tighter">Atención</div>
-                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Personalizada</div>
+                        <div className="text-3xl font-black text-white tracking-tighter">Trato</div>
+                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Cercano</div>
                     </div>
                 </motion.div>
             </div>
@@ -590,36 +588,14 @@ export const AuthView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Razón Social *</label>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">RFC *</label>
                                 <input 
                                     type="text" 
-                                    value={storeLegalName}
-                                    onChange={(e) => setStoreLegalName(e.target.value)}
-                                    placeholder="Ej. Tacos El Gordo S.A. de C.V."
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    value={storeTaxId}
+                                    onChange={(e) => setStoreTaxId(e.target.value)}
+                                    placeholder="Tu RFC"
+                                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">RFC *</label>
-                                    <input 
-                                        type="text" 
-                                        value={storeTaxId}
-                                        onChange={(e) => setStoreTaxId(e.target.value)}
-                                        placeholder="Tu RFC"
-                                        className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Teléfono *</label>
-                                    <input 
-                                        type="tel" 
-                                        value={storePhone}
-                                        onChange={(e) => setStorePhone(e.target.value)}
-                                        placeholder="Teléfono de contacto"
-                                        className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
-                                    />
-                                </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">CLABE y Cuenta *</label>
@@ -660,7 +636,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <button 
                                 onClick={handleRegisterMerchant}
-                                disabled={!storeName || !storeLegalName || !storeTaxId || !storePhone}
+                                disabled={!storeName || !storeTaxId || !storeBankAccount}
                                 className="w-full mt-4 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:hover:bg-brand-500 text-brand-950 font-black py-4 px-6 rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
                             >
                                 <StoreIcon size={20} />
