@@ -2,12 +2,13 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { ShoppingBag, Settings, LogOut, WifiOff, Heart, History, User, Bell } from 'lucide-react';
+import { ShoppingBag, Settings, LogOut, WifiOff, Heart, History, User, Bell, Shield } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { APP_CONFIG } from '../../constants';
+import { UserRole } from '../../types';
 
 export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, setClientViewState, setSelectedStore, clientViewState, notifications, setIsNotificationsOpen } = useApp();
+  const { toggleSettings, setClientViewState, setSelectedStore, clientViewState, notifications, setIsNotificationsOpen, user, setRole } = useApp();
   const { signOut } = useAuth();
   const { isOnline } = useConnectivity();
 
@@ -54,6 +55,11 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
             <div id="profile-tab">
                 <DesktopNavItem icon={<User />} label="Mi Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
             </div>
+            {user?.role === UserRole.ADMIN && (
+                <div className="pt-4">
+                    <DesktopNavItem icon={<Shield />} label="Volver a Admin" active={false} onClick={() => setRole(UserRole.ADMIN)} />
+                </div>
+            )}
           </nav>
 
           <div className="p-4 border-t border-brand-100 dark:border-stone-800 space-y-2">

@@ -1,11 +1,11 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings } from 'lucide-react';
+import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings, ShoppingBag, Bike } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { adminViewState, setAdminViewState, notifications, setIsNotificationsOpen, toggleSettings } = useApp();
+  const { adminViewState, setAdminViewState, notifications, setIsNotificationsOpen, toggleSettings, setRole } = useApp();
   const { signOut } = useAuth();
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -48,6 +48,14 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <div id="disputes-tab">
                 <DesktopNavItem icon={<AlertTriangle />} label="Reclamos" active={adminViewState === 'DISPUTES'} onClick={() => setAdminViewState('DISPUTES')} />
             </div>
+            
+            <div className="pt-4 pb-2 px-4">
+                <span className="text-[10px] font-black text-stone-600 uppercase tracking-[0.2em]">Vistas de Usuario</span>
+            </div>
+            <DesktopNavItem icon={<ShoppingBag />} label="Vista Cliente" active={false} onClick={() => setRole(UserRole.CLIENT)} />
+            <DesktopNavItem icon={<Store />} label="Vista Comercio" active={false} onClick={() => setRole(UserRole.MERCHANT)} />
+            <DesktopNavItem icon={<Bike />} label="Vista Repartidor" active={false} onClick={() => setRole(UserRole.DRIVER)} />
+
             <div id="help-tab">
                 <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
             </div>

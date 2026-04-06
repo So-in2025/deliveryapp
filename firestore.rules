@@ -70,7 +70,6 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && 
         ((request.auth.token.email == "ofeliaacevedo41@gmail.com" && request.auth.token.email_verified == true) ||
-         (request.auth.token.email == "jg.hardcore.builds@gmail.com" && request.auth.token.email_verified == true) ||
          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN'));
     }
@@ -159,11 +158,9 @@ service cloud.firestore {
       
       // Allow update if owner or admin
       // Owner cannot change their own role to ADMIN unless they are already an admin
-      // OR they provide the correct _adminPin (validated against system/security)
       allow update: if isAuthenticated() && (
         (isOwner(userId) && (
-          (request.resource.data.role == resource.data.role || (request.resource.data.role != 'ADMIN' && resource.data.role != 'ADMIN') || isAdmin()) ||
-          (request.resource.data.role == 'ADMIN' && request.resource.data._adminPin == get(/databases/$(database)/documents/system/security).data.adminPin)
+          (request.resource.data.role == resource.data.role || (request.resource.data.role != 'ADMIN' && resource.data.role != 'ADMIN') || isAdmin())
         )) || 
         isAdmin()
       );

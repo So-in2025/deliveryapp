@@ -2,11 +2,12 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { Truck, Map, History, Settings, LogOut, WifiOff, Navigation, ShieldCheck, Bell, HelpCircle } from 'lucide-react';
+import { Truck, Map, History, Settings, LogOut, WifiOff, Navigation, ShieldCheck, Bell, HelpCircle, Shield } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
+import { UserRole } from '../../types';
 
 export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, driverViewState, setDriverViewState, notifications, setIsNotificationsOpen } = useApp();
+  const { toggleSettings, driverViewState, setDriverViewState, notifications, setIsNotificationsOpen, user, setRole } = useApp();
   const { signOut } = useAuth();
   const { isOnline } = useConnectivity();
 
@@ -57,6 +58,11 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
             <div id="profile-tab">
                 <DesktopNavItem icon={<ShieldCheck />} label="Seguridad" active={driverViewState === 'PROFILE'} onClick={() => setDriverViewState('PROFILE')} />
             </div>
+            {user?.role === UserRole.ADMIN && (
+                <div className="pt-4">
+                    <DesktopNavItem icon={<Shield />} label="Volver a Admin" active={false} onClick={() => setRole(UserRole.ADMIN)} />
+                </div>
+            )}
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-2">

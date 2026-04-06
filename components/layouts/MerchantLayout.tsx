@@ -2,11 +2,12 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, Bell, Utensils, Tag, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, Bell, Utensils, Tag, HelpCircle, Shield } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
+import { UserRole } from '../../types';
 
 export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toggleSettings, merchantViewState, setMerchantViewState, notifications, setIsNotificationsOpen } = useApp();
+  const { toggleSettings, merchantViewState, setMerchantViewState, notifications, setIsNotificationsOpen, user, setRole } = useApp();
   const { signOut } = useAuth();
   const { isOnline } = useConnectivity();
 
@@ -60,6 +61,11 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
             <div id="help-tab">
                 <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
             </div>
+            {user?.role === UserRole.ADMIN && (
+                <div className="pt-4">
+                    <DesktopNavItem icon={<Shield />} label="Volver a Admin" active={false} onClick={() => setRole(UserRole.ADMIN)} />
+                </div>
+            )}
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-2">

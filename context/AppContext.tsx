@@ -89,6 +89,7 @@ interface AppContextType {
   driverLocation: { lat: number, lng: number };
   setDriverLocation: (loc: { lat: number, lng: number }) => void;
   completeTour: (tourId: string) => void;
+  requestAdminAccess: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -669,19 +670,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const verifyAdminPin = async (pin: string): Promise<boolean> => {
+  const requestAdminAccess = async () => {
+    if (!authUser) return;
     try {
-      if (!authUser) return false;
-      // We attempt to update the user role to ADMIN by providing the PIN in a temporary field
-      // The Firestore rules will validate this PIN and allow the update if correct.
       await updateDoc(doc(db, 'users', authUser.uid), { 
-        role: UserRole.ADMIN,
-        _adminPin: pin // Temporary field for rule validation
+        adminAccessRequested: true,
+        requestedAt: serverTimestamp()
       });
-      return true;
+      showToast('Solicitud enviada. Contacta al desarrollador para aprobación.', 'info');
     } catch (error) {
-      console.error('Error verifying admin pin:', error);
-      return false;
+      console.error('Error requesting admin access:', error);
+      showToast('Error al enviar solicitud', 'error');
     }
   };
 
@@ -1050,7 +1049,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       clearCart,
       placeOrder,
       getRouteDistance,
-      verifyAdminPin,
       updateOrder,
       cancelOrder,
       submitClaim,
@@ -1096,7 +1094,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateConfig,
       driverLocation,
       setDriverLocation,
-      completeTour
+      completeTour,
+      requestAdminAccess
     }}>
       {children}
     </AppContext.Provider>

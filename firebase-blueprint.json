@@ -15,7 +15,9 @@
         "phone": { "type": "string", "description": "User's phone number" },
         "driverLicense": { "type": "string", "description": "Driver's license number" },
         "driverInsurance": { "type": "string", "description": "Driver's insurance policy number" },
-        "driverPlate": { "type": "string", "description": "Driver's vehicle plate number" }
+        "driverPlate": { "type": "string", "description": "Driver's vehicle plate number" },
+        "adminAccessRequested": { "type": "boolean", "description": "Whether the user has requested admin access" },
+        "requestedAt": { "type": "string", "format": "date-time", "description": "When the admin access was requested" }
       },
       "required": ["name", "email", "role"]
     },

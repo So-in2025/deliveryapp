@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
 
 export const AuthView: React.FC = () => {
-  const { user: appUser, createStore, updateUser, setRole, config, verifyAdminPin } = useApp();
+  const { user: appUser, createStore, updateUser, setRole, config, requestAdminAccess } = useApp();
   const { showToast } = useToast();
   const { user: authUser, login, loginEmail, registerEmail, resetPass, signOut, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
@@ -18,9 +18,8 @@ export const AuthView: React.FC = () => {
   const [onboardingStep, setOnboardingStep] = useState<'NONE' | 'MERCHANT' | 'DRIVER'>('NONE');
   const [authMode, setAuthMode] = useState<'GOOGLE' | 'EMAIL_LOGIN' | 'EMAIL_REGISTER' | 'FORGOT'>('GOOGLE');
 
-  const [showAdminPin, setShowAdminPin] = useState(false);
-  const [adminPin, setAdminPin] = useState('');
-  const [isVerifyingPin, setIsVerifyingPin] = useState(false);
+  const [showAdminAccess, setShowAdminAccess] = useState(false);
+  const [isRequestingAccess, setIsRequestingAccess] = useState(false);
 
   // Email Auth States
   const [email, setEmail] = useState('');
@@ -31,9 +30,7 @@ export const AuthView: React.FC = () => {
   const [storeName, setStoreName] = useState('');
   const [storeCategory, setStoreCategory] = useState('Comida');
   const [storeTime, setStoreTime] = useState('30');
-  const [storeLegalName, setStoreLegalName] = useState('');
   const [storeTaxId, setStoreTaxId] = useState('');
-  const [storePhone, setStorePhone] = useState('');
   const [storeBankAccount, setStoreBankAccount] = useState('');
 
   const [vehicleType, setVehicleType] = useState('Moto');
@@ -137,21 +134,15 @@ export const AuthView: React.FC = () => {
     setRole(role);
   };
 
-  const handleAdminPinSubmit = async () => {
+  const handleRequestAdminAccess = async () => {
     if (!authUser) {
-        showToast('Inicia sesión para verificar identidad', 'info');
+        showToast('Inicia sesión para solicitar acceso', 'info');
         return;
     }
-    setIsVerifyingPin(true);
-    const success = await verifyAdminPin(adminPin);
-    setIsVerifyingPin(false);
-    if (success) {
-        showToast('Acceso administrativo concedido', 'success');
-        setShowAdminPin(false);
-        setRole(UserRole.ADMIN);
-    } else {
-        showToast('PIN incorrecto o error de autorización', 'error');
-    }
+    setIsRequestingAccess(true);
+    await requestAdminAccess();
+    setIsRequestingAccess(false);
+    setShowAdminAccess(false);
   };
 
   const handleRegisterMerchant = () => {
@@ -753,7 +744,7 @@ export const AuthView: React.FC = () => {
                         </motion.button>
                     ) : (
                         <button 
-                            onClick={() => setShowAdminPin(true)}
+                            onClick={() => setShowAdminAccess(true)}
                             className="text-[10px] font-bold text-stone-500 uppercase tracking-widest hover:text-stone-400 transition-colors"
                         >
                             Acceso Staff
@@ -762,9 +753,9 @@ export const AuthView: React.FC = () => {
                 </div>
             </motion.div>
 
-            {/* Admin PIN Modal */}
+            {/* Admin Access Modal */}
             <AnimatePresence>
-                {showAdminPin && (
+                {showAdminAccess && (
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -782,32 +773,35 @@ export const AuthView: React.FC = () => {
                                     <div className="p-2 bg-stone-100 dark:bg-stone-800 rounded-xl">
                                         <Shield size={20} className="text-stone-900 dark:text-white" />
                                     </div>
-                                    <h4 className="text-lg font-black text-stone-900 dark:text-white uppercase tracking-tight">Staff Login</h4>
+                                    <h4 className="text-lg font-black text-stone-900 dark:text-white uppercase tracking-tight">Acceso Staff</h4>
                                 </div>
-                                <button onClick={() => setShowAdminPin(false)} className="text-stone-400 hover:text-stone-600">
+                                <button onClick={() => setShowAdminAccess(false)} className="text-stone-400 hover:text-stone-600">
                                     <X size={20} />
                                 </button>
                             </div>
 
-                            <p className="text-sm text-stone-500 mb-6 leading-relaxed">
-                                Ingresa tu clave de acceso autorizada para gestionar la plataforma.
-                            </p>
+                            <div className="space-y-6">
+                                <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
+                                    El acceso al panel administrativo es restringido. Solo el personal autorizado puede gestionar la plataforma.
+                                </p>
+                                
+                                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30">
+                                    <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                                        Si eres parte del equipo, solicita tu acceso. El desarrollador deberá aprobar tu cuenta desde la base de datos.
+                                    </p>
+                                </div>
 
-                            <div className="space-y-4">
-                                <input 
-                                    type="password"
-                                    value={adminPin}
-                                    onChange={(e) => setAdminPin(e.target.value)}
-                                    placeholder="••••••"
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-center text-2xl tracking-[0.5em] font-mono text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
-                                />
                                 <button 
-                                    onClick={handleAdminPinSubmit}
-                                    disabled={isVerifyingPin || !adminPin}
+                                    onClick={handleRequestAdminAccess}
+                                    disabled={isRequestingAccess || appUser?.adminAccessRequested}
                                     className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-black py-4 rounded-xl shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                                 >
-                                    {isVerifyingPin ? 'Verificando...' : 'Verificar Identidad'}
+                                    {isRequestingAccess ? 'Enviando...' : appUser?.adminAccessRequested ? 'Solicitud Pendiente' : 'Solicitar Acceso'}
                                 </button>
+                                
+                                <p className="text-[10px] text-center text-stone-400 uppercase tracking-widest font-bold">
+                                    Seguridad Nivel Bancario
+                                </p>
                             </div>
                         </motion.div>
                     </motion.div>
