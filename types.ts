@@ -24,6 +24,10 @@ export interface UserProfile {
   lat?: number; // New: For real-time tracking
   lng?: number; // New: For real-time tracking
   completedTours?: string[]; // New: Track which onboarding tours have been seen
+  referralCode?: string; // New: Unique code for this user
+  referredBy?: string; // New: Code used to sign up
+  isFirstPurchaseDone?: boolean; // New: Track first purchase status
+  referralEarnings?: number; // New: Credit earned from referrals
   driverLicense?: string; // Strict: Licencia de conducir
   vehicleInsurance?: string; // Strict: Seguro del vehículo
   vehiclePlate?: string; // Strict: Placa del vehículo
@@ -72,6 +76,7 @@ export interface Product {
   description: string;
   price: number;
   image: string;
+  isAvailable?: boolean; // New: Inventory management
   modifierGroups?: ModifierGroup[]; // Layer 4: Customization
 }
 
@@ -99,6 +104,7 @@ export interface Store {
   taxId?: string; // Strict: RFC/CUIT/RUT
   phone?: string; // Strict: Teléfono de contacto
   bankAccount?: string; // Strict: Cuenta Bancaria (CLABE/CBU)
+  commissionPct?: number; // New: Custom commission for this store (overrides global)
 }
 
 export interface CartItem {
@@ -141,6 +147,11 @@ export interface Order {
   claimReason?: string; // Audit: Why it is disputed
   claimStatus?: 'OPEN' | 'RESOLVED' | 'REJECTED'; // Audit: Dispute status
   coordinates?: { lat: number; lng: number }; // New: For precise delivery
+  referralDiscount?: number; // New: Discount from referral
+  firstPurchaseDiscount?: number; // New: Discount for first purchase
+  merchantSettled?: boolean; // New: For Admin Settlement tracking
+  driverSettled?: boolean; // New: For Admin Settlement tracking
+  settledAt?: Date; // New: When it was settled
 }
 
 export interface Review {
@@ -181,10 +192,26 @@ export interface GlobalConfig {
   maintenanceMode: boolean;
   paymentMode: 'CENTRALIZED' | 'DECENTRALIZED'; // New: For Payment Strategy
   categories: string[]; // New: Dynamic categories for stores and services
+  maxDeliveryRadiusKm: number; // New: Geofencing
+  centerCoordinates: { lat: number; lng: number }; // New: Geofencing center
+  referralRewardAmount: number; // New: Fixed amount for referral reward
+  referralDiscountPct: number; // New: e.g., 0.05 for 5% off for the new user
+  firstPurchaseDiscountPct: number; // New: e.g., 0.20 for 20% off
+}
+
+export interface ChatMessage {
+  id: string;
+  orderId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  text: string;
+  timestamp: any; // Firestore Timestamp
+  readBy: string[]; // List of UIDs who read it
 }
 
 // UI State Types - Standardized
 export type ViewState = 'BROWSE' | 'CHECKOUT' | 'TRACKING' | 'HISTORY' | 'RECEIPT' | 'FAVORITES' | 'PROFILE';
 export type MerchantViewState = 'ORDERS' | 'MENU' | 'COUPONS' | 'HISTORY' | 'SETTINGS';
-export type DriverViewState = 'MAP' | 'DELIVERIES' | 'HISTORY' | 'PROFILE';
-export type AdminViewState = 'DASHBOARD' | 'USERS' | 'STORES' | 'FLEET' | 'DISPUTES' | 'SETTINGS' | 'ORDERS';
+export type DriverViewState = 'MAP' | 'DELIVERIES' | 'HISTORY' | 'PROFILE' | 'WALLET';
+export type AdminViewState = 'DASHBOARD' | 'USERS' | 'STORES' | 'FLEET' | 'DISPUTES' | 'SETTINGS' | 'ORDERS' | 'SETTLEMENTS';

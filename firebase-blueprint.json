@@ -17,7 +17,11 @@
         "driverInsurance": { "type": "string", "description": "Driver's insurance policy number" },
         "driverPlate": { "type": "string", "description": "Driver's vehicle plate number" },
         "adminAccessRequested": { "type": "boolean", "description": "Whether the user has requested admin access" },
-        "requestedAt": { "type": "string", "format": "date-time", "description": "When the admin access was requested" }
+        "requestedAt": { "type": "string", "format": "date-time", "description": "When the admin access was requested" },
+        "referralCode": { "type": "string", "description": "Unique referral code for this user" },
+        "referredBy": { "type": "string", "description": "Referral code used to sign up" },
+        "isFirstPurchaseDone": { "type": "boolean", "description": "Whether the user has completed their first purchase" },
+        "referralEarnings": { "type": "number", "description": "Total earnings from referrals" }
       },
       "required": ["name", "email", "role"]
     },
@@ -41,7 +45,8 @@
         "legalName": { "type": "string", "description": "Legal name of the store owner" },
         "taxId": { "type": "string", "description": "Tax ID of the store" },
         "phone": { "type": "string", "description": "Store contact phone" },
-        "bankAccount": { "type": "string", "description": "Bank account for payouts" }
+        "bankAccount": { "type": "string", "description": "Bank account for payouts" },
+        "commissionPct": { "type": "number", "description": "Custom commission percentage (0-1)" }
       },
       "required": ["name", "category", "ownerId", "createdAt"]
     },
@@ -54,7 +59,8 @@
         "description": { "type": "string", "description": "Product description" },
         "price": { "type": "number", "description": "Product price" },
         "image": { "type": "string", "description": "URL to product image" },
-        "storeId": { "type": "string", "description": "ID of the store this product belongs to" }
+        "storeId": { "type": "string", "description": "ID of the store this product belongs to" },
+        "isAvailable": { "type": "boolean", "description": "Whether the product is in stock" }
       },
       "required": ["name", "price", "storeId"]
     },
@@ -80,7 +86,12 @@
         "preferenceId": { "type": "string", "description": "Mercado Pago preference ID" },
         "items": { "type": "array", "description": "List of items in the order" },
         "notes": { "type": "string", "description": "Order notes" },
-        "isReviewed": { "type": "boolean", "description": "Whether the order has been reviewed" }
+        "isReviewed": { "type": "boolean", "description": "Whether the order has been reviewed" },
+        "referralDiscount": { "type": "number", "description": "Discount applied from a referral" },
+        "firstPurchaseDiscount": { "type": "number", "description": "Discount applied for the first purchase" },
+        "merchantSettled": { "type": "boolean", "description": "Whether the merchant has been paid" },
+        "driverSettled": { "type": "boolean", "description": "Whether the driver has been paid" },
+        "settledAt": { "type": "string", "format": "date-time", "description": "When the order was settled" }
       },
       "required": ["storeId", "total", "status", "customerId", "createdAt"]
     },
@@ -109,6 +120,21 @@
         "storeId": { "type": "string", "description": "ID of the store (optional, for store-specific coupons)" }
       },
       "required": ["code", "discountPct", "active"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A message in an order chat",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "readBy": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["orderId", "senderId", "text", "timestamp"]
     }
   },
   "firestore": {
@@ -135,6 +161,10 @@
     "/coupons/{couponId}": {
       "schema": "Coupon",
       "description": "Coupon documents"
+    },
+    "/chats/{orderId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Messages for an order chat"
     },
     "/config/global": {
       "schema": "object",

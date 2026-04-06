@@ -51,6 +51,10 @@ interface AppContextType {
   updateStore: (storeId: string, data: Partial<Store>) => void;
   updateLocation: (lat: number, lng: number) => void;
   
+  // Chat Real-time
+  sendMessage: (orderId: string, text: string) => Promise<void>;
+  subscribeToChat: (orderId: string, callback: (messages: ChatMessage[]) => void) => () => void;
+  
   isDriverOnline: boolean;
   toggleDriverStatus: () => void;
   // Lifted Client State for Global Navigation
@@ -90,6 +94,12 @@ interface AppContextType {
   setDriverLocation: (loc: { lat: number, lng: number }) => void;
   completeTour: (tourId: string) => void;
   requestAdminAccess: () => Promise<void>;
+  
+  // Referral System
+  validateReferralCode: (code: string) => Promise<boolean>;
+  applyReferralCode: (code: string) => Promise<void>;
+  setPendingRole: (role: UserRole | null) => void;
+  setPendingAction: (action: { type: 'PLACE_ORDER'; data: any } | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -112,6 +122,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [role, setRoleState] = useState<UserRole>(UserRole.NONE);
   
   const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
+  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
+  const [pendingAction, setPendingAction] = useState<{ type: 'PLACE_ORDER'; data: any } | null>(null);
+
+  const updateUser = useCallback(async (data: Partial<UserProfile>) => {
+    if (!authUser?.uid || authUser.uid === 'guest') {
+      setUser(prev => ({ ...prev, ...data }));
+      return;
+    }
+    try {
+      await updateDoc(doc(db, 'users', authUser.uid), data);
+      // Local state will be updated by the onSnapshot listener in AuthContext -> useEffect in AppContext
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
+  }, [authUser?.uid]);
+
+  const updateAnyUser = useCallback(async (userId: string, data: Partial<UserProfile>) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), data);
+    } catch (error) {
+      console.error('Error updating any user:', error);
+    }
+  }, []);
 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
@@ -130,7 +163,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     supportEmail: 'soporte@telollevo.com',
     maintenanceMode: false,
     paymentMode: 'CENTRALIZED',
-    categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales']
+    categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales'],
+    maxDeliveryRadiusKm: 10, // Default 10km
+    centerCoordinates: { lat: -34.6037, lng: -58.3816 }, // Default center
+    referralRewardAmount: 500, // $500 reward
+    referralDiscountPct: 0.05, // 5% off for the new user
+    firstPurchaseDiscountPct: 0.20 // 20% off
   });
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
@@ -232,21 +270,68 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => unsubscribe();
   }, [addNotification]);
 
+  // Referral Code Generation
+  useEffect(() => {
+    if (authUser?.uid && user.name && !user.referralCode && user.role !== UserRole.NONE) {
+      const generateCode = () => {
+        const prefix = user.name.slice(0, 4).toUpperCase().replace(/\s/g, '');
+        const random = Math.floor(1000 + Math.random() * 9000);
+        return `${prefix}${random}`;
+      };
+      
+      const newCode = generateCode();
+      updateUser({ referralCode: newCode, referralEarnings: 0, isFirstPurchaseDone: false });
+    }
+  }, [authUser?.uid, user.name, user.referralCode, user.role, updateUser]);
+
+  const validateReferralCode = async (code: string): Promise<boolean> => {
+    if (!code) return false;
+    try {
+      const q = query(collection(db, 'users'), where('referralCode', '==', code.toUpperCase()));
+      const snapshot = await onSnapshot(q, () => {}); // This is just to check existence, but we need a one-time get
+      // Actually, let's use a simple fetch or assume it's valid if found in users state
+      const found = users.find(u => u.referralCode === code.toUpperCase());
+      return !!found && found.uid !== authUser?.uid;
+    } catch (error) {
+      console.error('Error validating referral code:', error);
+      return false;
+    }
+  };
+
+  const applyReferralCode = async (code: string) => {
+    if (!authUser?.uid) return;
+    const isValid = await validateReferralCode(code);
+    if (isValid) {
+      await updateUser({ referredBy: code.toUpperCase() });
+      showToast(`¡Código aplicado! Obtendrás un ${(config.referralDiscountPct * 100)}% extra en tu primera compra`, 'success');
+    } else {
+      showToast('Código de referido inválido', 'error');
+    }
+  };
+
   // Sync User Profile from AuthContext
   useEffect(() => {
     console.log('AuthProfile changed:', authProfile);
     if (authProfile) {
       setUser(authProfile);
-      // We don't automatically set the role here anymore, so the user can choose their role
-      // from the AuthView menu every time they open the app.
-      // setRoleState(authProfile.role);
+      
+      // Handle pending role selection from AuthView
+      if (pendingRole) {
+        setRoleState(pendingRole);
+        updateUser({ role: pendingRole });
+        setPendingRole(null);
+      } else if (authProfile.role && role === UserRole.NONE) {
+        // Automatically restore role from profile if none is set
+        setRoleState(authProfile.role);
+      }
+
       setIsDriverOnline(!!authProfile.isOnline);
     } else {
       setUser(DEFAULT_USER);
       setRoleState(UserRole.NONE);
       setIsDriverOnline(false);
     }
-  }, [authProfile]);
+  }, [authProfile, pendingRole, role, updateUser]);
 
   // Real-time Firestore Listeners
   useEffect(() => {
@@ -502,25 +587,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       showToast(nextStatus ? 'Ahora estás en línea' : 'Desconectado', 'info');
   };
 
-  const updateUser = useCallback(async (data: Partial<UserProfile>) => {
-      setUser(prev => ({ ...prev, ...data }));
-      if (authUser) {
-        try {
-          await setDoc(doc(db, 'users', authUser.uid), data, { merge: true });
-        } catch (error) {
-          console.error('Error updating user:', error);
-        }
-      }
-  }, [authUser]);
-
-  const updateAnyUser = async (userId: string, data: Partial<UserProfile>) => {
-      try {
-        await updateDoc(doc(db, 'users', userId), data);
-      } catch (error) {
-        console.error('Error updating any user:', error);
-      }
-  };
-
   const createStore = async (newStore: Store) => {
       try {
         const storeId = newStore.id || `store-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -656,7 +722,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [clearCart, showToast, setClientViewState]);
 
-  const getRouteDistance = async (start: { lat: number, lng: number }, end: { lat: number, lng: number }): Promise<number> => {
+  const getRouteDistance = useCallback(async (start: { lat: number, lng: number }, end: { lat: number, lng: number }): Promise<number> => {
     try {
       const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=false`);
       const data = await response.json();
@@ -668,7 +734,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.error('Error fetching OSRM route:', error);
       return 0;
     }
-  };
+  }, []);
 
   const requestAdminAccess = async () => {
     if (!authUser) return;
@@ -684,17 +750,94 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const placeOrder = async (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount: number = 0, coordinates?: { lat: number, lng: number }) => {
+  const sendMessage = async (orderId: string, text: string) => {
+    if (!authUser || !user) return;
+    try {
+      const message: Omit<ChatMessage, 'id'> = {
+        orderId,
+        senderId: authUser.uid,
+        senderName: user.name,
+        senderRole: role,
+        text,
+        timestamp: serverTimestamp(),
+        readBy: [authUser.uid]
+      };
+      await addDoc(collection(db, 'chats', orderId, 'messages'), message);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      showToast('Error al enviar mensaje', 'error');
+    }
+  };
+
+  const subscribeToChat = (orderId: string, callback: (messages: ChatMessage[]) => void) => {
+    const q = query(collection(db, 'chats', orderId, 'messages'), where('orderId', '==', orderId));
+    return onSnapshot(q, (snapshot) => {
+      const messages = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          id: doc.id, 
+          ...data, 
+          timestamp: (data.timestamp as Timestamp)?.toDate() || new Date() 
+        } as ChatMessage;
+      }).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      callback(messages);
+    }, (error) => {
+      console.error('Chat subscription error:', error);
+    });
+  };
+
+  const createPaymentPreference = useCallback(async (orderId: string, items: { name: string, price: number, quantity: number }[], storeId: string) => {
+    try {
+      const store = stores.find(s => s.id === storeId);
+      const customAccessToken = config.paymentMode === 'DECENTRALIZED' ? store?.mpAccessToken : null;
+
+      const response = await fetch('/api/create-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, items, customAccessToken })
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating payment preference:', error);
+      return null;
+    }
+  }, [stores, config]);
+
+  const placeOrder = useCallback(async (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount: number = 0, coordinates?: { lat: number, lng: number }) => {
     const subtotal = cart.reduce((sum, item) => sum + (item.totalPrice * item.quantity), 0);
     
+    // Geofencing Check
+    if (type === OrderType.DELIVERY && coordinates && config.maxDeliveryRadiusKm > 0) {
+      const distance = await getRouteDistance(config.centerCoordinates, coordinates);
+      if (distance > config.maxDeliveryRadiusKm) {
+        showToast(`Lo sentimos, el domicilio está fuera de nuestra zona de cobertura (${config.maxDeliveryRadiusKm}km)`, 'error');
+        return;
+      }
+    }
+
     // Dynamic Delivery Fee Logic
     const store = stores.find(s => s.id === storeId);
     const deliveryFee = type === OrderType.DELIVERY ? (store?.deliveryFee ?? config.baseDeliveryFee) : 0;
     
-    const total = Math.max(0, subtotal + deliveryFee - (discount || 0));
+    // Retention Logic: First Purchase & Referral
+    let firstPurchaseDiscount = 0;
+    let referralDiscount = 0;
 
-    // Commissions Calculation
-    const platformCommission = subtotal * config.platformCommissionPct;
+    if (!user.isFirstPurchaseDone) {
+      firstPurchaseDiscount = subtotal * config.firstPurchaseDiscountPct;
+    }
+
+    if (user.referredBy && !user.isFirstPurchaseDone) {
+      referralDiscount = subtotal * config.referralDiscountPct;
+    }
+
+    const totalDiscount = (discount || 0) + firstPurchaseDiscount + referralDiscount;
+    const total = Math.max(0, subtotal + deliveryFee - totalDiscount);
+
+    // Commissions Calculation: Use store-specific commission if available, otherwise global
+    const storeCommissionPct = store?.commissionPct ?? config.platformCommissionPct;
+    const platformCommission = subtotal * storeCommissionPct;
     const driverEarnings = deliveryFee * config.driverCommissionPct;
     const merchantEarnings = subtotal - platformCommission;
     
@@ -719,7 +862,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       type,
       isReviewed: false,
       paymentStatus: paymentMethod === PaymentMethod.MERCADO_PAGO ? 'PENDING' : 'PAID',
-      coordinates
+      coordinates,
+      firstPurchaseDiscount,
+      referralDiscount
     };
     
     try {
@@ -753,33 +898,73 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
       }
 
+      // For Cash/Card, create order immediately
       await setDoc(doc(db, 'orders', orderId), newOrder);
+      
+      // Update User Retention Flags
+      if (!user.isFirstPurchaseDone) {
+        await updateUser({ isFirstPurchaseDone: true });
+        
+        // If referred, reward the referrer
+        if (user.referredBy) {
+          const referrer = users.find(u => u.referralCode === user.referredBy);
+          if (referrer) {
+            await updateAnyUser(referrer.uid, { 
+              referralEarnings: (referrer.referralEarnings || 0) + config.referralRewardAmount 
+            });
+            
+            // Notify referrer
+            fetch('/api/send-notification', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: referrer.uid,
+                title: '¡Ganaste un premio!',
+                body: `Tu amigo ${user.name} hizo su primera compra. ¡Recibiste $${config.referralRewardAmount}!`,
+                url: '/wallet'
+              })
+            }).catch(console.error);
+          }
+        }
+      }
+
       clearCart();
       setSelectedStore(null);
-      showToast('Pedido realizado con éxito', 'success');
+      setClientViewState('TRACKING');
+      showToast('¡Pedido realizado con éxito!', 'success');
+      
+      // Notify Merchant
+      if (store?.ownerId) {
+        fetch('/api/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: store.ownerId,
+            title: 'Nuevo Pedido',
+            body: `Has recibido un nuevo pedido de ${user.name}`,
+            url: '/merchant/orders'
+          })
+        }).catch(console.error);
+      }
+
     } catch (error) {
       console.error('Error placing order:', error);
-      showToast('Error al realizar el pedido', 'error');
+      showToast('Error al procesar el pedido', 'error');
     }
-  };
+  }, [cart, config, getRouteDistance, stores, user, authUser, updateUser, updateAnyUser, clearCart, setSelectedStore, setClientViewState, showToast, users, createPaymentPreference]);
 
-  const createPaymentPreference = async (orderId: string, items: { name: string, price: number, quantity: number }[], storeId: string) => {
-    try {
-      const store = stores.find(s => s.id === storeId);
-      const customAccessToken = config.paymentMode === 'DECENTRALIZED' ? store?.mpAccessToken : null;
-
-      const response = await fetch('/api/create-preference', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, items, customAccessToken })
-      });
-      if (!response.ok) throw new Error('Network response was not ok');
-      return await response.json();
-    } catch (error) {
-      console.error('Error creating payment preference:', error);
-      return null;
+  // Execute pending actions after login and role restoration
+  useEffect(() => {
+    if (authUser && role !== UserRole.NONE && pendingAction) {
+      if (pendingAction.type === 'PLACE_ORDER') {
+        const { storeId, storeName, address, paymentMethod, notes, type, discount, coordinates } = pendingAction.data;
+        placeOrder(storeId, storeName, address, paymentMethod, notes, type, discount, coordinates);
+        setPendingAction(null);
+        setClientViewState('TRACKING');
+        showToast('Pedido realizado automáticamente tras iniciar sesión', 'success');
+      }
     }
-  };
+  }, [authUser, role, pendingAction, placeOrder, setClientViewState, showToast]);
 
   const updateOrder = async (orderId: string, status: OrderStatus) => {
     try {
@@ -852,11 +1037,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!store) return;
     
     try {
+      const newProduct = { ...product, id: `prod-${Date.now()}`, isAvailable: true };
       await updateDoc(doc(db, 'stores', storeId), {
-        products: [...store.products, product]
+        products: [...store.products, newProduct]
       });
+      showToast('Producto añadido', 'success');
     } catch (error) {
       console.error('Error adding product:', error);
+      showToast('Error al añadir producto', 'error');
     }
   };
 
@@ -868,8 +1056,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await updateDoc(doc(db, 'stores', storeId), {
         products: store.products.map(p => p.id === updatedProduct.id ? updatedProduct : p)
       });
+      showToast('Producto actualizado', 'success');
     } catch (error) {
       console.error('Error updating product:', error);
+      showToast('Error al actualizar producto', 'error');
     }
   };
 
@@ -926,6 +1116,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
   };
 
+  const settleMerchantOrder = async (orderId: string) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        merchantSettled: true,
+        settledAt: serverTimestamp()
+      });
+      showToast('Liquidación de comercio completada', 'success');
+    } catch (error) {
+      console.error('Error settling merchant order:', error);
+    }
+  };
+
+  const settleDriverOrder = async (orderId: string) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        driverSettled: true,
+        settledAt: serverTimestamp()
+      });
+      showToast('Liquidación de repartidor completada', 'success');
+    } catch (error) {
+      console.error('Error settling driver order:', error);
+    }
+  };
+
   const addReview = async (review: Review) => {
     try {
       // 1. Save Review
@@ -969,23 +1183,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // FCM Integration
   useEffect(() => {
     if (!messaging || !authUser) return;
-
-    const setupFCM = async () => {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          const { getToken } = await import('firebase/messaging');
-          const token = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY });
-          if (token) {
-            await updateDoc(doc(db, 'users', authUser.uid), { fcmToken: token });
-          }
-        }
-      } catch (error) {
-        console.error('Error setting up FCM:', error);
-      }
-    };
-
-    setupFCM();
 
     const unsubscribe = onMessage(messaging, (payload) => {
       console.log('Message received. ', payload);
@@ -1054,6 +1251,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       submitClaim,
       resolveClaim,
       assignDriver,
+      settleMerchantOrder,
+      settleDriverOrder,
       addProduct,
       updateProduct,
       deleteProduct,
@@ -1095,7 +1294,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       driverLocation,
       setDriverLocation,
       completeTour,
-      requestAdminAccess
+      requestAdminAccess,
+      sendMessage,
+      subscribeToChat,
+      validateReferralCode,
+      applyReferralCode,
+      setPendingRole,
+      setPendingAction
     }}>
       {children}
     </AppContext.Provider>

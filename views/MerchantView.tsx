@@ -12,12 +12,14 @@ import { extractProductsFromMenu } from '../services/geminiService';
 import * as XLSX from 'xlsx';
 import { uploadImageToCloudinary } from '../services/cloudinaryService';
 import { soundService } from '../services/soundService';
+import { ChatOverlay } from '../components/ui/ChatOverlay';
 
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
 
 const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
   const { updateOrder, cancelOrder } = useApp();
   const { showToast } = useToast();
+  const [showChat, setShowChat] = useState(false);
 
   const handleAction = () => {
     switch (order.status) {
@@ -158,6 +160,12 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
       {/* Logic Update: Only show button if action is available for Merchant */}
       {!(order.status === OrderStatus.READY && order.type === OrderType.DELIVERY) && order.status !== OrderStatus.PICKED_UP && order.status !== OrderStatus.DRIVER_ASSIGNED && order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.DISPUTED && (
         <div className="p-3 bg-stone-50 dark:bg-stone-800/50 border-t border-stone-100 dark:border-stone-700 flex gap-2">
+          <button 
+            onClick={() => setShowChat(true)}
+            className="p-2.5 bg-stone-100 dark:bg-stone-700 rounded-xl text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
+          >
+            <MessageSquare size={20} />
+          </button>
           {order.status === OrderStatus.PENDING && (
               <button 
                   onClick={handleCancel}
@@ -189,6 +197,13 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
               <span className="font-bold">Reclamo ({order.claimStatus}):</span> {order.claimReason}
           </div>
       )}
+
+      <ChatOverlay 
+          orderId={order.id} 
+          isOpen={showChat} 
+          onClose={() => setShowChat(false)} 
+          title={`Chat con ${order.customerName}`} 
+      />
     </div>
   );
 };
@@ -511,7 +526,12 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
               <LazyImage src={product.image} alt={product.name} className="w-full h-full" />
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-stone-900 dark:text-white text-sm">{product.name}</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="font-bold text-stone-900 dark:text-white text-sm">{product.name}</h4>
+                {product.isAvailable === false && (
+                    <span className="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Agotado</span>
+                )}
+              </div>
               <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-1">{product.description}</p>
               <div className="flex items-center gap-2 mt-1">
                   <p className="font-bold text-brand-800 dark:text-brand-400 text-sm">{formatCurrency(product.price)}</p>
@@ -536,6 +556,17 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
                    <input className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Precio" type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
                    <textarea className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Descripción" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                    
+                   <div className="flex items-center gap-2 py-2">
+                        <input 
+                            type="checkbox" 
+                            id="isAvailable" 
+                            checked={formData.isAvailable !== false} 
+                            onChange={e => setFormData({...formData, isAvailable: e.target.checked})} 
+                            className="w-4 h-4 rounded border-stone-300 text-brand-600 focus:ring-brand-500"
+                        />
+                        <label htmlFor="isAvailable" className="text-sm font-bold dark:text-white">Producto Disponible (en stock)</label>
+                    </div>
+
                    <div className="flex flex-col gap-2">
                        <label className="text-sm font-bold dark:text-white">Imagen del Producto</label>
                        {formData.image && <img src={formData.image} alt="Preview" className="w-24 h-24 object-cover rounded-lg" />}

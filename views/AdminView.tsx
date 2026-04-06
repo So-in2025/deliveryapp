@@ -42,6 +42,163 @@ const KpiCard = ({ title, value, sub, icon: Icon, color }: KpiCardProps) => (
   </div>
 );
 
+const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: { 
+    orders: Order[], 
+    settleMerchantOrder: (id: string) => Promise<void>,
+    settleDriverOrder: (id: string) => Promise<void>
+}) => {
+    const [activeSubTab, setActiveSubTab] = useState<'MERCHANTS' | 'DRIVERS'>('MERCHANTS');
+
+    const merchantSettlements = useMemo(() => {
+        const settlements: { [storeId: string]: { storeName: string, pending: number, settled: number, total: number, orders: Order[] } } = {};
+        
+        orders.filter(o => o.status === OrderStatus.DELIVERED).forEach(order => {
+            if (!settlements[order.storeId]) {
+                settlements[order.storeId] = { storeName: order.storeName, pending: 0, settled: 0, total: 0, orders: [] };
+            }
+            const amount = order.merchantEarnings || 0;
+            if (order.merchantSettled) {
+                settlements[order.storeId].settled += amount;
+            } else {
+                settlements[order.storeId].pending += amount;
+            }
+            settlements[order.storeId].total += amount;
+            settlements[order.storeId].orders.push(order);
+        });
+
+        return Object.entries(settlements).map(([id, data]) => ({ id, ...data }));
+    }, [orders]);
+
+    const driverSettlements = useMemo(() => {
+        const settlements: { [driverId: string]: { driverName: string, pending: number, settled: number, total: number, orders: Order[] } } = {};
+        
+        orders.filter(o => o.status === OrderStatus.DELIVERED && o.driverId).forEach(order => {
+            if (!settlements[order.driverId!]) {
+                settlements[order.driverId!] = { driverName: order.driverName || 'Repartidor', pending: 0, settled: 0, total: 0, orders: [] };
+            }
+            const amount = order.driverEarnings || 0;
+            if (order.driverSettled) {
+                settlements[order.driverId!].settled += amount;
+            } else {
+                settlements[order.driverId!].pending += amount;
+            }
+            settlements[order.driverId!].total += amount;
+            settlements[order.driverId!].orders.push(order);
+        });
+
+        return Object.entries(settlements).map(([id, data]) => ({ id, ...data }));
+    }, [orders]);
+
+    return (
+        <div className="space-y-6 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+            <div className="flex bg-stone-100 p-1 rounded-xl border border-stone-200">
+                <button 
+                    onClick={() => setActiveSubTab('MERCHANTS')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'MERCHANTS' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                >
+                    Comercios
+                </button>
+                <button 
+                    onClick={() => setActiveSubTab('DRIVERS')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'DRIVERS' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                >
+                    Repartidores
+                </button>
+            </div>
+
+            {activeSubTab === 'MERCHANTS' ? (
+                <div className="space-y-4">
+                    {merchantSettlements.length === 0 ? (
+                        <div className="text-center py-20 opacity-50">
+                            <DollarSign size={48} className="mx-auto mb-4 text-stone-300" />
+                            <p className="font-medium text-stone-900">No hay liquidaciones pendientes</p>
+                        </div>
+                    ) : merchantSettlements.map(s => (
+                        <div key={s.id} className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm space-y-4">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-black text-stone-900 text-lg uppercase tracking-tight">{s.storeName}</h3>
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">ID: {s.id}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Pendiente</p>
+                                    <p className="text-xl font-black text-red-500">{formatCurrency(s.pending)}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 py-4 border-y border-stone-50">
+                                <div>
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Liquidado</p>
+                                    <p className="font-bold text-stone-900">{formatCurrency(s.settled)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Total Histórico</p>
+                                    <p className="font-bold text-stone-900">{formatCurrency(s.total)}</p>
+                                </div>
+                            </div>
+                            {s.pending > 0 && (
+                                <Button 
+                                    fullWidth 
+                                    onClick={() => {
+                                        const pendingOrders = s.orders.filter(o => !o.merchantSettled);
+                                        pendingOrders.forEach(o => settleMerchantOrder(o.id));
+                                    }}
+                                    className="bg-stone-950 text-white"
+                                >
+                                    Liquidar Todo
+                                </Button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {driverSettlements.length === 0 ? (
+                        <div className="text-center py-20 opacity-50">
+                            <Truck size={48} className="mx-auto mb-4 text-stone-300" />
+                            <p className="font-medium text-stone-900">No hay liquidaciones pendientes</p>
+                        </div>
+                    ) : driverSettlements.map(s => (
+                        <div key={s.id} className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm space-y-4">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h3 className="font-black text-stone-900 text-lg uppercase tracking-tight">{s.driverName}</h3>
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">ID: {s.id}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Pendiente</p>
+                                    <p className="text-xl font-black text-red-500">{formatCurrency(s.pending)}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 py-4 border-y border-stone-50">
+                                <div>
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Liquidado</p>
+                                    <p className="font-bold text-stone-900">{formatCurrency(s.settled)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Total Histórico</p>
+                                    <p className="font-bold text-stone-900">{formatCurrency(s.total)}</p>
+                                </div>
+                            </div>
+                            {s.pending > 0 && (
+                                <Button 
+                                    fullWidth 
+                                    onClick={() => {
+                                        const pendingOrders = s.orders.filter(o => !o.driverSettled);
+                                        pendingOrders.forEach(o => settleDriverOrder(o.id));
+                                    }}
+                                    className="bg-stone-950 text-white"
+                                >
+                                    Liquidar Todo
+                                </Button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const OrdersTab = ({ orders }: { orders: Order[] }) => {
     const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
     
@@ -97,7 +254,7 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
 };
 
 export const AdminView: React.FC = () => {
-  const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState, updateAnyUser, updateStore, config, updateConfig, user, completeTour } = useApp();
+  const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState, updateAnyUser, updateStore, config, updateConfig, user, completeTour, settleMerchantOrder, settleDriverOrder } = useApp();
   const { showToast } = useToast();
 
   const isMobile = window.innerWidth < 1024;
@@ -483,6 +640,28 @@ export const AdminView: React.FC = () => {
                   </div>
 
                   <div className="bg-white p-4 rounded-xl border border-stone-100 space-y-3">
+                      <h3 className="font-bold text-stone-900 text-sm">Configuración de Comisiones</h3>
+                      <div className="space-y-4">
+                          <div>
+                              <p className="text-xs font-bold text-stone-400 uppercase mb-1">Comisión Personalizada (%)</p>
+                              <div className="flex gap-2">
+                                  <input 
+                                    type="number" 
+                                    defaultValue={(selectedStore.commissionPct || config.platformCommissionPct) * 100}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value) / 100;
+                                        updateStore(selectedStore.id, { commissionPct: val });
+                                    }}
+                                    className="flex-1 p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm"
+                                  />
+                                  <div className="bg-stone-100 px-3 flex items-center rounded-lg font-bold text-stone-500">%</div>
+                              </div>
+                              <p className="text-[10px] text-stone-400 mt-1 italic">* Sobrescribe la comisión global del {(config.platformCommissionPct * 100).toFixed(0)}%</p>
+                          </div>
+                      </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-xl border border-stone-100 space-y-3">
                       <h3 className="font-bold text-stone-900 text-sm">Estado del Comercio</h3>
                       <div className="flex gap-2">
                           <Button 
@@ -786,6 +965,12 @@ export const AdminView: React.FC = () => {
                             Pedidos
                         </button>
                         <button 
+                            onClick={() => setAdminViewState('SETTLEMENTS')}
+                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'SETTLEMENTS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
+                        >
+                            Liquidaciones
+                        </button>
+                        <button 
                             id="stores-tab-mobile"
                             onClick={() => setAdminViewState('STORES')}
                             className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'STORES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
@@ -821,6 +1006,7 @@ export const AdminView: React.FC = () => {
                     {adminViewState === 'DASHBOARD' && renderDashboardTab()}
                     {adminViewState === 'FLEET' && renderDispatchTab()}
                     {adminViewState === 'ORDERS' && <OrdersTab orders={orders} />}
+                    {adminViewState === 'SETTLEMENTS' && <SettlementsTab orders={orders} settleMerchantOrder={settleMerchantOrder} settleDriverOrder={settleDriverOrder} />}
                     {adminViewState === 'STORES' && renderStoresTab()}
                     {adminViewState === 'USERS' && renderUsersTab()}
                     {adminViewState === 'DISPUTES' && renderDisputesTab()}

@@ -90,6 +90,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Automatic setup if permission already granted
+  useEffect(() => {
+    if (!messaging || !user || Capacitor.isNativePlatform()) return;
+    
+    if (Notification.permission === 'granted') {
+      const setup = async () => {
+        try {
+          const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+          if (vapidKey) {
+            const token = await getToken(messaging, { vapidKey });
+            if (token && profile && profile.fcmToken !== token) {
+              await updateDoc(doc(db, 'users', user.uid), { fcmToken: token });
+            }
+          }
+        } catch (e) {
+          console.error('Auto FCM setup error:', e);
+        }
+      };
+      setup();
+    }
+  }, [user, messaging, profile]);
+
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
 

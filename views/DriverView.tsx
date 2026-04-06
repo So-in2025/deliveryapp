@@ -5,7 +5,8 @@ import { useToast } from '../context/ToastContext';
 import { OrderStatus, PaymentMethod, OrderType, Order } from '../types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Navigation, DollarSign, LocateFixed, Bike, Banknote, Shield, MapPin, Truck, FileText, X, Clock, Eye } from 'lucide-react';
+import { Navigation, DollarSign, LocateFixed, Bike, Banknote, Shield, MapPin, Truck, FileText, X, Clock, Eye, MessageSquare } from 'lucide-react';
+import { ChatOverlay } from '../components/ui/ChatOverlay';
 import { formatCurrency } from '../constants';
 
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
@@ -60,6 +61,7 @@ export const DriverView: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<Order | null>(null);
   const [vehicleType, setVehicleType] = useState<'MOTO' | 'BICI' | 'AUTO'>('MOTO');
     const [isSimulating, setIsSimulating] = useState(false);
+    const [activeChatOrder, setActiveChatOrder] = useState<string | null>(null);
     const [simulatedDistance, setSimulatedDistance] = useState(0.8);
 
     // Real GPS Tracking Logic
@@ -136,6 +138,27 @@ export const DriverView: React.FC = () => {
 
   const totalEarnings = deliveryEarnings + tipEarnings;
 
+  const dailyEarnings = myHistory
+    .filter(o => {
+        const orderDate = new Date(o.createdAt);
+        const today = new Date();
+        return o.status === OrderStatus.DELIVERED && 
+               orderDate.getDate() === today.getDate() &&
+               orderDate.getMonth() === today.getMonth() &&
+               orderDate.getFullYear() === today.getFullYear();
+    })
+    .reduce((sum, o) => sum + (o.driverEarnings ?? 0), 0);
+
+  const weeklyEarnings = myHistory
+    .filter(o => {
+        const orderDate = new Date(o.createdAt);
+        const today = new Date();
+        const diffTime = Math.abs(today.getTime() - orderDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return o.status === OrderStatus.DELIVERED && diffDays <= 7;
+    })
+    .reduce((sum, o) => sum + (o.driverEarnings ?? 0), 0);
+
   const handleAcceptOrder = (orderId: string) => {
     updateOrder(orderId, OrderStatus.DRIVER_ASSIGNED);
     showToast('¡Entrega aceptada! Dirígete al local.', 'success');
@@ -193,6 +216,12 @@ export const DriverView: React.FC = () => {
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'MAP' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
                 Mi Ruta ({myTasks.length})
+            </button>
+            <button 
+                onClick={() => setDriverViewState('WALLET')}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'WALLET' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
+            >
+                Billetera
             </button>
             <button 
                 onClick={() => setDriverViewState('HISTORY')}
@@ -491,8 +520,16 @@ export const DriverView: React.FC = () => {
                                 <button 
                                     onClick={() => setSelectedTask(task)}
                                     className="w-12 h-12 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                                    title="Ver Detalles"
                                 >
                                     <FileText size={20} />
+                                </button>
+                                <button 
+                                    onClick={() => setActiveChatOrder(task.id)}
+                                    className="w-12 h-12 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                                    title="Chat"
+                                >
+                                    <MessageSquare size={20} />
                                 </button>
                             </div>
 
@@ -596,6 +633,72 @@ export const DriverView: React.FC = () => {
                    ))}
                </div>
              )}
+            </div>
+        )}
+
+        {/* === TAB: WALLET === */}
+        {driverViewState === 'WALLET' && (
+            <div className="space-y-6 animate-fade-in pb-20">
+                <div className="bg-brand-500 rounded-[2.5rem] p-8 text-brand-950 shadow-2xl relative overflow-hidden">
+                    <div className="absolute -right-10 -top-10 w-40 h-40 bg-brand-400/30 rounded-full blur-3xl"></div>
+                    <div className="relative z-10">
+                        <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-2">Balance Disponible</p>
+                        <h2 className="text-5xl font-black tracking-tighter mb-6">{formatCurrency(totalEarnings)}</h2>
+                        <div className="flex gap-4">
+                            <div className="bg-brand-600/20 backdrop-blur-md rounded-2xl p-4 flex-1 border border-brand-400/30">
+                                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Hoy</p>
+                                <p className="text-xl font-black">{formatCurrency(dailyEarnings)}</p>
+                            </div>
+                            <div className="bg-brand-600/20 backdrop-blur-md rounded-2xl p-4 flex-1 border border-brand-400/30">
+                                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Esta Semana</p>
+                                <p className="text-xl font-black">{formatCurrency(weeklyEarnings)}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-stone-100 dark:border-stone-700 shadow-sm">
+                        <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center mb-4">
+                            <DollarSign className="text-green-500" size={20} />
+                        </div>
+                        <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Propinas</p>
+                        <p className="text-2xl font-black text-stone-900 dark:text-white">{formatCurrency(tipEarnings)}</p>
+                    </div>
+                    <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-stone-100 dark:border-stone-700 shadow-sm">
+                        <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4">
+                            <Bike className="text-blue-500" size={20} />
+                        </div>
+                        <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Envíos</p>
+                        <p className="text-2xl font-black text-stone-900 dark:text-white">{formatCurrency(deliveryEarnings)}</p>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-stone-800 rounded-3xl border border-stone-100 dark:border-stone-700 overflow-hidden shadow-sm">
+                    <div className="p-6 border-b border-stone-100 dark:border-stone-700 flex justify-between items-center">
+                        <h3 className="font-black text-stone-900 dark:text-white uppercase tracking-widest text-sm">Últimos Pagos</h3>
+                        <button className="text-brand-600 text-xs font-bold">Ver Todo</button>
+                    </div>
+                    <div className="divide-y divide-stone-100 dark:divide-stone-700">
+                        {myHistory.filter(o => o.status === OrderStatus.DELIVERED).slice(0, 5).map(order => (
+                            <div key={order.id} className="p-4 flex justify-between items-center hover:bg-stone-50 dark:hover:bg-stone-700/30 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-stone-100 dark:bg-stone-700 rounded-xl flex items-center justify-center">
+                                        <Banknote size={20} className="text-stone-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-stone-900 dark:text-white">{order.storeName}</p>
+                                        <p className="text-[10px] text-stone-500 uppercase font-bold">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-black text-stone-900 dark:text-white">+{formatCurrency(order.driverEarnings)}</p>
+                                    <p className="text-[10px] text-green-500 font-bold uppercase">Completado</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         )}
 
@@ -769,6 +872,13 @@ export const DriverView: React.FC = () => {
                 onComplete={() => completeTour('driver-onboarding')} 
             />
         )}
+
+        <ChatOverlay 
+          orderId={activeChatOrder || ''} 
+          isOpen={!!activeChatOrder} 
+          onClose={() => setActiveChatOrder(null)} 
+          title="Chat de Entrega" 
+        />
     </div>
   );
 };

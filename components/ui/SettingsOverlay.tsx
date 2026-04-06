@@ -31,7 +31,7 @@ export const SettingsOverlay: React.FC = () => {
   const [editName, setEditName] = useState(user.name);
   const [editEmail, setEditEmail] = useState(user.email);
   const [notificationsEnabled, setNotificationsEnabled] = useState(
-    typeof Notification !== 'undefined' && Notification.permission === 'granted' && !!user.fcmToken
+    typeof Notification !== 'undefined' && Notification.permission === 'granted' && !!user.pushSubscription
   );
   
   // Store Reg State
@@ -98,8 +98,12 @@ export const SettingsOverlay: React.FC = () => {
 
   const toggleNotifications = async () => {
       if (!notificationsEnabled) {
-          await requestNotificationPermission();
-          setNotificationsEnabled(true);
+          try {
+              await requestNotificationPermission();
+              setNotificationsEnabled(true);
+          } catch (error) {
+              console.error('Error enabling notifications:', error);
+          }
       } else {
           setNotificationsEnabled(false);
           showToast('Notificaciones desactivadas localmente', 'info');
@@ -574,20 +578,20 @@ export const SettingsOverlay: React.FC = () => {
   const renderPrivacyView = () => (
       <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white dark:bg-stone-950 animate-slide-in-right">
           <div className="prose prose-stone dark:prose-invert max-w-none text-sm space-y-4 text-stone-600 dark:text-stone-400">
-              <p className="font-bold text-stone-900 dark:text-white">Última actualización: 4 de Abril, 2026</p>
-              <p>En <span className="font-bold text-brand-600">Te lo Llevo</span>, valoramos tu privacidad. Esta política describe cómo recopilamos, usamos y protegemos tu información personal.</p>
+              <p className="font-bold text-stone-900 dark:text-white">Última actualización: 6 de Abril, 2026</p>
+              <p>En <span className="font-bold text-brand-600">Te lo Llevo</span>, la privacidad de nuestros vecinos es prioridad. Esta política detalla cómo manejamos tu información en nuestra comunidad.</p>
               
-              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">1. Información que recopilamos</h4>
-              <p>Recopilamos información que nos proporcionas directamente, como tu nombre, correo electrónico, dirección de entrega y número de teléfono cuando te registras o realizas un pedido.</p>
+              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">1. Datos que Recopilamos</h4>
+              <p>Para que tus pedidos lleguen correctamente, necesitamos: Nombre, Teléfono, Dirección exacta (con referencias locales) y Correo electrónico. También guardamos tu historial de pedidos para ofrecerte mejores promociones.</p>
               
-              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">2. Uso de la información</h4>
-              <p>Utilizamos tu información para procesar pedidos, facilitar la entrega, mejorar nuestros servicios y comunicarnos contigo sobre actualizaciones de tus pedidos.</p>
+              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">2. Geolocalización</h4>
+              <p>Si eres cliente, usamos tu ubicación solo para mostrarte comercios cercanos y calcular el costo de envío. Si eres repartidor, rastreamos tu ubicación en tiempo real solo mientras estás en un pedido activo para seguridad de todos.</p>
               
-              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">3. Compartir información</h4>
-              <p>Compartimos los datos necesarios con los comercios y repartidores para completar la entrega de tus pedidos. No vendemos tu información a terceros.</p>
+              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">3. Uso de Cookies y Almacenamiento</h4>
+              <p>Usamos almacenamiento local para mantener tu sesión iniciada y recordar tus productos en el carrito, evitando que pierdas tu progreso si se cierra la app.</p>
               
-              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">4. Seguridad</h4>
-              <p>Implementamos medidas de seguridad técnicas y organizativas para proteger tus datos contra el acceso no autorizado o la pérdida.</p>
+              <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">4. Tus Derechos</h4>
+              <p>Puedes solicitar la eliminación de tu cuenta y datos en cualquier momento desde esta configuración o contactando a soporte técnico local.</p>
           </div>
       </div>
   );
@@ -595,20 +599,20 @@ export const SettingsOverlay: React.FC = () => {
   const renderTermsView = () => (
     <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white dark:bg-stone-950 animate-slide-in-right">
         <div className="prose prose-stone dark:prose-invert max-w-none text-sm space-y-4 text-stone-600 dark:text-stone-400">
-            <p className="font-bold text-stone-900 dark:text-white">Última actualización: 4 de Abril, 2026</p>
-            <p>Al utilizar la plataforma <span className="font-bold text-brand-600">Te lo Llevo</span>, aceptas los siguientes términos y condiciones:</p>
+            <p className="font-bold text-stone-900 dark:text-white">Última actualización: 6 de Abril, 2026</p>
+            <p>Bienvenido a <span className="font-bold text-brand-600">Te lo Llevo</span>. Al usar nuestra app, aceptas estas reglas diseñadas para una convivencia sana en nuestra comunidad.</p>
             
-            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">1. Uso del Servicio</h4>
-            <p>Debes tener al menos 18 años para utilizar este servicio. Eres responsable de mantener la confidencialidad de tu cuenta.</p>
+            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">1. Naturaleza del Servicio</h4>
+            <p><span className="font-bold">Te lo Llevo</span> es una plataforma tecnológica de intermediación. No preparamos comida ni somos dueños de los vehículos de reparto. Conectamos vecinos con comercios locales.</p>
             
-            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">2. Pagos y Reembolsos</h4>
-            <p>Los pagos se procesan a través de Mercado Pago. Las cancelaciones están sujetas a la política de cada comercio una vez que el pedido ha sido aceptado.</p>
+            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">2. Deslinde de Responsabilidad (Productos)</h4>
+            <p>La calidad, temperatura, sabor y estado de los productos son responsabilidad exclusiva del comercio que los prepara. Cualquier reclamo sobre el producto debe dirigirse al comercio a través de nuestro sistema de tickets.</p>
             
-            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">3. Responsabilidades</h4>
-            <p><span className="font-bold">Te lo Llevo</span> actúa como intermediario entre clientes, comercios y repartidores independientes. No somos responsables de la calidad de los productos preparados por los comercios.</p>
+            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">3. Deslinde de Responsabilidad (Accidentes)</h4>
+            <p>Los repartidores (Drivers) actúan como prestadores independientes. <span className="font-bold">Te lo Llevo</span> no se hace responsable por accidentes de tránsito, daños a terceros o lesiones sufridas por los repartidores durante el ejercicio de su actividad. Cada repartidor debe contar con su propio seguro de vida y vehículo vigente.</p>
             
-            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">4. Modificaciones</h4>
-            <p>Nos reservamos el derecho de modificar estos términos en cualquier momento. El uso continuado de la plataforma constituye la aceptación de los nuevos términos.</p>
+            <h4 className="font-bold text-stone-900 dark:text-white uppercase text-xs tracking-widest mt-6">4. Comportamiento del Usuario</h4>
+            <p>Nos reservamos el derecho de bloquear cuentas que falten al respeto a repartidores o personal de comercios. Queremos una comunidad basada en el respeto mutuo.</p>
         </div>
     </div>
 );
@@ -618,20 +622,33 @@ export const SettingsOverlay: React.FC = () => {
       [UserRole.CLIENT]: (
         <div className="space-y-6">
           <section>
-            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
-              <ShoppingBag size={16} className="text-brand-500" /> Realizar un Pedido
+            <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-3">
+              <HelpCircle size={16} className="text-brand-500" /> Preguntas Frecuentes (FAQ)
             </h4>
-            <ul className="list-disc pl-5 space-y-1">
-              <li><b>Exploración:</b> Navega por categorías o usa el buscador.</li>
-              <li><b>Selección:</b> Elige un comercio y personaliza tus productos.</li>
-              <li><b>Pago:</b> Usa Mercado Pago para pagos online o efectivo al recibir.</li>
-            </ul>
+            <div className="space-y-4">
+                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800">
+                    <p className="font-bold text-xs text-brand-600 dark:text-brand-400 uppercase mb-1">¿Cuál es la zona de cobertura?</p>
+                    <p className="text-xs">Cubrimos todo el casco urbano y barrios periféricos hasta 8km del centro. Si tu dirección no aparece, contáctanos.</p>
+                </div>
+                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800">
+                    <p className="font-bold text-xs text-brand-600 dark:text-brand-400 uppercase mb-1">¿Qué hago si mi pedido llegó mal?</p>
+                    <p className="text-xs">Ve a "Mis Pedidos", selecciona el pedido y toca "Iniciar Reclamo". Adjunta una foto y el comercio te dará una solución inmediata.</p>
+                </div>
+                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800">
+                    <p className="font-bold text-xs text-brand-600 dark:text-brand-400 uppercase mb-1">¿Cuáles son los horarios?</p>
+                    <p className="text-xs">La app funciona 24/7, pero la disponibilidad depende de los horarios de cada comercio (generalmente de 11:00 a 23:00).</p>
+                </div>
+            </div>
           </section>
           <section>
             <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
-              <MapPin size={16} className="text-brand-500" /> Seguimiento en Vivo
+              <ShoppingBag size={16} className="text-brand-500" /> Cómo Pedir
             </h4>
-            <p>En "Mis Pedidos", verás un mapa con la ubicación del repartidor cuando el pedido esté "En Camino".</p>
+            <ul className="list-disc pl-5 text-xs space-y-1">
+              <li>Elige tu comercio favorito.</li>
+              <li>Personaliza tu pedido con extras.</li>
+              <li>Paga con Mercado Pago o Efectivo.</li>
+            </ul>
           </section>
         </div>
       ),
@@ -641,13 +658,13 @@ export const SettingsOverlay: React.FC = () => {
             <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
               <Bell size={16} className="text-brand-500" /> Gestión de Pedidos
             </h4>
-            <p>Recibirás una alerta sonora con cada pedido nuevo. Debes aceptarlo para iniciar la preparación.</p>
+            <p className="text-xs">Recibirás una alerta sonora con cada pedido nuevo. Debes aceptarlo para iniciar la preparación.</p>
           </section>
           <section>
             <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
               <ChefHat size={16} className="text-brand-500" /> Tu Menú
             </h4>
-            <p>Puedes añadir fotos reales usando Cloudinary y configurar modificadores para tus platos.</p>
+            <p className="text-xs">Puedes añadir fotos reales usando Cloudinary y configurar modificadores para tus platos.</p>
           </section>
         </div>
       ),
@@ -657,13 +674,13 @@ export const SettingsOverlay: React.FC = () => {
             <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
               <Bike size={16} className="text-brand-500" /> Aceptar Entregas
             </h4>
-            <p>Verás la distancia al comercio y al cliente antes de aceptar cualquier pedido disponible.</p>
+            <p className="text-xs">Verás la distancia al comercio y al cliente antes de aceptar cualquier pedido disponible.</p>
           </section>
           <section>
             <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
               <Check size={16} className="text-brand-500" /> Proceso de Entrega
             </h4>
-            <p>Marca como "Retirado" al salir del local y "Entregado" al llegar con el cliente.</p>
+            <p className="text-xs">Marca como "Retirado" al salir del local y "Entregado" al llegar con el cliente.</p>
           </section>
         </div>
       ),
@@ -673,13 +690,13 @@ export const SettingsOverlay: React.FC = () => {
             <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
               <Shield size={16} className="text-brand-500" /> Seguridad Global
             </h4>
-            <p>El acceso a configuraciones críticas requiere validación de PIN en el servidor.</p>
+            <p className="text-xs">El acceso a configuraciones críticas requiere validación de PIN en el servidor.</p>
           </section>
           <section>
             <h4 className="font-bold text-stone-900 dark:text-white flex items-center gap-2 mb-2">
               <RefreshCcw size={16} className="text-brand-500" /> Mantenimiento
             </h4>
-            <p>Asegúrate de que las API Keys de Mercado Pago y Cloudinary estén configuradas en las variables de entorno.</p>
+            <p className="text-xs">Asegúrate de que las API Keys de Mercado Pago y Cloudinary estén configuradas en las variables de entorno.</p>
           </section>
         </div>
       )

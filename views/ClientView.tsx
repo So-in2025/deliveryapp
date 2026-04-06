@@ -6,6 +6,7 @@ import { MapSelector } from '../components/ui/MapSelector';
 import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order } from '../types';
 import { Button } from '../components/ui/Button';
 import { LazyImage } from '../components/ui/LazyImage';
+import { ChatOverlay } from '../components/ui/ChatOverlay';
 import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings, Trash2, FileText, DollarSign, Camera, Share, Mail, HelpCircle } from 'lucide-react';
 import { formatCurrency, APP_CONFIG } from '../constants';
 import { useToast } from '../context/ToastContext';
@@ -159,41 +160,55 @@ const isNewStore = (dateString: string): boolean => {
     );
 });
 
-const ProductRow = React.memo(({ product, onAdd, onCustomize, accentColor }: { product: Product; onAdd: () => void; onCustomize: () => void; accentColor?: string }) => (
-    <div className="flex gap-5 p-5 rounded-[2.5rem] bg-white dark:bg-stone-900/40 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm relative overflow-hidden shadow-2xl shadow-black/5 group hover:border-brand-500/20 transition-all duration-500">
-        <div className="flex-1 space-y-3 relative z-10 py-1">
-            <h4 className="font-black text-xl text-stone-900 dark:text-white tracking-tight group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{product.name}</h4>
-            <p className="text-sm text-stone-500 dark:text-stone-400 line-clamp-2 leading-relaxed font-medium">{product.description}</p>
-            <p className="font-black text-xl mt-4" style={accentColor ? { color: accentColor } : { color: '#FACC15' }}>{formatCurrency(product.price)}</p>
-        </div>
-        <div className="flex flex-col justify-between items-end gap-4 relative z-10">
-            <div className="w-32 h-32 rounded-[2rem] overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-inner border border-black/5 dark:border-white/5">
-                <LazyImage src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out" />
+const ProductRow = React.memo(({ product, onAdd, onCustomize, accentColor }: { product: Product; onAdd: () => void; onCustomize: () => void; accentColor?: string }) => {
+    const isAvailable = product.isAvailable !== false;
+    
+    return (
+        <div className={`flex gap-5 p-5 rounded-[2.5rem] bg-white dark:bg-stone-900/40 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm relative overflow-hidden shadow-2xl shadow-black/5 group hover:border-brand-500/20 transition-all duration-500 ${!isAvailable ? 'opacity-75 grayscale-[0.5]' : ''}`}>
+            <div className="flex-1 space-y-3 relative z-10 py-1">
+                <div className="flex items-center gap-2">
+                    <h4 className="font-black text-xl text-stone-900 dark:text-white tracking-tight group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{product.name}</h4>
+                    {!isAvailable && (
+                        <span className="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Agotado</span>
+                    )}
+                </div>
+                <p className="text-sm text-stone-500 dark:text-stone-400 line-clamp-2 leading-relaxed font-medium">{product.description}</p>
+                <p className="font-black text-xl mt-4" style={accentColor ? { color: accentColor } : { color: '#FACC15' }}>{formatCurrency(product.price)}</p>
             </div>
-            <button 
-                onClick={(e) => {
-                    e.stopPropagation();
-                    if (product.modifierGroups && product.modifierGroups.length > 0) {
-                        onCustomize();
-                    } else {
-                        onAdd();
-                    }
-                }}
-                className="absolute -bottom-1 -right-1 bg-stone-950 dark:bg-white text-white dark:text-stone-950 p-4 rounded-2xl shadow-2xl active:scale-90 transition-all hover:scale-110 hover:rotate-3"
-                style={accentColor ? { backgroundColor: accentColor, color: '#000' } : {}}
-                aria-label="Agregar"
-            >
-                <Plus size={24} strokeWidth={4} />
-            </button>
+            <div className="flex flex-col justify-between items-end gap-4 relative z-10">
+                <div className="w-32 h-32 rounded-[2rem] overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-inner border border-black/5 dark:border-white/5">
+                    <LazyImage src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out" />
+                </div>
+                <button 
+                    disabled={!isAvailable}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isAvailable) return;
+                        if (product.modifierGroups && product.modifierGroups.length > 0) {
+                            onCustomize();
+                        } else {
+                            onAdd();
+                        }
+                    }}
+                    className={`absolute -bottom-1 -right-1 p-4 rounded-2xl shadow-2xl active:scale-90 transition-all ${isAvailable ? 'bg-stone-950 dark:bg-white text-white dark:text-stone-950 hover:scale-110 hover:rotate-3' : 'bg-stone-200 dark:bg-stone-800 text-stone-400 cursor-not-allowed'}`}
+                    style={isAvailable && accentColor ? { backgroundColor: accentColor, color: '#000' } : {}}
+                    aria-label="Agregar"
+                >
+                    <Plus size={24} strokeWidth={4} />
+                </button>
+            </div>
         </div>
-    </div>
-));
+    );
+});
 
 export const ClientView: React.FC = () => {
   // Consume Global State for navigation
-  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour, config } = useApp();
+  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour, config, applyReferralCode, setRole, setPendingAction, getRouteDistance } = useApp();
   const { showToast } = useToast();
-  const { signOut } = useAuth();
+  const { signOut, user: authUser, login } = useAuth();
+  const [showChat, setShowChat] = useState(false);
+  const [referralInput, setReferralInput] = useState('');
+  const [isApplyingReferral, setIsApplyingReferral] = useState(false);
 
   const isMobile = window.innerWidth < 1024;
 
@@ -1007,7 +1022,10 @@ export const ClientView: React.FC = () => {
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <button className="p-3 bg-stone-100 dark:bg-stone-700 rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-stone-200 transition-colors">
+                            <button 
+                                onClick={() => setShowChat(true)}
+                                className="p-3 bg-stone-100 dark:bg-stone-700 rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-stone-200 transition-colors"
+                            >
                                 <MessageSquare size={20} />
                             </button>
                             <button className="p-3 bg-brand-500 rounded-2xl text-brand-950 hover:bg-brand-600 transition-colors">
@@ -1016,6 +1034,13 @@ export const ClientView: React.FC = () => {
                         </div>
                     </motion.div>
                 )}
+
+                <ChatOverlay 
+                    orderId={displayOrder.id} 
+                    isOpen={showChat} 
+                    onClose={() => setShowChat(false)} 
+                    title={`Chat con ${displayOrder.storeName}`} 
+                />
 
                  <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
                     <h3 className="font-bold text-sm text-stone-900 dark:text-white mb-3 uppercase tracking-wider">Detalle del Pedido</h3>
@@ -1063,7 +1088,6 @@ export const ClientView: React.FC = () => {
     const [requestCutlery, setRequestCutlery] = useState<boolean>(false);
 
     const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState(orderType === OrderType.DELIVERY ? (selectedStore?.deliveryFee ?? config.baseDeliveryFee) : 0);
-    const [distanceKm, setDistanceKm] = useState<number | null>(null);
 
     useEffect(() => {
         const calculateFee = async () => {
@@ -1103,10 +1127,43 @@ export const ClientView: React.FC = () => {
         if (found) { setAppliedCoupon({ code: found.code, discountPct: found.discountPct }); showToast('¡Cupón aplicado!', 'success'); } else { showToast('Cupón inválido.', 'error'); setAppliedCoupon(null); }
     };
     const discountAmount = appliedCoupon ? (subtotal + dynamicDeliveryFee) * appliedCoupon.discountPct : 0;
-    const total = subtotal + dynamicDeliveryFee + tip - discountAmount;
+    const firstPurchaseDiscount = !user.isFirstPurchaseDone ? subtotal * config.firstPurchaseDiscountPct : 0;
+    const referralDiscount = (user.referredBy && !user.isFirstPurchaseDone) ? subtotal * config.referralDiscountPct : 0;
+    const total = subtotal + dynamicDeliveryFee + tip - discountAmount - firstPurchaseDiscount - referralDiscount;
 
     const handlePlaceOrder = async () => {
         if (!selectedStore) return;
+
+        // If user is not logged in, we must prompt for login and save the action
+        if (!authUser) {
+            showToast('Por favor, inicia sesión para finalizar tu pedido', 'info');
+            
+            // Extract coordinates for the order
+            let orderCoords = undefined;
+            const match = deliveryAddr.match(/\((-?\d+\.\d+),\s*(-?\d+\.\d+)\)/);
+            if (match) {
+                orderCoords = { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+            }
+
+            setPendingAction({
+                type: 'PLACE_ORDER',
+                data: {
+                    storeId: selectedStore.id,
+                    storeName: selectedStore.name,
+                    address: deliveryAddr,
+                    paymentMethod,
+                    notes,
+                    type: orderType,
+                    discount: discountAmount,
+                    coordinates: orderCoords
+                }
+            });
+
+            setRole(UserRole.NONE); // Redirect to AuthView
+            login();
+            return;
+        }
+
         setIsProcessing(true);
         
         try {
@@ -1275,6 +1332,42 @@ export const ClientView: React.FC = () => {
               )}
           </div>
 
+          {!user.referredBy && (
+            <div className="bg-white dark:bg-stone-900/40 p-6 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm">
+                <h3 className="font-black text-stone-950 dark:text-white mb-4 flex items-center gap-3 tracking-tight">
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                      <User size={20} className="text-blue-500" />
+                  </div>
+                  Código de Referido
+                </h3>
+                <div className="flex gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="CÓDIGO DE TU AMIGO" 
+                    value={referralInput} 
+                    onChange={(e) => setReferralInput(e.target.value.toUpperCase())} 
+                    disabled={isProcessing || isApplyingReferral} 
+                    className="flex-1 bg-stone-100 dark:bg-white/5 border border-transparent focus:border-brand-500/30 rounded-2xl px-5 py-4 text-sm outline-none focus:ring-4 focus:ring-brand-500/10 text-stone-950 dark:text-white font-black tracking-tight transition-all" 
+                  />
+                  <Button 
+                    size="lg" 
+                    onClick={async () => {
+                      setIsApplyingReferral(true);
+                      await applyReferralCode(referralInput);
+                      setIsApplyingReferral(false);
+                      setReferralInput('');
+                    }} 
+                    disabled={!referralInput || isProcessing || isApplyingReferral} 
+                    isLoading={isApplyingReferral}
+                    className="px-8 !rounded-2xl bg-blue-600 hover:bg-blue-700"
+                  >
+                    APLICAR
+                  </Button>
+                </div>
+                <p className="text-[10px] text-stone-400 font-bold mt-3 px-2">Si tienes un código de un amigo, aplícalo para obtener un descuento extra en tu primera compra.</p>
+            </div>
+          )}
+
           <div id="order-summary" className="bg-stone-950 dark:bg-white p-8 rounded-[3rem] shadow-2xl shadow-black/20 text-white dark:text-stone-950">
              <h3 className="font-black text-xl mb-6 tracking-tight flex items-center gap-3">
                 <div className="w-2 h-8 bg-brand-500 rounded-full"></div>
@@ -1331,8 +1424,20 @@ export const ClientView: React.FC = () => {
                 )}
                 {appliedCoupon && (
                     <div className="flex justify-between items-center text-brand-400 dark:text-brand-600">
-                        <span className="text-sm font-black uppercase tracking-widest">Descuento</span>
+                        <span className="text-sm font-black uppercase tracking-widest">Descuento Cupón</span>
                         <span className="font-black text-lg">- {formatCurrency(discountAmount)}</span>
+                    </div>
+                )}
+                {!user.isFirstPurchaseDone && (
+                    <div className="flex justify-between items-center text-brand-400 dark:text-brand-600">
+                        <span className="text-sm font-black uppercase tracking-widest">Descuento 1ra Compra</span>
+                        <span className="font-black text-lg">- {formatCurrency(firstPurchaseDiscount)}</span>
+                    </div>
+                )}
+                {user.referredBy && !user.isFirstPurchaseDone && (
+                    <div className="flex justify-between items-center text-blue-400 dark:text-blue-600">
+                        <span className="text-sm font-black uppercase tracking-widest">Descuento Referido</span>
+                        <span className="font-black text-lg">- {formatCurrency(referralDiscount)}</span>
                     </div>
                 )}
              </div>
@@ -1568,6 +1673,55 @@ export const ClientView: React.FC = () => {
                         <p className="text-[9px] text-stone-500 dark:text-stone-400 font-black uppercase tracking-widest mt-1">{stat.label}</p>
                     </div>
                   ))}
+              </div>
+
+              {/* Referral System Card */}
+              <div className="bg-gradient-to-br from-brand-500 to-brand-600 p-8 rounded-[3rem] shadow-2xl shadow-brand-500/20 text-brand-950 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-10">
+                      <Sparkles size={120} />
+                  </div>
+                  <div className="relative z-10">
+                      <h4 className="font-black text-2xl tracking-tighter mb-2">Gana Dinero Invitando</h4>
+                      <p className="text-brand-900/70 font-bold text-sm mb-6 leading-tight">Comparte tu código con amigos. Cuando hagan su primera compra, ¡tú ganas {formatCurrency(config.referralRewardAmount)}!</p>
+                      
+                      <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 flex items-center justify-between border border-white/30 mb-6">
+                          <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Tu Código</p>
+                              <p className="text-2xl font-black tracking-tighter">{user.referralCode || 'GENERANDO...'}</p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                                navigator.clipboard.writeText(user.referralCode || '');
+                                showToast('Código copiado', 'success');
+                            }}
+                            className="p-3 bg-brand-950 text-white rounded-xl hover:scale-110 active:scale-95 transition-all shadow-xl"
+                          >
+                              <Download size={20} className="rotate-[-90deg]" />
+                          </button>
+                      </div>
+
+                      <div className="flex justify-between items-end">
+                          <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Ganancias Acumuladas</p>
+                              <p className="text-3xl font-black tracking-tighter">{formatCurrency(user.referralEarnings || 0)}</p>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            className="bg-brand-950 text-white !rounded-xl px-6"
+                            onClick={() => {
+                                const text = `¡Usa mi código ${user.referralCode} en ${APP_CONFIG.appName} y obtén un descuento en tu primera compra! Descarga la app aquí: ${window.location.origin}`;
+                                if (navigator.share) {
+                                    navigator.share({ title: APP_CONFIG.appName, text, url: window.location.origin });
+                                } else {
+                                    navigator.clipboard.writeText(text);
+                                    showToast('Mensaje copiado para compartir', 'success');
+                                }
+                            }}
+                          >
+                              COMPARTIR
+                          </Button>
+                      </div>
+                  </div>
               </div>
 
               {/* Edit Form */}

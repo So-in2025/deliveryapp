@@ -3,10 +3,23 @@ import { createServer as createViteServer } from 'vite';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import webpush from 'web-push';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
-import { db, doc, updateDoc } from './firebase.js';
+import { db, doc, updateDoc, getDoc } from './firebase.js';
 
 dotenv.config();
+
+// Web Push Configuration
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || '';
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || '';
+
+if (vapidPublicKey && vapidPrivateKey) {
+  webpush.setVapidDetails(
+    'mailto:ofeliaacevedo41@gmail.com',
+    vapidPublicKey,
+    vapidPrivateKey
+  );
+}
 
 async function startServer() {
   const app = express();
@@ -101,6 +114,36 @@ async function startServer() {
     } catch (error) {
       console.error('Error creating MP preference:', error);
       res.status(500).json({ error: 'Failed to create payment preference' });
+    }
+  });
+
+  // Push Notification Endpoint
+  app.post('/api/send-notification', async (req, res) => {
+    try {
+      const { userId, title, body, url } = req.body;
+      
+      // Fetch user's push subscription from Firestore
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      
+      if (!userSnap.exists()) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      const userData = userSnap.data();
+      const subscription = userData.pushSubscription;
+      
+      if (!subscription) {
+        return res.status(400).json({ error: 'User has no push subscription' });
+      }
+      
+      const payload = JSON.stringify({ title, body, url });
+      
+      await webpush.sendNotification(subscription, payload);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+      res.status(500).json({ error: 'Failed to send notification' });
     }
   });
 

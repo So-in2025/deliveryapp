@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
 
 export const AuthView: React.FC = () => {
-  const { user: appUser, createStore, updateUser, setRole, config, requestAdminAccess } = useApp();
+  const { user: appUser, createStore, updateUser, setRole, config, requestAdminAccess, setPendingRole } = useApp();
   const { showToast } = useToast();
   const { user: authUser, login, loginEmail, registerEmail, resetPass, signOut, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
@@ -104,7 +104,9 @@ export const AuthView: React.FC = () => {
 
   const handleRoleSelection = (role: UserRole, isGuest: boolean = false) => {
     if (!authUser && !isGuest) {
-      showToast("Por favor, inicia sesión primero", "info");
+      showToast("Por favor, inicia sesión para continuar", "info");
+      setPendingRole(role);
+      setAuthMode('GOOGLE'); // Default to Google for quick login
       login();
       return;
     }
