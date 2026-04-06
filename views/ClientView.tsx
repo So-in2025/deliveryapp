@@ -6,7 +6,7 @@ import { MapSelector } from '../components/ui/MapSelector';
 import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order } from '../types';
 import { Button } from '../components/ui/Button';
 import { LazyImage } from '../components/ui/LazyImage';
-import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Coffee, Pizza, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings, Trash2, FileText, DollarSign, Camera, Share, Mail, HelpCircle } from 'lucide-react';
+import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings, Trash2, FileText, DollarSign, Camera, Share, Mail, HelpCircle } from 'lucide-react';
 import { formatCurrency, APP_CONFIG } from '../constants';
 import { useToast } from '../context/ToastContext';
 import jsPDF from 'jspdf';
@@ -191,7 +191,7 @@ const ProductRow = React.memo(({ product, onAdd, onCustomize, accentColor }: { p
 
 export const ClientView: React.FC = () => {
   // Consume Global State for navigation
-  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour } = useApp();
+  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour, config } = useApp();
   const { showToast } = useToast();
   const { signOut } = useAuth();
 
@@ -286,12 +286,6 @@ export const ClientView: React.FC = () => {
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | 'ALL'>('ALL');
-
-  // Extract unique categories
-  const categories = useMemo(() => {
-    const cats = Array.from(new Set(stores.map(s => s.category)));
-    return ['Todos', ...cats];
-  }, [stores]);
 
   // --- ALGORITHMIC LISTS (HEURISTICS) ---
 
@@ -711,13 +705,18 @@ export const ClientView: React.FC = () => {
       </div>
   );
 
-  const CategoryPills = () => (
+  const CategoryPills = () => {
+    const displayCategories = ['Todos', ...config.categories];
+    return (
       <div id="category-pills" className="flex gap-4 px-6 pb-4 overflow-x-auto scrollbar-hide">
-           {categories.map((cat) => {
+           {displayCategories.map((cat) => {
               let Icon = Utensils;
-              if(cat === 'Hamburguesas') Icon = Flame;
-              if(cat === 'Pizza & Pasta') Icon = Pizza;
-              if(cat === 'Japonesa') Icon = Coffee; 
+              if(cat === 'Comida') Icon = ChefHat;
+              if(cat === 'Supermercado') Icon = ShoppingBag;
+              if(cat === 'Farmacia') Icon = Zap;
+              if(cat === 'Mascotas') Icon = Heart;
+              if(cat === 'Servicios Profesionales') Icon = User;
+              
               const isSelected = (selectedCategory === cat || (selectedCategory === 'ALL' && cat === 'Todos'));
 
               return (
@@ -736,7 +735,8 @@ export const ClientView: React.FC = () => {
               )
           })}
       </div>
-  );
+    );
+  };
 
   const HorizontalSection = ({ title, icon, data }: { title: string, icon: React.ReactNode, data: Store[] }) => (
       <div className="mt-2">
@@ -2026,6 +2026,7 @@ export const ClientView: React.FC = () => {
                     <BannerCarousel />
                     <CategoryPills />
                     <HorizontalSection title="Cerca de ti" icon={<MapPin size={18} className="text-brand-800" />} data={recommendedStores} />
+                    <HorizontalSection title="Servicios Profesionales" icon={<User size={18} className="text-blue-500" />} data={stores.filter(s => s.category === 'Servicios Profesionales')} />
                     <HorizontalSection title="Nuevos" icon={<Sparkles size={18} className="text-amber-500" />} data={stores.filter(s => isNewStore(s.createdAt))} />
                     <HorizontalSection title="Más Rápidos" icon={<Zap size={18} className="text-amber-500" />} data={fastestStores} />
                     

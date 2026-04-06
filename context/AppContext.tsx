@@ -128,7 +128,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     feePerKm: APP_CONFIG.feePerKm,
     supportEmail: 'soporte@telollevo.com',
     maintenanceMode: false,
-    paymentMode: 'CENTRALIZED'
+    paymentMode: 'CENTRALIZED',
+    categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales']
   });
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
@@ -375,8 +376,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Listen to Global Config
     const unsubscribeConfig = onSnapshot(doc(db, 'config', 'global'), (snapshot) => {
       if (snapshot.exists()) {
-        setConfig(snapshot.data() as GlobalConfig);
+        const data = snapshot.data() as GlobalConfig;
+        setConfig(prev => ({
+          ...prev,
+          ...data,
+          categories: data.categories || prev.categories
+        }));
+      } else {
+        // Create initial config if it doesn't exist
+        setDoc(doc(db, 'config', 'global'), {
+          platformCommissionPct: APP_CONFIG.platformCommissionPct,
+          driverCommissionPct: APP_CONFIG.driverCommissionPct,
+          baseDeliveryFee: APP_CONFIG.baseDeliveryFee,
+          feePerKm: APP_CONFIG.feePerKm,
+          supportEmail: 'soporte@telollevo.com',
+          maintenanceMode: false,
+          paymentMode: 'CENTRALIZED',
+          categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales']
+        }).catch(err => handleFirestoreError(err, OperationType.WRITE, 'config/global'));
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'config/global');
     });
 
     // Listen to Coupons

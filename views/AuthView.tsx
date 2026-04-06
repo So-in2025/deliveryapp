@@ -3,13 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Store } from '../types';
-import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, User as UserIcon, Globe, Sparkles, Download, ArrowLeft, Mail, Lock, User } from 'lucide-react';
+import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, User as UserIcon, Globe, Sparkles, Download, ArrowLeft, Mail, Lock, User, X } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
 
 export const AuthView: React.FC = () => {
-  const { user: appUser, createStore, updateUser, setRole } = useApp();
+  const { user: appUser, createStore, updateUser, setRole, config, verifyAdminPin } = useApp();
   const { showToast } = useToast();
   const { user: authUser, login, loginEmail, registerEmail, resetPass, signOut, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
@@ -17,6 +17,10 @@ export const AuthView: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState<'NONE' | 'MERCHANT' | 'DRIVER'>('NONE');
   const [authMode, setAuthMode] = useState<'GOOGLE' | 'EMAIL_LOGIN' | 'EMAIL_REGISTER' | 'FORGOT'>('GOOGLE');
+
+  const [showAdminPin, setShowAdminPin] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [isVerifyingPin, setIsVerifyingPin] = useState(false);
 
   // Email Auth States
   const [email, setEmail] = useState('');
@@ -131,6 +135,23 @@ export const AuthView: React.FC = () => {
 
     updateUser({ role });
     setRole(role);
+  };
+
+  const handleAdminPinSubmit = async () => {
+    if (!authUser) {
+        showToast('Inicia sesión para verificar identidad', 'info');
+        return;
+    }
+    setIsVerifyingPin(true);
+    const success = await verifyAdminPin(adminPin);
+    setIsVerifyingPin(false);
+    if (success) {
+        showToast('Acceso administrativo concedido', 'success');
+        setShowAdminPin(false);
+        setRole(UserRole.ADMIN);
+    } else {
+        showToast('PIN incorrecto o error de autorización', 'error');
+    }
   };
 
   const handleRegisterMerchant = () => {
@@ -278,10 +299,10 @@ export const AuthView: React.FC = () => {
                         <span>Nueva Experiencia 2026</span>
                     </div>
                     <h2 className="text-8xl font-black text-white leading-[0.85] tracking-tighter uppercase">
-                        REDEFINE<br/>TU<br/><span className="text-brand-500">CIUDAD.</span>
+                        TU CIUDAD,<br/>A TU<br/><span className="text-brand-500">RITMO.</span>
                     </h2>
                     <p className="text-stone-400 font-medium mt-8 text-xl max-w-md leading-relaxed">
-                        Accede a los mejores comercios, farmacias y restaurantes con un servicio diseñado para la excelencia.
+                        Conectamos los mejores comercios locales con personas que valoran su tiempo y la excelencia en el servicio.
                     </p>
                 </motion.div>
 
@@ -292,12 +313,12 @@ export const AuthView: React.FC = () => {
                     className="grid grid-cols-2 gap-8"
                 >
                     <div className="space-y-2">
-                        <div className="text-3xl font-black text-white tracking-tighter">500+</div>
-                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Aliados Estratégicos</div>
+                        <div className="text-3xl font-black text-white tracking-tighter">Comercios</div>
+                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Verificados</div>
                     </div>
                     <div className="space-y-2">
-                        <div className="text-3xl font-black text-white tracking-tighter">24/7</div>
-                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Soporte Elite</div>
+                        <div className="text-3xl font-black text-white tracking-tighter">Atención</div>
+                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Personalizada</div>
                     </div>
                 </motion.div>
             </div>
@@ -311,12 +332,12 @@ export const AuthView: React.FC = () => {
                 <div className="flex -space-x-3">
                     {[1,2,3,4].map(i => (
                         <div key={i} className="w-8 h-8 rounded-full border-2 border-stone-950 bg-stone-800 overflow-hidden">
-                            <img src={`https://i.pravatar.cc/100?u=${i}`} alt="User" className="w-full h-full object-cover" />
+                            <img src={`https://i.pravatar.cc/100?u=${i + 10}`} alt="User" className="w-full h-full object-cover" />
                         </div>
                     ))}
                 </div>
                 <p className="text-stone-500 text-[11px] font-bold uppercase tracking-wider">
-                    Únete a más de <span className="text-white">10k usuarios</span> satisfechos
+                    Únete a nuestra <span className="text-white">comunidad local</span>
                 </p>
             </motion.div>
         </div>
@@ -351,10 +372,10 @@ export const AuthView: React.FC = () => {
                     <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-cover" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
                 </div>
                 <h3 className="text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight text-center lg:text-left leading-tight">
-                    Tu puerta a la <br/><span className="text-brand-500 italic">Excelencia.</span>
+                    Hasta la comodidad <br/><span className="text-brand-500 italic">de tu puerta.</span>
                 </h3>
                 <p className="text-stone-600 dark:text-stone-400 font-medium mt-3 text-center lg:text-left text-base">
-                    Inicia sesión para descubrir un mundo de posibilidades.
+                    Descubre un mundo de productos y servicios.
                 </p>
             </motion.div>
 
@@ -538,16 +559,6 @@ export const AuthView: React.FC = () => {
                                 delay={0.4}
                             />
                         </div>
-                        {appUser?.role === UserRole.ADMIN && (
-                            <RoleButton 
-                                icon={<Shield />} 
-                                title="Panel Administrativo" 
-                                subtitle="Gestión de Plataforma" 
-                                variant="dark"
-                                onClick={() => handleRoleSelection(UserRole.ADMIN, false)}
-                                delay={0.5}
-                            />
-                        )}
                     </motion.div>
                 ) : onboardingStep === 'MERCHANT' ? (
                     <motion.div 
@@ -590,13 +601,13 @@ export const AuthView: React.FC = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">RFC/CUIT/RUT *</label>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">RFC *</label>
                                     <input 
                                         type="text" 
                                         value={storeTaxId}
                                         onChange={(e) => setStoreTaxId(e.target.value)}
-                                        placeholder="Identificación fiscal"
-                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="Tu RFC"
+                                        className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                     />
                                 </div>
                                 <div>
@@ -606,18 +617,18 @@ export const AuthView: React.FC = () => {
                                         value={storePhone}
                                         onChange={(e) => setStorePhone(e.target.value)}
                                         placeholder="Teléfono de contacto"
-                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                        className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Cuenta Bancaria (CLABE/CBU)</label>
+                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">CLABE y Cuenta *</label>
                                 <input 
                                     type="text" 
                                     value={storeBankAccount}
                                     onChange={(e) => setStoreBankAccount(e.target.value)}
                                     placeholder="Para recibir tus pagos"
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -628,10 +639,9 @@ export const AuthView: React.FC = () => {
                                         onChange={(e) => setStoreCategory(e.target.value)}
                                         className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
                                     >
-                                        <option value="Comida">Comida</option>
-                                        <option value="Farmacia">Farmacia</option>
-                                        <option value="Abarrotes">Abarrotes</option>
-                                        <option value="Vinos y Licores">Vinos y Licores</option>
+                                        {config.categories.map(cat => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
@@ -748,11 +758,85 @@ export const AuthView: React.FC = () => {
                 transition={{ delay: 0.7 }}
                 className="mt-12 flex flex-col items-center gap-5"
             >
-                <div className="flex items-center gap-2 text-stone-400 dark:text-stone-600">
-                    <Globe size={12} />
-                    <span className="text-xs font-bold uppercase tracking-widest">Global Network • Secure Access</span>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-2 text-stone-400 dark:text-stone-600">
+                        <Globe size={12} />
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Infraestructura Segura • Acceso Encriptado</span>
+                    </div>
+                    
+                    {/* Admin Access Portal - Professional & Discreet */}
+                    {appUser?.role === UserRole.ADMIN ? (
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleRoleSelection(UserRole.ADMIN, false)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-500 hover:text-brand-600 transition-all group"
+                        >
+                            <Shield size={14} className="group-hover:rotate-12 transition-transform" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Portal Administrativo</span>
+                        </motion.button>
+                    ) : (
+                        <button 
+                            onClick={() => setShowAdminPin(true)}
+                            className="text-[10px] font-bold text-stone-500 uppercase tracking-widest hover:text-stone-400 transition-colors"
+                        >
+                            Acceso Staff
+                        </button>
+                    )}
                 </div>
             </motion.div>
+
+            {/* Admin PIN Modal */}
+            <AnimatePresence>
+                {showAdminPin && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-950/80 backdrop-blur-sm"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-8 w-full max-w-sm shadow-2xl"
+                        >
+                            <div className="flex justify-between items-center mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-stone-100 dark:bg-stone-800 rounded-xl">
+                                        <Shield size={20} className="text-stone-900 dark:text-white" />
+                                    </div>
+                                    <h4 className="text-lg font-black text-stone-900 dark:text-white uppercase tracking-tight">Staff Login</h4>
+                                </div>
+                                <button onClick={() => setShowAdminPin(false)} className="text-stone-400 hover:text-stone-600">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <p className="text-sm text-stone-500 mb-6 leading-relaxed">
+                                Ingresa tu clave de acceso autorizada para gestionar la plataforma.
+                            </p>
+
+                            <div className="space-y-4">
+                                <input 
+                                    type="password"
+                                    value={adminPin}
+                                    onChange={(e) => setAdminPin(e.target.value)}
+                                    placeholder="••••••"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-4 text-center text-2xl tracking-[0.5em] font-mono text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                />
+                                <button 
+                                    onClick={handleAdminPinSubmit}
+                                    disabled={isVerifyingPin || !adminPin}
+                                    className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-black py-4 rounded-xl shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isVerifyingPin ? 'Verificando...' : 'Verificar Identidad'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
       </div>
     </div>

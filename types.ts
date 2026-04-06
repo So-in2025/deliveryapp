@@ -180,6 +180,7 @@ export interface GlobalConfig {
   supportEmail: string;
   maintenanceMode: boolean;
   paymentMode: 'CENTRALIZED' | 'DECENTRALIZED'; // New: For Payment Strategy
+  categories: string[]; // New: Dynamic categories for stores and services
 }
 
 // UI State Types - Standardized

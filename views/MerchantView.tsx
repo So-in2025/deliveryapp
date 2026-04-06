@@ -593,18 +593,25 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
 };
 
 const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
-    const { updateStore } = useApp();
+    const { updateStore, config } = useApp();
     const { showToast } = useToast();
     const [font, setFont] = useState(store.customFont || 'Inter');
     const [color, setColor] = useState(store.customColor || '#FACC15'); // Default brand yellow
     const [mpToken, setMpToken] = useState(store.mpAccessToken || '');
     const [storeImage, setStoreImage] = useState(store.image || '');
+    const [category, setCategory] = useState(store.category || '');
     const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     const fonts = ['Inter', 'Roboto', 'Montserrat', 'Playfair Display', 'Courier New', 'Georgia'];
 
     const handleSave = () => {
-        updateStore(store.id, { customFont: font, customColor: color, mpAccessToken: mpToken, image: storeImage });
+        updateStore(store.id, { 
+            customFont: font, 
+            customColor: color, 
+            mpAccessToken: mpToken, 
+            image: storeImage,
+            category: category
+        });
         showToast('Configuración guardada', 'success');
     };
 
@@ -615,6 +622,19 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
             </h3>
 
             <div className="space-y-6">
+                <div>
+                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Categoría del Comercio</label>
+                    <select 
+                        value={category}
+                        onChange={e => setCategory(e.target.value)}
+                        className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"
+                    >
+                        {config.categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+
                 <div>
                     <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Logo / Imagen de la Tienda</label>
                     <div className="flex items-center gap-4">
@@ -705,7 +725,7 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
 };
 
 export const MerchantView: React.FC = () => {
-  const { user, orders, stores, merchantViewState, setMerchantViewState, createStore, updateStore, completeTour } = useApp();
+  const { user, orders, stores, merchantViewState, setMerchantViewState, createStore, updateStore, completeTour, config } = useApp();
   const { showToast } = useToast();
   const lastOrderCountRef = useRef(0);
 
@@ -790,10 +810,9 @@ export const MerchantView: React.FC = () => {
                           id="new-store-category"
                           className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                       >
-                          <option value="Comida">Comida</option>
-                          <option value="Farmacia">Farmacia</option>
-                          <option value="Abarrotes">Abarrotes</option>
-                          <option value="Vinos y Licores">Vinos y Licores</option>
+                          {config.categories.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                          ))}
                       </select>
                   </div>
                   <Button 

@@ -10,7 +10,7 @@ import {
   TrendingUp, Users, Store as StoreIcon, Activity, 
   DollarSign, Shield, Search, 
   AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail,
-  BarChart3, PieChart as PieChartIcon, Filter
+  BarChart3, PieChart as PieChartIcon, Filter, Tag, X
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -186,15 +186,19 @@ export const AdminView: React.FC = () => {
     const platformCommission = orders.reduce((acc, o) => acc + (o.platformCommission || 0), 0);
     const activeOrders = orders.filter(o => o.status !== OrderStatus.DELIVERED && o.status !== OrderStatus.CANCELLED).length;
     const completedOrders = orders.filter(o => o.status === OrderStatus.DELIVERED).length;
+    const pendingStores = stores.filter(s => !s.isActive).length;
+    const onlineUsers = users.filter(u => u.isOnline).length;
 
     return {
       totalSales,
       platformCommission,
       activeOrders,
       completedOrders,
-      totalStores: stores.length
+      totalStores: stores.length,
+      pendingStores,
+      onlineUsers
     };
-  }, [orders, stores]);
+  }, [orders, stores, users]);
 
   const recentActivity = useMemo(() => {
     return [...orders]
@@ -238,28 +242,28 @@ export const AdminView: React.FC = () => {
         <KpiCard 
           title="Revenue Global" 
           value={formatCurrency(kpis.totalSales)}
-          sub="+12% vs ayer"
+          sub={`${kpis.completedOrders} pedidos finalizados`}
           icon={DollarSign}
           color="text-brand-950"
         />
         <KpiCard 
-          title="Comisiones (15%)" 
+          title="Comisiones" 
           value={formatCurrency(kpis.platformCommission)}
-          sub="Ganancia Neta"
+          sub="Ingreso Bruto Plataforma"
           icon={TrendingUp}
           color="text-brand-950"
         />
         <KpiCard 
-          title="Tiendas Activas" 
+          title="Tiendas" 
           value={kpis.totalStores}
-          sub="2 pendientes"
+          sub={`${kpis.pendingStores} por aprobar`}
           icon={StoreIcon}
           color="text-amber-700"
         />
         <KpiCard 
-          title="Usuarios Online" 
-          value="142"
-          sub="Estimado"
+          title="Usuarios Activos" 
+          value={kpis.onlineUsers}
+          sub="En línea ahora"
           icon={Users}
           color="text-orange-700"
         />
@@ -887,6 +891,60 @@ export const AdminView: React.FC = () => {
                                                     className="w-20 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
                                                 />
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 border-b border-stone-100">
+                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
+                                        <Tag size={18} className="text-brand-800" /> Gestión de Categorías
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <div className="flex flex-wrap gap-2">
+                                            {localConfig.categories.map((cat, idx) => (
+                                                <div key={idx} className="flex items-center gap-2 bg-stone-100 px-3 py-1.5 rounded-lg border border-stone-200">
+                                                    <span className="text-xs font-bold text-stone-700">{cat}</span>
+                                                    <button 
+                                                        onClick={() => {
+                                                            const newCats = localConfig.categories.filter((_, i) => i !== idx);
+                                                            setLocalConfig({...localConfig, categories: newCats});
+                                                        }}
+                                                        className="text-stone-400 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                id="new-category-input"
+                                                placeholder="Nueva categoría..."
+                                                className="flex-1 p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm outline-none focus:border-brand-500"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        const val = e.currentTarget.value.trim();
+                                                        if (val && !localConfig.categories.includes(val)) {
+                                                            setLocalConfig({...localConfig, categories: [...localConfig.categories, val]});
+                                                            e.currentTarget.value = '';
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            <Button 
+                                                size="sm" 
+                                                onClick={() => {
+                                                    const input = document.getElementById('new-category-input') as HTMLInputElement;
+                                                    const val = input.value.trim();
+                                                    if (val && !localConfig.categories.includes(val)) {
+                                                        setLocalConfig({...localConfig, categories: [...localConfig.categories, val]});
+                                                        input.value = '';
+                                                    }
+                                                }}
+                                            >
+                                                Agregar
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
