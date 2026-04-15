@@ -46,7 +46,7 @@ const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         }}
         className="flex flex-col items-center gap-6"
       >
-        <div className="w-64 h-64 flex items-center justify-center relative overflow-hidden rounded-[3rem] border-8 border-white/20 shadow-2xl p-8">
+        <div className="w-64 h-64 flex items-center justify-center relative overflow-hidden rounded-[3rem] border-8 border-white/20 shadow-2xl p-2">
             <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain" />
         </div>
         

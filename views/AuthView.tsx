@@ -327,7 +327,7 @@ export const AuthView: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-5"
             >
-                <div className="w-24 h-24 bg-brand-500 rounded-[2rem] flex items-center justify-center shadow-[0_20px_50px_rgba(250,204,21,0.3)] overflow-hidden border-4 border-white/20 backdrop-blur-sm p-3">
+                <div className="w-24 h-24 bg-brand-500 rounded-[2rem] flex items-center justify-center shadow-[0_20px_50px_rgba(250,204,21,0.3)] overflow-hidden border-4 border-white/20 backdrop-blur-sm p-1">
                     <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
                 </div>
                 <div className="flex flex-col">
@@ -416,7 +416,7 @@ export const AuthView: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-10"
             >
-                <div className="lg:hidden w-28 h-28 bg-brand-500 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-8 mx-auto overflow-hidden p-4">
+                <div className="lg:hidden w-28 h-28 bg-brand-500 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-8 mx-auto overflow-hidden p-1">
                     <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
                 </div>
                 <h3 className="text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight text-center lg:text-left leading-tight">

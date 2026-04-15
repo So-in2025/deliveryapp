@@ -41,7 +41,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
           <div className="p-10 flex flex-col items-center">
             <div className="relative group cursor-pointer" onClick={handleHomeClick}>
                 <div className="absolute -inset-6 bg-brand-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                <div className="w-32 h-32 bg-brand-500 rounded-[2.5rem] flex items-center justify-center shadow-[0_20px_50px_rgba(250,204,21,0.2)] overflow-hidden border-4 border-white dark:border-stone-800 relative z-10 transition-transform duration-500 group-hover:scale-105 p-5">
+                <div className="w-32 h-32 bg-brand-500 rounded-[2.5rem] flex items-center justify-center shadow-[0_20px_50px_rgba(250,204,21,0.2)] overflow-hidden border-4 border-white dark:border-stone-800 relative z-10 transition-transform duration-500 group-hover:scale-105 p-2">
                   <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain" />
                 </div>
                 <div className="mt-4 text-center relative z-10">
@@ -91,7 +91,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
           {/* Mobile Header */}
           <header className="lg:hidden shrink-0 z-30 bg-white/80 dark:bg-stone-900/80 backdrop-blur-2xl border-b border-black/[0.03] dark:border-white/[0.03] px-4 py-3 flex justify-between items-center pt-safe transition-colors duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 overflow-hidden border-2 border-white dark:border-stone-800 p-2">
+              <div className="w-14 h-14 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 overflow-hidden border-2 border-white dark:border-stone-800 p-1">
                 <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col">
