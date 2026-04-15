@@ -7,6 +7,7 @@ import { APP_CONFIG } from '../constants';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
 import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage } from '../firebase';
+import { io, Socket } from 'socket.io-client';
 
 // App Context Type and Provider
 interface AppContextType {
@@ -50,6 +51,7 @@ interface AppContextType {
   createPaymentPreference: (orderId: string, items: { name: string, price: number, quantity: number }[]) => Promise<{ id: string, init_point: string } | null>;
   updateStore: (storeId: string, data: Partial<Store>) => void;
   updateLocation: (lat: number, lng: number) => void;
+  socket: Socket | null;
   
   // Chat Real-time
   sendMessage: (orderId: string, text: string) => Promise<void>;
@@ -230,19 +232,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       .map(u => ({ id: u.uid, name: u.name }));
   }, [users]);
 
+  // Socket.io State
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  useEffect(() => {
+    // Connect to the same host that serves the frontend
+    const newSocket = io();
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (socket && authUser?.uid && isDriverOnline) {
+      socket.emit('driver_online', authUser.uid);
+    }
+  }, [socket, authUser?.uid, isDriverOnline]);
+
   // Driver GPS State
   const [driverLocation, setDriverLocation] = useState({ lat: -34.6037, lng: -58.3816 });
 
   const updateLocation = useCallback(async (lat: number, lng: number) => {
     setDriverLocation({ lat, lng });
     if (authUser?.uid) {
+      // 1. High-frequency update via WebSockets
+      if (socket) {
+        socket.emit('update_location', { driverId: authUser.uid, lat, lng });
+      }
+      
+      // 2. Low-frequency update to Firestore (throttled/optional, keeping it here for persistence but could be optimized further)
       try {
         await updateDoc(doc(db, 'users', authUser.uid), { lat, lng });
       } catch (error) {
         console.error('Error updating location:', error);
       }
     }
-  }, [authUser?.uid]);
+  }, [authUser?.uid, socket]);
 
   const updateConfig = async (data: Partial<GlobalConfig>) => {
     const newConfig = { ...config, ...data };
@@ -337,23 +364,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (!isAuthReady) return;
 
-    // Listen to Stores (Optimized by role)
-    let storesQuery;
-    if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
-      // Merchants only need their own store data for management
-      storesQuery = query(collection(db, 'stores'), where('id', '==', authProfile.ownedStoreId));
-    } else {
-      // Clients and Admins need all stores
-      storesQuery = collection(db, 'stores');
-    }
+    // Listen to Stores (Phase 1: Cached Backend Fetch)
+    const fetchStores = async () => {
+      try {
+        const response = await fetch('/api/stores');
+        if (response.ok) {
+          const storesData = await response.json();
+          // If merchant, filter locally to avoid complex backend logic for now
+          if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+            setStores(storesData.filter((s: Store) => s.id === authProfile.ownedStoreId));
+          } else {
+            setStores(storesData);
+          }
+        } else {
+          console.error('Failed to fetch stores from backend');
+        }
+      } catch (error) {
+        console.error('Error fetching stores:', error);
+      }
+    };
 
-    const unsubscribeStores = onSnapshot(storesQuery, (snapshot) => {
-      const storesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Store));
-      setStores(storesData);
-    }, (error) => {
-      console.warn('Stores listener error:', error.message);
-      // Don't throw for public collections, just log
-    });
+    fetchStores();
+    // Refresh stores every 5 minutes (matches Redis TTL)
+    const storesInterval = setInterval(fetchStores, 300000);
 
     // Listen to Orders (Filtered by role)
     let ordersQuery;
@@ -500,7 +533,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     return () => {
-      unsubscribeStores();
+      clearInterval(storesInterval);
       unsubscribeOrders();
       unsubscribeUsers();
       unsubscribeReviews();
@@ -1265,6 +1298,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       createPaymentPreference,
       updateStore,
       updateLocation,
+      socket,
       clientViewState,
       setClientViewState,
       merchantViewState,

@@ -5,7 +5,10 @@ import dotenv from 'dotenv';
 import path from 'path';
 import webpush from 'web-push';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
-import { db, doc, updateDoc, getDoc } from './firebase.js';
+import { db, doc, updateDoc, getDoc, collection, getDocs } from './firebase.js';
+import { createClient } from 'redis';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 dotenv.config();
 
@@ -23,10 +26,78 @@ if (vapidPublicKey && vapidPrivateKey) {
 
 async function startServer() {
   const app = express();
+  const httpServer = http.createServer(app);
   const PORT = 3000;
+
+  // --- PHASE 2: WEBSOCKETS (SOCKET.IO) SETUP ---
+  const io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: '*', // In production, restrict this to your domain
+      methods: ['GET', 'POST']
+    }
+  });
+
+  io.on('connection', (socket) => {
+    console.log(`Client connected: ${socket.id}`);
+
+    // Driver joins their own room to broadcast location
+    socket.on('driver_online', (driverId) => {
+      socket.join(`driver_${driverId}`);
+      console.log(`Driver ${driverId} is online and broadcasting.`);
+    });
+
+    // Client joins a room to track a specific driver
+    socket.on('join_tracking', (driverId) => {
+      socket.join(`tracking_${driverId}`);
+      console.log(`Client ${socket.id} is tracking driver ${driverId}`);
+    });
+
+    // Driver emits location update
+    socket.on('update_location', (data) => {
+      const { driverId, lat, lng } = data;
+      // Broadcast to anyone tracking this driver
+      io.to(`tracking_${driverId}`).emit('driver_location', { driverId, lat, lng });
+    });
+
+    socket.on('disconnect', () => {
+      console.log(`Client disconnected: ${socket.id}`);
+    });
+  });
 
   app.use(cors());
   app.use(express.json());
+
+  // --- PHASE 1: REDIS CACHE SETUP ---
+  let redisClient: ReturnType<typeof createClient> | null = null;
+  const memoryCache = new Map<string, any>(); // Fallback if Redis is not available
+
+  if (process.env.REDIS_URL) {
+    redisClient = createClient({ url: process.env.REDIS_URL });
+    redisClient.on('error', (err) => console.error('Redis Client Error', err));
+    await redisClient.connect().catch(console.error);
+    console.log('✅ Redis connected successfully');
+  } else {
+    console.warn('⚠️ No REDIS_URL provided. Using in-memory fallback for caching.');
+  }
+
+  // Helper to get from cache
+  const getCachedData = async (key: string) => {
+    if (redisClient) {
+      const data = await redisClient.get(key);
+      return data ? JSON.parse(data) : null;
+    }
+    return memoryCache.get(key) || null;
+  };
+
+  // Helper to set cache (expires in 5 minutes)
+  const setCachedData = async (key: string, data: any, ttlSeconds = 300) => {
+    if (redisClient) {
+      await redisClient.setEx(key, ttlSeconds, JSON.stringify(data));
+    } else {
+      memoryCache.set(key, data);
+      setTimeout(() => memoryCache.delete(key), ttlSeconds * 1000);
+    }
+  };
 
   // Mercado Pago Configuration
   const mpClient = new MercadoPagoConfig({ 
@@ -35,7 +106,34 @@ async function startServer() {
 
   // API Routes
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok' });
+    res.json({ status: 'ok', cache: redisClient ? 'redis' : 'memory' });
+  });
+
+  // --- PHASE 1: CACHED STORES ENDPOINT ---
+  app.get('/api/stores', async (req, res) => {
+    const cacheKey = 'stores_catalog';
+    
+    try {
+      // 1. Check Cache
+      const cachedStores = await getCachedData(cacheKey);
+      if (cachedStores) {
+        res.setHeader('X-Cache', 'HIT');
+        return res.json(cachedStores);
+      }
+
+      // 2. Cache Miss: Fetch from Firestore
+      const storesSnapshot = await getDocs(collection(db, 'stores'));
+      const storesData = storesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // 3. Save to Cache (TTL: 5 minutes)
+      await setCachedData(cacheKey, storesData, 300);
+
+      res.setHeader('X-Cache', 'MISS');
+      res.json(storesData);
+    } catch (error) {
+      console.error('Error fetching stores:', error);
+      res.status(500).json({ error: 'Failed to fetch stores' });
+    }
   });
 
   // Mercado Pago Webhook
@@ -162,7 +260,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }

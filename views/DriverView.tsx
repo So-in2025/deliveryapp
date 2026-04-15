@@ -8,11 +8,95 @@ import { Badge } from '../components/ui/Badge';
 import { Navigation, DollarSign, LocateFixed, Bike, Banknote, Shield, MapPin, Truck, FileText, X, Clock, Eye, MessageSquare } from 'lucide-react';
 import { ChatOverlay } from '../components/ui/ChatOverlay';
 import { formatCurrency } from '../constants';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
+import L from 'leaflet';
 
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
 
+// Reusing the MapUpdater
+const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
+    const map = useMap();
+    useEffect(() => {
+        map.setView(center, map.getZoom());
+    }, [center, map]);
+    return null;
+};
+
+// Driver Map Component
+const DriverTrackingMap: React.FC<{ 
+    driverLat: number; 
+    driverLng: number; 
+    destLat?: number; 
+    destLng?: number; 
+    destLabel?: string;
+}> = ({ driverLat, driverLng, destLat, destLng, destLabel }) => {
+    const center: [number, number] = [driverLat, driverLng];
+    const [route, setRoute] = useState<[number, number][]>([]);
+
+    useEffect(() => {
+        if (driverLat && driverLng && destLat && destLng) {
+            fetch(`https://router.project-osrm.org/route/v1/driving/${driverLng},${driverLat};${destLng},${destLat}?overview=full&geometries=geojson`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.code === 'Ok' && data.routes.length > 0) {
+                        const coords = data.routes[0].geometry.coordinates.map((c: [number, number]) => [c[1], c[0]] as [number, number]);
+                        setRoute(coords);
+                    }
+                })
+                .catch(console.error);
+        } else {
+            setRoute([]);
+        }
+    }, [driverLat, driverLng, destLat, destLng]);
+
+    const driverIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div class="relative flex items-center justify-center">
+                <div class="absolute -inset-4 bg-brand-500/30 rounded-full animate-ping"></div>
+                <div class="w-10 h-10 bg-brand-500 rounded-2xl border-2 border-white shadow-xl flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-brand-950"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                </div>
+               </div>`,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+    });
+
+    const destIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div class="w-8 h-8 bg-stone-900 dark:bg-white rounded-xl border-2 border-white dark:border-stone-800 shadow-xl flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white dark:text-stone-900"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+               </div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+    });
+
+    return (
+        <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+            <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <MapUpdater center={center} />
+            
+            {route.length > 0 && (
+                <Polyline positions={route} color="#ffef00" weight={5} opacity={0.8} />
+            )}
+
+            <Marker position={[driverLat, driverLng]} icon={driverIcon}>
+                <Popup>Tu ubicación</Popup>
+            </Marker>
+
+            {destLat && destLng && (
+                <Marker position={[destLat, destLng]} icon={destIcon}>
+                    <Popup>{destLabel || 'Destino'}</Popup>
+                </Marker>
+            )}
+        </MapContainer>
+    );
+};
+
 export const DriverView: React.FC = () => {
-  const { user, orders, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, updateLocation, completeTour } = useApp();
+  const { user, orders, stores, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, updateLocation, completeTour } = useApp();
   const { showToast } = useToast();
 
   const isMobile = window.innerWidth < 1024;
@@ -406,77 +490,11 @@ export const DriverView: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="aspect-video bg-stone-100 dark:bg-stone-700 rounded-xl relative overflow-hidden flex items-center justify-center border border-stone-200 dark:border-stone-600 mb-4 shadow-inner">
-                        {/* Simulated Map Background */}
-                        <div className="absolute inset-0 opacity-30 pointer-events-none">
-                            <div className="w-full h-full" style={{ 
-                                backgroundImage: 'radial-gradient(#000 1px, transparent 1px), linear-gradient(to right, #ccc 1px, transparent 1px), linear-gradient(to bottom, #ccc 1px, transparent 1px)', 
-                                backgroundSize: '40px 40px, 80px 80px, 80px 80px' 
-                            }}></div>
-                        </div>
-                        
-                        {/* Route Line Visualization */}
-                        {myTasks.length > 0 && (
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 200">
-                                <path 
-                                    d="M 50 150 L 100 120 L 150 140 L 200 80 L 250 110 L 300 60 L 350 50" 
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    strokeWidth="4" 
-                                    className="text-stone-300 dark:text-stone-600"
-                                    strokeDasharray="8 4"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                                <path 
-                                    d="M 50 150 L 100 120 L 150 140 L 200 80 L 250 110 L 300 60 L 350 50" 
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    strokeWidth="4" 
-                                    className="text-brand-500"
-                                    strokeDasharray="600"
-                                    strokeDashoffset={isSimulating ? (600 - (0.8 - simulatedDistance) * 750) : 600}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    style={{ transition: 'stroke-dashoffset 1s linear' }}
-                                />
-                            </svg>
-                        )}
-
-                        <div className="relative z-10 text-center">
-                            <div className="w-14 h-14 bg-brand-500 rounded-full mx-auto mb-2 flex items-center justify-center shadow-2xl border-4 border-white dark:border-stone-800 animate-bounce-slow">
-                                <Truck size={28} className="text-brand-950" />
-                            </div>
-                            <p className="text-[10px] font-black text-stone-600 dark:text-stone-400 uppercase tracking-widest bg-white/80 dark:bg-stone-800/80 px-2 py-0.5 rounded-full backdrop-blur-sm">Tu Ubicación</p>
-                        </div>
-
-                        {/* Destination Markers on Map */}
-                        {myTasks.length > 0 && (
-                            <>
-                                <div className="absolute left-[50px] bottom-[50px] transform -translate-x-1/2 -translate-y-1/2 group">
-                                    <div className="w-8 h-8 bg-white dark:bg-stone-800 rounded-full border-2 border-stone-400 flex items-center justify-center shadow-lg">
-                                        <Bike size={16} className="text-stone-600 dark:text-stone-400" />
-                                    </div>
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-stone-900 text-white text-[8px] font-bold px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Local: {myTasks[0].storeName}
-                                    </div>
-                                </div>
-                                <div className="absolute right-[50px] top-[50px] transform -translate-x-1/2 -translate-y-1/2 group">
-                                    <div className="w-8 h-8 bg-brand-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg animate-pulse">
-                                        <MapPin size={16} className="text-brand-950" />
-                                    </div>
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-brand-500 text-brand-950 text-[8px] font-bold px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Cliente: {myTasks[0].customerName}
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
                     <Button 
                         variant={isSimulating ? "secondary" : "primary"} 
                         fullWidth 
                         onClick={() => setIsSimulating(!isSimulating)}
-                        className={isSimulating ? "bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600" : "bg-brand-500 text-brand-950 font-black"}
+                        className={isSimulating ? "bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600 mb-4" : "bg-brand-500 text-brand-950 font-black mb-4"}
                     >
                         {isSimulating ? "Detener Navegación" : "Iniciar Navegación GPS"}
                     </Button>
@@ -494,18 +512,43 @@ export const DriverView: React.FC = () => {
                  </div>
              ) : (
                <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
-                   {myTasks.map(task => (
+                   {myTasks.map(task => {
+                       let destLat, destLng, destLabel;
+                       if (task.status === OrderStatus.DRIVER_ASSIGNED) {
+                           const store = stores.find(s => s.id === task.storeId);
+                           if (store && store.coordinates) {
+                               destLat = store.coordinates.lat;
+                               destLng = store.coordinates.lng;
+                               destLabel = `Tienda: ${store.name}`;
+                           }
+                       } else if (task.status === OrderStatus.PICKED_UP) {
+                           if (task.coordinates) {
+                               destLat = task.coordinates.lat;
+                               destLng = task.coordinates.lng;
+                               destLabel = `Cliente: ${task.customerName}`;
+                           }
+                       }
+
+                       return (
                      <div key={task.id} className="bg-white dark:bg-stone-800 rounded-3xl shadow-xl border border-stone-100 dark:border-stone-700 overflow-hidden h-full flex flex-col group hover:border-brand-500/30 transition-all duration-500">
                        
                        {/* Interactive Navigation Interface */}
-                       <div className="h-56 bg-stone-200 dark:bg-stone-700 relative border-b border-stone-100 dark:border-stone-700 shrink-0 overflow-hidden">
-                            <div className="absolute inset-0 bg-[url('https://placehold.co/800x600/e2e8f0/94a3b8?text=Navigation+Active')] dark:bg-[url('https://placehold.co/800x600/1e293b/475569?text=Navigation+Active')] bg-cover bg-center transition-transform duration-[10s] linear" style={{ transform: isSimulating ? 'scale(1.2) translateY(-20px)' : 'scale(1)' }}></div>
+                       <div className="h-56 bg-stone-200 dark:bg-stone-700 relative border-b border-stone-100 dark:border-stone-700 shrink-0 overflow-hidden z-0">
+                            <div className="absolute inset-0 z-0">
+                                <DriverTrackingMap 
+                                    driverLat={driverLocation.lat}
+                                    driverLng={driverLocation.lng}
+                                    destLat={destLat}
+                                    destLng={destLng}
+                                    destLabel={destLabel}
+                                />
+                            </div>
                             
                             {/* Navigation Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30"></div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10 pointer-events-none z-10"></div>
                             
                             {/* Floating Action Button (Directly on Map) */}
-                            <div className="absolute bottom-4 left-4 right-4 flex gap-2">
+                            <div className="absolute bottom-4 left-4 right-4 flex gap-2 z-20">
                                 <Button 
                                     fullWidth 
                                     className={`font-black uppercase tracking-tighter text-sm h-12 shadow-2xl ${task.status === OrderStatus.DRIVER_ASSIGNED ? 'bg-brand-500 text-brand-950' : 'bg-green-500 text-white'}`}
@@ -542,7 +585,7 @@ export const DriverView: React.FC = () => {
                                  </div>
                             </div>
 
-                            <div className="absolute top-4 right-4">
+                            <div className="absolute top-4 right-4 z-20">
                                 <button className="w-10 h-10 bg-brand-500 rounded-full shadow-lg flex items-center justify-center text-brand-950 hover:scale-110 transition-transform">
                                     <Navigation size={20} />
                                 </button>
@@ -630,7 +673,8 @@ export const DriverView: React.FC = () => {
                          )}
                        </div>
                      </div>
-                   ))}
+                   );
+                   })}
                </div>
              )}
             </div>

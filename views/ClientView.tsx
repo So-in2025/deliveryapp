@@ -203,12 +203,37 @@ const ProductRow = React.memo(({ product, onAdd, onCustomize, accentColor }: { p
 
 export const ClientView: React.FC = () => {
   // Consume Global State for navigation
-  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour, config, applyReferralCode, setRole, setPendingAction, getRouteDistance } = useApp();
+  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour, config, applyReferralCode, setRole, setPendingAction, getRouteDistance, socket } = useApp();
   const { showToast } = useToast();
   const { signOut, user: authUser, login } = useAuth();
   const [showChat, setShowChat] = useState(false);
   const [referralInput, setReferralInput] = useState('');
   const [isApplyingReferral, setIsApplyingReferral] = useState(false);
+  
+  // Real-time tracking state
+  const [liveDriverLocation, setLiveDriverLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  useEffect(() => {
+    if (clientViewState === 'TRACKING' && socket) {
+      const activeOrder = orders.find(o => o.customerId === user.uid && (o.status === OrderStatus.DRIVER_ASSIGNED || o.status === OrderStatus.PICKED_UP));
+      
+      if (activeOrder && activeOrder.driverId) {
+        socket.emit('join_tracking', activeOrder.driverId);
+        
+        const handleLocationUpdate = (data: { driverId: string, lat: number, lng: number }) => {
+          if (data.driverId === activeOrder.driverId) {
+            setLiveDriverLocation({ lat: data.lat, lng: data.lng });
+          }
+        };
+
+        socket.on('driver_location', handleLocationUpdate);
+
+        return () => {
+          socket.off('driver_location', handleLocationUpdate);
+        };
+      }
+    }
+  }, [clientViewState, socket, orders, user.uid]);
 
   const isMobile = window.innerWidth < 1024;
 
@@ -990,8 +1015,8 @@ export const ClientView: React.FC = () => {
                             
                             return (
                                 <TrackingMap 
-                                    driverLat={driver?.lat} 
-                                    driverLng={driver?.lng}
+                                    driverLat={liveDriverLocation?.lat || driver?.lat} 
+                                    driverLng={liveDriverLocation?.lng || driver?.lng}
                                     storeLat={store?.lat || -34.6037} // Fallback to center
                                     storeLng={store?.lng || -58.3816}
                                 />

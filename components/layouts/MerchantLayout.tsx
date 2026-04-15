@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, Bell, Utensils, Tag, HelpCircle, Shield } from 'lucide-react';
+import { LayoutDashboard, Store, History, Settings, LogOut, WifiOff, Bell, Utensils, Tag, HelpCircle, Shield, Sliders } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { UserRole } from '../../types';
 
@@ -55,8 +55,8 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
             <div id="history-tab">
                 <DesktopNavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
             </div>
-            <div id="settings-tab">
-                <DesktopNavItem icon={<Settings />} label="Ajustes Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
+            <div id="store-settings-tab">
+                <DesktopNavItem icon={<Sliders />} label="Mi Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
             </div>
             <div id="help-tab">
                 <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
@@ -69,6 +69,9 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-2">
+            <div id="settings-tab">
+                <DesktopNavItem icon={<Settings />} label="Ajustes Perfil" active={false} onClick={toggleSettings} />
+            </div>
             <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={handleSignOut} isDanger />
           </div>
         </aside>
@@ -104,6 +107,7 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
                     )}
                 </button>
                 <button 
+                    id="settings-tab-mobile"
                     onClick={toggleSettings}
                     className="p-2 rounded-lg bg-white/5 text-stone-400 hover:text-white transition-colors"
                 >
@@ -122,7 +126,7 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
              <div id="menu-tab-mobile"><NavItem icon={<Utensils />} label="Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} /></div>
              <div id="coupons-tab-mobile"><NavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} /></div>
              <div id="history-tab-mobile"><NavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} /></div>
-             <div id="settings-tab-mobile"><NavItem icon={<Settings />} label="Ajustes" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} /></div>
+             <div id="store-settings-tab-mobile"><NavItem icon={<Sliders />} label="Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} /></div>
           </nav>
         </div>
       </div>

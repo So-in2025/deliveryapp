@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings, ShoppingBag, Bike } from 'lucide-react';
+import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings, ShoppingBag, Bike, User } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -65,6 +65,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <div id="config-tab">
                 <DesktopNavItem icon={<Settings />} label="Configuración" active={adminViewState === 'SETTINGS'} onClick={() => setAdminViewState('SETTINGS')} />
             </div>
+            <div id="profile-tab">
+                <DesktopNavItem icon={<User />} label="Perfil" active={false} onClick={toggleSettings} />
+            </div>
             <DesktopNavItem icon={<LogOut />} label="Logout" active={false} onClick={handleSignOut} isDanger />
           </div>
         </aside>
@@ -98,6 +101,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                     {unreadCount > 0 && (
                         <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-600 rounded-full" />
                     )}
+                </button>
+                <button 
+                    onClick={toggleSettings}
+                    className="p-2 rounded bg-white/5 text-stone-400 hover:text-white transition-colors"
+                    title="Perfil"
+                >
+                    <User size={16} />
                 </button>
                 <button 
                     onClick={handleSignOut}
