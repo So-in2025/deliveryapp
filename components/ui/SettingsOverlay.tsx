@@ -428,7 +428,7 @@ export const SettingsOverlay: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                   <div>
-                      <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">CUIT / Tax ID</label>
+                      <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">RFC / Identificación Fiscal</label>
                       <input 
                         placeholder="30-XXXXXXXX-X"
                         value={storeTaxId}

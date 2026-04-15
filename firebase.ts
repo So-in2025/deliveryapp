@@ -9,6 +9,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   updateProfile,
+  sendEmailVerification,
   type User
 } from 'firebase/auth';
 import { 
@@ -90,6 +91,7 @@ export const loginWithGoogle = async () => {
 
 export const loginWithEmail = (email: string, pass: string) => signInWithEmailAndPassword(auth, email, pass);
 export const registerWithEmail = (email: string, pass: string) => createUserWithEmailAndPassword(auth, email, pass);
+export const verifyEmail = () => auth.currentUser ? sendEmailVerification(auth.currentUser) : Promise.reject('No user logged in');
 export const resetPassword = (email: string) => sendPasswordResetEmail(auth, email);
 export { updateProfile };
 

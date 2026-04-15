@@ -43,7 +43,7 @@
         "customFont": { "type": "string", "description": "Custom font for store UI" },
         "customColor": { "type": "string", "description": "Custom color for store UI" },
         "legalName": { "type": "string", "description": "Legal name of the store owner" },
-        "taxId": { "type": "string", "description": "Tax ID of the store" },
+        "taxId": { "type": "string", "description": "RFC / Tax ID of the store" },
         "phone": { "type": "string", "description": "Store contact phone" },
         "bankAccount": { "type": "string", "description": "Bank account for payouts" },
         "commissionPct": { "type": "number", "description": "Custom commission percentage (0-1)" }

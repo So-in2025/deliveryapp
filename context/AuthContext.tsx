@@ -193,10 +193,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerEmail = async (email: string, pass: string, name: string) => {
     try {
-      const { registerWithEmail, updateProfile } = await import('../firebase');
+      const { registerWithEmail, updateProfile, verifyEmail } = await import('../firebase');
       const userCredential = await registerWithEmail(email, pass);
       await updateProfile(userCredential.user, { displayName: name });
-      showToast('Cuenta creada correctamente', 'success');
+      try {
+        await verifyEmail();
+        showToast('Cuenta creada. Por favor verifica tu correo electrónico.', 'info');
+      } catch (e) {
+        console.warn('Verification email failed:', e);
+        showToast('Cuenta creada correctamente', 'success');
+      }
     } catch (error: any) {
       console.error('Register email error:', error);
       let msg = 'Error al crear cuenta';

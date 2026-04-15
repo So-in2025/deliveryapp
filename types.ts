@@ -103,7 +103,9 @@ export interface Store {
   legalName?: string; // Strict: Razón Social
   taxId?: string; // Strict: RFC/CUIT/RUT
   phone?: string; // Strict: Teléfono de contacto
+  bankName?: string; // New: Nombre del banco
   bankAccount?: string; // Strict: Cuenta Bancaria (CLABE/CBU)
+  clabe?: string; // New: CLABE Interbancaria (18 digits)
   commissionPct?: number; // New: Custom commission for this store (overrides global)
 }
 

@@ -639,7 +639,8 @@ export const ClientView: React.FC = () => {
       };
 
       const handleAddAddress = (address: string) => {
-          const updatedAddresses = [address.trim(), ...user.addresses];
+          const currentAddresses = user.addresses || [];
+          const updatedAddresses = [address.trim(), ...currentAddresses];
           updateUser({ addresses: updatedAddresses });
           showToast('Dirección agregada y establecida como principal', 'success');
           setShowMapSelector(false);
@@ -1502,7 +1503,7 @@ export const ClientView: React.FC = () => {
               <h2 className="text-2xl font-black dark:text-white tracking-tight">Mis Pedidos</h2>
           </div>
           
-          <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24">
+          <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-4xl lg:mx-auto lg:w-full">
               {pastOrders.length === 0 ? (
                   <div className="text-center py-20">
                       <div className="w-24 h-24 bg-stone-100 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
@@ -1618,7 +1619,7 @@ export const ClientView: React.FC = () => {
               <h2 className="text-2xl font-black dark:text-white tracking-tight">Mis Favoritos</h2>
           </div>
           
-          <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24">
+          <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-5xl lg:mx-auto lg:w-full">
               {favoriteStores.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
                       <div className="w-24 h-24 bg-red-500/10 rounded-[2.5rem] flex items-center justify-center text-red-500 shadow-inner">
@@ -1668,9 +1669,9 @@ export const ClientView: React.FC = () => {
               <h2 className="text-2xl font-black dark:text-white tracking-tight">Mi Perfil</h2>
           </div>
           
-          <div className="p-6 space-y-8 flex-1 overflow-y-auto pb-24">
+          <div className="p-6 space-y-8 flex-1 overflow-y-auto pb-24 lg:max-w-4xl lg:mx-auto lg:w-full">
               {/* Profile Header */}
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center py-8">
                   <div className="relative group">
                     <div className="w-32 h-32 bg-brand-500 rounded-[3rem] flex items-center justify-center text-brand-950 text-4xl font-black shadow-2xl shadow-brand-500/20 border-4 border-white dark:border-stone-900 group-hover:scale-105 transition-transform duration-500">
                         {user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
@@ -1684,18 +1685,18 @@ export const ClientView: React.FC = () => {
               </div>
 
               {/* Stats Card */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4 lg:gap-8">
                   {[
                     { label: 'Pedidos', value: pastOrders.length, icon: <History size={16} /> },
                     { label: 'Favoritos', value: favorites.length, icon: <Heart size={16} /> },
                     { label: 'Cupones', value: coupons.length, icon: <Ticket size={16} /> }
                   ].map((stat, i) => (
-                    <div key={i} className="bg-white dark:bg-stone-900/40 p-5 rounded-[2.5rem] text-center shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm">
-                        <div className="flex justify-center mb-2 text-brand-500">
+                    <div key={i} className="bg-white dark:bg-stone-900/40 p-6 rounded-[2.5rem] text-center shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm hover:scale-105 transition-transform duration-300">
+                        <div className="flex justify-center mb-3 text-brand-500">
                             {stat.icon}
                         </div>
                         <p className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter">{stat.value}</p>
-                        <p className="text-[9px] text-stone-500 dark:text-stone-400 font-black uppercase tracking-widest mt-1">{stat.label}</p>
+                        <p className="text-[10px] text-stone-500 dark:text-stone-400 font-black uppercase tracking-widest mt-1">{stat.label}</p>
                     </div>
                   ))}
               </div>

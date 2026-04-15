@@ -899,76 +899,79 @@ export const MerchantView: React.FC = () => {
   const totalRevenue = historyOrders.filter(o => o.status === OrderStatus.DELIVERED).reduce((sum, o) => sum + o.total, 0);
 
   return (
-    <div className="flex flex-col h-full bg-stone-50 dark:bg-stone-900 animate-fade-in">
+    <div className="flex flex-col h-full bg-stone-50 dark:bg-stone-950 animate-fade-in">
       {/* Merchant Header with Tabs */}
-      <div className="bg-white dark:bg-stone-800 shadow-sm z-10 sticky top-0">
-        <div className="p-4 flex justify-between items-end border-b border-stone-50 dark:border-stone-700">
-          <div>
-            <h2 className="text-2xl font-bold text-stone-900 dark:text-white">{myStore.name}</h2>
-            <div className="flex items-center gap-3 mt-1">
-              <button 
-                id="store-status"
-                onClick={() => updateStore(myStore.id, { isOpen: !myStore.isOpen })}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 w-fit transition-all ${myStore.isOpen !== false ? 'bg-brand-500 text-brand-950' : 'bg-stone-200 dark:bg-stone-700 text-stone-500 dark:text-stone-400'}`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${myStore.isOpen !== false ? 'bg-brand-950 animate-pulse' : 'bg-stone-400'}`}></span>
-                {myStore.isOpen !== false ? 'ONLINE' : 'OFFLINE'}
-              </button>
-              <span className="text-xs text-stone-400 dark:text-stone-500">| {activeOrders.length} pedidos activos</span>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-              <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 overflow-hidden">
-                <LazyImage src={myStore.image} alt="Logo" className="w-full h-full" />
+      <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-2xl shadow-sm z-10 sticky top-0 border-b border-black/[0.03] dark:border-white/[0.03]">
+        <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
+            <div className="p-6 flex justify-between items-end">
+              <div>
+                <h2 className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter">{myStore.name}</h2>
+                <div className="flex items-center gap-3 mt-2">
+                  <button 
+                    id="store-status"
+                    onClick={() => updateStore(myStore.id, { isOpen: !myStore.isOpen })}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black flex items-center gap-2 w-fit transition-all shadow-sm ${myStore.isOpen !== false ? 'bg-brand-500 text-brand-950' : 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400'}`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${myStore.isOpen !== false ? 'bg-brand-950 animate-pulse' : 'bg-stone-400'}`}></span>
+                    {myStore.isOpen !== false ? 'TIENDA ABIERTA' : 'TIENDA CERRADA'}
+                  </button>
+                  <span className="text-xs text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest">| {activeOrders.length} activos</span>
+                </div>
               </div>
-          </div>
-        </div>
+              <div className="flex flex-col items-end gap-1">
+                  <div className="w-14 h-14 rounded-[1.5rem] bg-stone-100 dark:bg-stone-800 border-2 border-white dark:border-stone-700 overflow-hidden shadow-2xl">
+                    <LazyImage src={myStore.image} alt="Logo" className="w-full h-full object-cover" />
+                  </div>
+              </div>
+            </div>
 
-        <div className="flex p-1 mx-4 mb-2 mt-2 bg-stone-100 dark:bg-stone-700/50 rounded-xl border border-stone-200 dark:border-stone-700 overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-2xl lg:mx-auto">
-          <button
-            id="orders-tab"
-            onClick={() => setMerchantViewState('ORDERS')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap relative ${merchantViewState === 'ORDERS' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
-          >
-            <LayoutDashboard size={16} /> 
-            Pedidos
-            {activeOrders.some(o => o.status === OrderStatus.PENDING) && (
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-              </span>
-            )}
-          </button>
-          <button
-            id="menu-tab"
-            onClick={() => setMerchantViewState('MENU')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'MENU' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
-          >
-            <UtensilsCrossed size={16} /> Mi Menú
-          </button>
-          <button
-            onClick={() => setMerchantViewState('COUPONS')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'COUPONS' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
-          >
-            <Ticket size={16} /> Cupones
-          </button>
-          <button
-            onClick={() => setMerchantViewState('HISTORY')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'HISTORY' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
-          >
-            <Clock size={16} /> Historial
-          </button>
-          <button
-            id="settings-tab"
-            onClick={() => setMerchantViewState('SETTINGS')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${merchantViewState === 'SETTINGS' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
-          >
-            <Pencil size={16} /> Ajustes
-          </button>
+            <div className="flex p-1.5 mx-6 mb-4 bg-stone-100 dark:bg-white/5 rounded-2xl border border-black/[0.03] dark:border-white/[0.03] overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-2xl lg:mx-auto">
+              <button
+                id="orders-tab"
+                onClick={() => setMerchantViewState('ORDERS')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap relative ${merchantViewState === 'ORDERS' ? 'bg-white dark:bg-stone-800 shadow-xl text-stone-950 dark:text-white' : 'text-stone-500 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white'}`}
+              >
+                <LayoutDashboard size={16} /> 
+                Pedidos
+                {activeOrders.some(o => o.status === OrderStatus.PENDING) && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                )}
+              </button>
+              <button
+                id="menu-tab"
+                onClick={() => setMerchantViewState('MENU')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${merchantViewState === 'MENU' ? 'bg-white dark:bg-stone-800 shadow-xl text-stone-950 dark:text-white' : 'text-stone-500 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white'}`}
+              >
+                <UtensilsCrossed size={16} /> Menú
+              </button>
+              <button
+                onClick={() => setMerchantViewState('COUPONS')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${merchantViewState === 'COUPONS' ? 'bg-white dark:bg-stone-800 shadow-xl text-stone-950 dark:text-white' : 'text-stone-500 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white'}`}
+              >
+                <Ticket size={16} /> Cupones
+              </button>
+              <button
+                onClick={() => setMerchantViewState('HISTORY')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${merchantViewState === 'HISTORY' ? 'bg-white dark:bg-stone-800 shadow-xl text-stone-950 dark:text-white' : 'text-stone-500 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white'}`}
+              >
+                <Clock size={16} /> Historial
+              </button>
+              <button
+                id="settings-tab"
+                onClick={() => setMerchantViewState('SETTINGS')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${merchantViewState === 'SETTINGS' ? 'bg-white dark:bg-stone-800 shadow-xl text-stone-950 dark:text-white' : 'text-stone-500 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white'}`}
+              >
+                <Pencil size={16} /> Ajustes
+              </button>
+            </div>
         </div>
       </div>
 
-      <div className="p-4 space-y-4 flex-1 overflow-y-auto lg:max-w-7xl lg:mx-auto lg:w-full lg:p-8">
+      <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-7xl lg:mx-auto lg:w-full lg:p-10">
+
         {merchantViewState === 'ORDERS' ? (
           activeOrders.length === 0 ? (
             <div className="text-center py-20 text-stone-400 dark:text-stone-500 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl">

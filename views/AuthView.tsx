@@ -24,6 +24,7 @@ export const AuthView: React.FC = () => {
   // Email Auth States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
 
   // Form states
@@ -31,7 +32,9 @@ export const AuthView: React.FC = () => {
   const [storeCategory, setStoreCategory] = useState('Comida');
   const [storeTime, setStoreTime] = useState('30');
   const [storeTaxId, setStoreTaxId] = useState('');
+  const [storeBankName, setStoreBankName] = useState('');
   const [storeBankAccount, setStoreBankAccount] = useState('');
+  const [storeClabe, setStoreClabe] = useState('');
 
   const [vehicleType, setVehicleType] = useState('Moto');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -55,6 +58,16 @@ export const AuthView: React.FC = () => {
       if (authMode === 'EMAIL_LOGIN') {
         await loginEmail(email, password);
       } else if (authMode === 'EMAIL_REGISTER') {
+        if (password !== confirmPassword) {
+          showToast('Las contraseñas no coinciden', 'error');
+          setIsLoggingIn(false);
+          return;
+        }
+        if (password.length < 6) {
+          showToast('La contraseña debe tener al menos 6 caracteres', 'error');
+          setIsLoggingIn(false);
+          return;
+        }
         await registerEmail(email, password, name);
       } else if (authMode === 'FORGOT') {
         await resetPass(email);
@@ -85,6 +98,20 @@ export const AuthView: React.FC = () => {
 
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
+
+  if (loading && !authUser) {
+    return (
+      <div className="fixed inset-0 bg-stone-950 flex flex-col items-center justify-center gap-6">
+        <div className="w-24 h-24 bg-brand-500 rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-pulse">
+            <ShoppingBag size={40} className="text-brand-950" />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+            <div className="w-12 h-1 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest">Iniciando plataforma...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
@@ -147,13 +174,35 @@ export const AuthView: React.FC = () => {
     setShowAdminAccess(false);
   };
 
-  const handleRegisterMerchant = () => {
-      if (!storeName || !storeTaxId || !storeBankAccount) {
+  const MEXICAN_BANKS = [
+    'BBVA México', 'Santander México', 'Banorte', 'Citibanamex', 'HSBC México', 
+    'Scotiabank', 'Banco Azteca', 'Bancoppel', 'Inbursa', 'Afirme', 'BanBajío', 
+    'Banco del Bienestar', 'Nu México', 'Stori', 'Hey Banco'
+  ];
+
+  const handleRegisterMerchant = async () => {
+      if (!storeName || !storeTaxId || !storeClabe || !storeBankName) {
           showToast('Por favor completa todos los campos obligatorios', 'error');
           return;
       }
+      
+      // RFC Validation (13 chars: 4 letters, 6 numbers, 3 homoclave)
+      const rfcRegex = /^[A-Z]{4}[0-9]{6}[A-Z0-9]{3}$/i;
+      if (!rfcRegex.test(storeTaxId)) {
+          showToast('RFC inválido. Debe tener 13 caracteres (4 letras, 6 números, 3 homoclave)', 'error');
+          return;
+      }
+
+      // CLABE Validation (18 digits)
+      const clabeRegex = /^[0-9]{18}$/;
+      if (!clabeRegex.test(storeClabe)) {
+          showToast('CLABE inválida. Debe tener 18 dígitos numéricos', 'error');
+          return;
+      }
+
+      const storeId = `store-${Date.now()}`;
       const newStore: Store = {
-          id: `store-${Date.now()}`,
+          id: storeId,
           name: storeName,
           category: storeCategory,
           rating: 5.0,
@@ -165,13 +214,21 @@ export const AuthView: React.FC = () => {
           products: [],
           createdAt: new Date().toISOString(),
           ownerId: authUser?.uid || 'guest',
-          taxId: storeTaxId,
-          bankAccount: storeBankAccount
+          taxId: storeTaxId.toUpperCase(),
+          bankName: storeBankName,
+          bankAccount: storeBankAccount,
+          clabe: storeClabe,
+          isActive: true, // Instant public store
+          isOpen: true
       };
-      createStore(newStore);
-      showToast('¡Tienda creada exitosamente!', 'success');
-      updateUser({ role: UserRole.MERCHANT, ownedStoreId: newStore.id });
-      setRole(UserRole.MERCHANT);
+      
+      try {
+          await createStore(newStore);
+          setRole(UserRole.MERCHANT);
+          showToast('¡Tienda creada exitosamente!', 'success');
+      } catch (error) {
+          console.error('Error in handleRegisterMerchant:', error);
+      }
   };
 
   const handleRegisterDriver = () => {
@@ -270,8 +327,8 @@ export const AuthView: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-5"
             >
-                <div className="w-20 h-20 bg-brand-500 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,237,0,0.3)] overflow-hidden">
-                    <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-cover" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
+                <div className="w-24 h-24 bg-brand-500 rounded-[2rem] flex items-center justify-center shadow-[0_20px_50px_rgba(250,204,21,0.3)] overflow-hidden border-4 border-white/20 backdrop-blur-sm p-3">
+                    <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
                 </div>
                 <div className="flex flex-col">
                     <h1 className="text-2xl font-black text-white tracking-tighter leading-none">TE LO LLEVO</h1>
@@ -359,8 +416,8 @@ export const AuthView: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-10"
             >
-                <div className="lg:hidden w-24 h-24 bg-brand-500 rounded-2xl flex items-center justify-center shadow-xl mb-8 mx-auto overflow-hidden">
-                    <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-cover" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
+                <div className="lg:hidden w-28 h-28 bg-brand-500 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-8 mx-auto overflow-hidden p-4">
+                    <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/1037/1037762.png'} />
                 </div>
                 <h3 className="text-3xl lg:text-4xl font-black text-stone-900 dark:text-white tracking-tight text-center lg:text-left leading-tight">
                     Hasta la comodidad <br/><span className="text-brand-500 italic">de tu puerta.</span>
@@ -431,16 +488,31 @@ export const AuthView: React.FC = () => {
                                 </div>
 
                                 {authMode !== 'FORGOT' && (
-                                    <div className="relative">
-                                        <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
-                                        <input 
-                                            type="password" 
-                                            placeholder="Contraseña" 
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            required
-                                            className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
-                                        />
+                                    <div className="space-y-3">
+                                        <div className="relative">
+                                            <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+                                            <input 
+                                                type="password" 
+                                                placeholder="Contraseña" 
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                required
+                                                className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                            />
+                                        </div>
+                                        {authMode === 'EMAIL_REGISTER' && (
+                                            <div className="relative">
+                                                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+                                                <input 
+                                                    type="password" 
+                                                    placeholder="Confirmar contraseña" 
+                                                    value={confirmPassword}
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                                    required
+                                                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -581,25 +653,50 @@ export const AuthView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">RFC *</label>
-                                <input 
-                                    type="text" 
-                                    value={storeTaxId}
-                                    onChange={(e) => setStoreTaxId(e.target.value)}
-                                    placeholder="Tu RFC"
-                                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">CLABE y Cuenta *</label>
-                                <input 
-                                    type="text" 
-                                    value={storeBankAccount}
-                                    onChange={(e) => setStoreBankAccount(e.target.value)}
-                                    placeholder="Para recibir tus pagos"
-                                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
-                                />
-                            </div>
+                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">RFC (13 caracteres) *</label>
+                                 <input 
+                                     type="text" 
+                                     value={storeTaxId}
+                                     onChange={(e) => setStoreTaxId(e.target.value)}
+                                     placeholder="Ej. CESA600203MY0"
+                                     maxLength={13}
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                 />
+                             </div>
+                             <div>
+                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Banco *</label>
+                                 <select 
+                                     value={storeBankName}
+                                     onChange={(e) => setStoreBankName(e.target.value)}
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
+                                 >
+                                     <option value="">Selecciona un banco</option>
+                                     {MEXICAN_BANKS.map(bank => (
+                                         <option key={bank} value={bank}>{bank}</option>
+                                     ))}
+                                 </select>
+                             </div>
+                             <div>
+                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">CLABE Interbancaria (18 dígitos) *</label>
+                                 <input 
+                                     type="text" 
+                                     value={storeClabe}
+                                     onChange={(e) => setStoreClabe(e.target.value)}
+                                     placeholder="18 dígitos numéricos"
+                                     maxLength={18}
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                 />
+                             </div>
+                             <div>
+                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Número de Cuenta (Opcional)</label>
+                                 <input 
+                                     type="text" 
+                                     value={storeBankAccount}
+                                     onChange={(e) => setStoreBankAccount(e.target.value)}
+                                     placeholder="Número de cuenta"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                 />
+                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Categoría</label>
@@ -768,15 +865,15 @@ export const AuthView: React.FC = () => {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-8 w-full max-w-sm shadow-2xl"
+                            className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-8 w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]"
                         >
                             <div className="flex justify-between items-center mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-stone-100 dark:bg-stone-800 rounded-xl">
-                                        <Shield size={20} className="text-stone-900 dark:text-white" />
-                                    </div>
-                                    <h4 className="text-lg font-black text-stone-900 dark:text-white uppercase tracking-tight">Acceso Staff</h4>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-brand-500 rounded-xl shadow-lg shadow-brand-500/20">
+                                    <Shield size={20} className="text-brand-950" />
                                 </div>
+                                <h4 className="text-lg font-black text-stone-900 dark:text-white uppercase tracking-tight">Acceso Staff</h4>
+                            </div>
                                 <button onClick={() => setShowAdminAccess(false)} className="text-stone-400 hover:text-stone-600">
                                     <X size={20} />
                                 </button>

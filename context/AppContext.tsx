@@ -121,7 +121,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const { showToast } = useToast();
   const { user: authUser, profile: authProfile, isAuthReady } = useAuth();
 
-  const [role, setRoleState] = useState<UserRole>(UserRole.NONE);
+  const [role, setRoleState] = useState<UserRole>(() => {
+    const saved = localStorage.getItem('codex_user_role');
+    return (saved as UserRole) || UserRole.NONE;
+  });
+
+  const setRole = useCallback((newRole: UserRole) => {
+    setRoleState(newRole);
+    localStorage.setItem('codex_user_role', newRole);
+  }, []);
   
   const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
   const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
@@ -338,27 +346,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Sync User Profile from AuthContext
   useEffect(() => {
-    console.log('AuthProfile changed:', authProfile);
     if (authProfile) {
       setUser(authProfile);
       
       // Handle pending role selection from AuthView
       if (pendingRole) {
-        setRoleState(pendingRole);
+        setRole(pendingRole);
         updateUser({ role: pendingRole });
         setPendingRole(null);
-      } else if (authProfile.role && role === UserRole.NONE) {
-        // Automatically restore role from profile if none is set
-        setRoleState(authProfile.role);
+      } else if (authProfile.role && (role === UserRole.NONE || role !== authProfile.role)) {
+        // Automatically restore role from profile if none is set or mismatch
+        setRole(authProfile.role);
       }
 
       setIsDriverOnline(!!authProfile.isOnline);
-    } else {
+    } else if (isAuthReady) {
+      // Only reset if auth is definitely finished and no profile exists
       setUser(DEFAULT_USER);
       setRoleState(UserRole.NONE);
       setIsDriverOnline(false);
     }
-  }, [authProfile, pendingRole, role, updateUser]);
+  }, [authProfile, isAuthReady, pendingRole, role, updateUser, setRole]);
 
   // Real-time Firestore Listeners
   useEffect(() => {
@@ -623,11 +631,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const createStore = async (newStore: Store) => {
       try {
         const storeId = newStore.id || `store-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        await setDoc(doc(db, 'stores', storeId), {
+        const storeData = {
           ...newStore,
           id: storeId,
-          createdAt: serverTimestamp()
-        });
+          createdAt: serverTimestamp(),
+          isOpen: true,
+          rating: 5.0,
+          reviewsCount: 0,
+          products: []
+        };
+        
+        await setDoc(doc(db, 'stores', storeId), storeData);
+        
+        // Update local state immediately to avoid "Create Store" loop
+        setStores(prev => [...prev, { ...storeData, createdAt: new Date() } as Store]);
+        
         await updateUser({ ownedStoreId: storeId });
         showToast('Tienda creada con éxito', 'success');
       } catch (error) {

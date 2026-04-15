@@ -929,89 +929,74 @@ export const AdminView: React.FC = () => {
        {selectedStore ? renderStoreDetail() :
         selectedUser ? renderUserDetail() : (
             <>
-                <div className="bg-stone-900 text-white p-4 pt- safe-pt shadow-md z-10 sticky top-0">
+                <div className="bg-stone-950 text-white p-6 pt-safe-pt shadow-2xl z-10 sticky top-0 border-b border-white/5">
                     <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
-                        <div className="flex justify-between items-center mb-4">
+                        <div className="flex justify-between items-center mb-6">
                             <div>
-                                <h1 className="text-xl font-bold flex items-center gap-2">
-                                <Shield size={20} className="text-brand-400" />
-                                Admin Panel
+                                <h1 className="text-3xl font-black flex items-center gap-3 tracking-tighter uppercase">
+                                    <div className="p-2 bg-brand-500 rounded-xl shadow-lg shadow-brand-500/20 text-brand-950">
+                                        <Shield size={24} strokeWidth={3} />
+                                    </div>
+                                    Panel de Control
                                 </h1>
-                                <p className="text-xs text-stone-400">Vista de Propietario</p>
+                                <p className="text-[10px] font-black text-stone-500 uppercase tracking-[0.2em] ml-1 mt-1">Administración Centralizada</p>
                             </div>
-                            <div className="w-8 h-8 bg-stone-800 rounded-full flex items-center justify-center border border-stone-700">
-                                <span className="font-bold text-xs">OP</span>
+                            <div className="flex items-center gap-4">
+                                <div className="text-right hidden sm:block">
+                                    <p className="text-[10px] font-black text-stone-500 uppercase tracking-widest">Estado del Sistema</p>
+                                    <div className="flex items-center gap-2 justify-end mt-1">
+                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                        <span className="text-xs font-black text-white uppercase tracking-widest">Operativo</span>
+                                    </div>
+                                </div>
+                                <div className="w-12 h-12 bg-stone-800 rounded-2xl flex items-center justify-center border border-white/10 shadow-xl">
+                                    <span className="font-black text-sm text-brand-500">AD</span>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex bg-stone-800/50 p-1 rounded-xl overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-3xl lg:mx-auto">
-                        <button 
-                            onClick={() => setAdminViewState('DASHBOARD')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'DASHBOARD' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
-                        >
-                            Resumen
-                        </button>
-                        <button 
-                            id="fleet-tab-mobile"
-                            onClick={() => setAdminViewState('FLEET')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'FLEET' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
-                        >
-                            Logística
-                        </button>
-                        <button 
-                            onClick={() => setAdminViewState('ORDERS')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'ORDERS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
-                        >
-                            Pedidos
-                        </button>
-                        <button 
-                            onClick={() => setAdminViewState('SETTLEMENTS')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'SETTLEMENTS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
-                        >
-                            Liquidaciones
-                        </button>
-                        <button 
-                            id="stores-tab-mobile"
-                            onClick={() => setAdminViewState('STORES')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'STORES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
-                        >
-                            Comercios
-                        </button>
-                        <button 
-                            id="users-tab-mobile"
-                            onClick={() => setAdminViewState('USERS')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'USERS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
-                        >
-                            Usuarios
-                        </button>
-                        <button 
-                            id="disputes-tab-mobile"
-                            onClick={() => setAdminViewState('DISPUTES')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'DISPUTES' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
-                        >
-                            Reclamos
-                        </button>
-                        <button 
-                            id="config-tab-mobile"
-                            onClick={() => setAdminViewState('SETTINGS')}
-                            className={`flex-1 px-2 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${adminViewState === 'SETTINGS' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-200'}`}
-                        >
-                            Config
-                        </button>
-                    </div>
+                        <div className="flex bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-4xl lg:mx-auto">
+                            {[
+                                { id: 'DASHBOARD', label: 'Resumen', icon: <BarChart3 size={16} /> },
+                                { id: 'FLEET', label: 'Logística', icon: <Truck size={16} /> },
+                                { id: 'ORDERS', label: 'Pedidos', icon: <Activity size={16} /> },
+                                { id: 'SETTLEMENTS', label: 'Liquidaciones', icon: <DollarSign size={16} /> },
+                                { id: 'STORES', label: 'Comercios', icon: <StoreIcon size={16} /> },
+                                { id: 'USERS', label: 'Usuarios', icon: <Users size={16} /> },
+                                { id: 'DISPUTES', label: 'Reclamos', icon: <AlertTriangle size={16} /> },
+                                { id: 'SETTINGS', label: 'Ajustes', icon: <Tag size={16} /> }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setAdminViewState(tab.id as any)}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap relative ${adminViewState === tab.id ? 'bg-white text-stone-950 shadow-xl' : 'text-stone-500 hover:text-white'}`}
+                                >
+                                    {tab.icon}
+                                    <span className="hidden md:inline">{tab.label}</span>
+                                    {tab.id === 'DISPUTES' && orders.some(o => o.status === OrderStatus.DISPUTED && o.claimStatus === 'PENDING') && (
+                                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                        </span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
-                    {adminViewState === 'DASHBOARD' && renderDashboardTab()}
-                    {adminViewState === 'FLEET' && renderDispatchTab()}
-                    {adminViewState === 'ORDERS' && <OrdersTab orders={orders} />}
-                    {adminViewState === 'SETTLEMENTS' && <SettlementsTab orders={orders} settleMerchantOrder={settleMerchantOrder} settleDriverOrder={settleDriverOrder} />}
-                    {adminViewState === 'STORES' && renderStoresTab()}
-                    {adminViewState === 'USERS' && renderUsersTab()}
-                    {adminViewState === 'DISPUTES' && renderDisputesTab()}
-                    {adminViewState === 'SETTINGS' && (
-                        <div className="p-4 space-y-6 animate-fade-in pb-20 lg:max-w-4xl lg:mx-auto">
+                <div className="flex-1 overflow-y-auto pb-24">
+                    <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
+                        {adminViewState === 'DASHBOARD' && renderDashboardTab()}
+                        {adminViewState === 'FLEET' && renderDispatchTab()}
+                        {adminViewState === 'ORDERS' && <OrdersTab orders={orders} />}
+                        {adminViewState === 'SETTLEMENTS' && <SettlementsTab orders={orders} settleMerchantOrder={settleMerchantOrder} settleDriverOrder={settleDriverOrder} />}
+                        {adminViewState === 'STORES' && renderStoresTab()}
+                        {adminViewState === 'USERS' && renderUsersTab()}
+                        {adminViewState === 'DISPUTES' && renderDisputesTab()}
+                        {adminViewState === 'SETTINGS' && (
+                            <div className="p-6 space-y-8 animate-fade-in lg:max-w-4xl lg:mx-auto">
+
                             <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden divide-y divide-stone-50">
                                 <div className="p-4">
                                     <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
@@ -1208,6 +1193,7 @@ export const AdminView: React.FC = () => {
                         </div>
                     )}
                 </div>
+            </div>
             </>
         )}
         {showTour && (

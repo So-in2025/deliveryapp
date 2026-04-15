@@ -110,8 +110,9 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
   };
 
   const handleConfirm = () => {
-    if (position && address) {
-      onSelect(address, { lat: position.lat, lng: position.lng });
+    if (position) {
+      const finalAddress = address || `Ubicación: ${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+      onSelect(finalAddress, { lat: position.lat, lng: position.lng });
     }
   };
 
