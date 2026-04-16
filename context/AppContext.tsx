@@ -491,8 +491,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           ...data,
           categories: data.categories || prev.categories
         }));
-      } else {
-        // Create initial config if it doesn't exist
+      } else if (authProfile?.role === 'ADMIN' || authUser?.email === 'daniel.acevedo3134@gmail.com') {
+        // Only an Admin should attempt to create initial config if it doesn't exist
         setDoc(doc(db, 'config', 'global'), {
           platformCommissionPct: APP_CONFIG.platformCommissionPct,
           driverCommissionPct: APP_CONFIG.driverCommissionPct,
@@ -502,10 +502,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           maintenanceMode: false,
           paymentMode: 'CENTRALIZED',
           categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales']
-        }).catch(err => handleFirestoreError(err, OperationType.WRITE, 'config/global'));
+        }).catch(err => console.warn('Silent config initialization skip:', err.message));
       }
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'config/global');
+      // Optional masking of permission error for non-admins to avoid console noise
+      if (error.code === 'permission-denied') {
+        console.warn('Config access restricted or not yet initialized.');
+      } else {
+        handleFirestoreError(error, OperationType.GET, 'config/global');
+      }
     });
 
     // Listen to Coupons
@@ -530,7 +535,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       unsubscribeConfig();
       unsubscribeCoupons();
     };
-  }, [isAuthReady, authProfile, authUser?.uid, addNotification]);
+  }, [isAuthReady, authProfile, authUser?.uid, authUser?.email, addNotification]);
   
   // Theme State
   const [darkMode, setDarkMode] = useState(() => {

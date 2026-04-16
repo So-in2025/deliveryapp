@@ -330,7 +330,8 @@ export const ClientView: React.FC = () => {
   // --- ALGORITHMIC LISTS (HEURISTICS) ---
 
   const recommendedStores = useMemo(() => {
-      return [...stores]
+      return stores
+        .filter(s => s.isActive === true)
         .map(s => ({
             ...s,
             score: (s.rating * 20) - (s.deliveryTimeMin) // Simple efficient algo
@@ -341,14 +342,14 @@ export const ClientView: React.FC = () => {
 
   const fastestStores = useMemo(() => {
       return stores
-        .filter(s => s.isActive !== false)
+        .filter(s => s.isActive === true)
         .sort((a, b) => a.deliveryTimeMin - b.deliveryTimeMin)
         .slice(0, 5);
   }, [stores]);
 
   const filteredStores = useMemo(() => {
     const sorted = stores
-        .filter(s => s.isActive !== false)
+        .filter(s => s.isActive === true)
         .sort((a, b) => {
             const aFav = favorites.includes(a.id);
             const bFav = favorites.includes(b.id);
@@ -2206,8 +2207,8 @@ export const ClientView: React.FC = () => {
                     <BannerCarousel />
                     <CategoryPills />
                     <HorizontalSection title="Cerca de ti" icon={<MapPin size={18} className="text-brand-800" />} data={recommendedStores} />
-                    <HorizontalSection title="Servicios Profesionales" icon={<User size={18} className="text-blue-500" />} data={stores.filter(s => s.category === 'Servicios Profesionales')} />
-                    <HorizontalSection title="Nuevos" icon={<Sparkles size={18} className="text-amber-500" />} data={stores.filter(s => isNewStore(s.createdAt))} />
+                    <HorizontalSection title="Servicios Profesionales" icon={<User size={18} className="text-blue-500" />} data={stores.filter(s => s.isActive === true && s.category === 'Servicios Profesionales')} />
+                    <HorizontalSection title="Nuevos" icon={<Sparkles size={18} className="text-amber-500" />} data={stores.filter(s => s.isActive === true && isNewStore(s.createdAt))} />
                     <HorizontalSection title="Más Rápidos" icon={<Zap size={18} className="text-amber-500" />} data={fastestStores} />
                     
                     {/* Main Feed with "History" Link */}

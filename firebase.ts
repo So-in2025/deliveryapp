@@ -62,6 +62,14 @@ const config = {
   firestoreDatabaseId: getEnv('VITE_FIREBASE_DATABASE_ID') || appletConfig.firestoreDatabaseId || '(default)'
 };
 
+// Log config for debugging (only in browser console, non-production)
+if (typeof window !== 'undefined' && getEnv('NODE_ENV') !== 'production') {
+  console.log('Firebase Config being used:', {
+    ...config,
+    apiKey: '***' // Hide sensitive part
+  });
+}
+
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(config) : getApp();
 const auth = getAuth(app);
