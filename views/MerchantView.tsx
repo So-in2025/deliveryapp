@@ -756,7 +756,7 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
 };
 
 export const MerchantView: React.FC = () => {
-  const { user, orders, stores, merchantViewState, setMerchantViewState, createStore, updateStore, completeTour, config } = useApp();
+  const { user, orders, stores, merchantViewState, setMerchantViewState, updateStore, completeTour, setRole } = useApp();
   const { showToast } = useToast();
   const lastOrderCountRef = useRef(0);
 
@@ -823,58 +823,14 @@ export const MerchantView: React.FC = () => {
               <div className="bg-brand-100 dark:bg-brand-900/30 p-6 rounded-full shadow-inner mb-6">
                   <StoreIcon size={48} className="text-brand-600 dark:text-brand-400" />
               </div>
-              <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Crea tu Tienda</h2>
-              <p className="text-stone-500 dark:text-stone-400 mb-8 max-w-xs mx-auto">Comienza a vender hoy mismo. Solo necesitas un nombre y una imagen para tu local.</p>
+              <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Registro Incompleto</h2>
+              <p className="text-stone-500 dark:text-stone-400 mb-8 max-w-xs mx-auto">Parece que aún no has completado el registro de tu tienda con todos los datos requeridos (RFC, Banco, etc).</p>
               
-              <div className="w-full max-w-sm space-y-4 bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-xl border border-stone-100 dark:border-stone-700">
-                  <div className="space-y-1 text-left">
-                      <label className="text-[10px] font-bold text-stone-400 uppercase ml-1">Nombre del Comercio</label>
-                      <input 
-                          id="new-store-name"
-                          className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
-                          placeholder="Ej: Pizzería Don Juan"
-                      />
-                  </div>
-                  <div className="space-y-1 text-left">
-                      <label className="text-[10px] font-bold text-stone-400 uppercase ml-1">Categoría</label>
-                      <select 
-                          id="new-store-category"
-                          className="w-full p-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
-                      >
-                          {config.categories.map(cat => (
-                              <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                      </select>
-                  </div>
-                  <Button 
-                      fullWidth 
-                      onClick={() => {
-                          if (user.uid === 'guest') {
-                              showToast('Debes iniciar sesión con Google para crear una tienda real.', 'error');
-                              return;
-                          }
-                          const name = (document.getElementById('new-store-name') as HTMLInputElement).value;
-                          const category = (document.getElementById('new-store-category') as HTMLSelectElement).value;
-                          if (name) {
-                              createStore({
-                                  id: '', // Will be set by Firestore
-                                  name,
-                                  category,
-                                  image: 'https://picsum.photos/seed/store/400/400',
-                                  rating: 5.0,
-                                  reviewsCount: 0,
-                                  products: [],
-                                  ownerId: user.uid
-                              });
-                              showToast('Tienda creada con éxito', 'success');
-                          } else {
-                              showToast('Por favor ingresa un nombre', 'error');
-                          }
-                      }}
-                  >
-                      Crear Mi Tienda
-                  </Button>
-              </div>
+              <Button 
+                  onClick={() => setRole(UserRole.NONE)}
+              >
+                  Volver al Inicio para Registrar Tienda
+              </Button>
           </div>
       );
   }

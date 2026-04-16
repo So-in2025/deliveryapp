@@ -100,7 +100,6 @@ interface AppContextType {
   // Referral System
   validateReferralCode: (code: string) => Promise<boolean>;
   applyReferralCode: (code: string) => Promise<void>;
-  setPendingRole: (role: UserRole | null) => void;
   setPendingAction: (action: { type: 'PLACE_ORDER'; data: any } | null) => void;
 }
 
@@ -132,7 +131,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
   
   const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
-  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
   const [pendingAction, setPendingAction] = useState<{ type: 'PLACE_ORDER'; data: any } | null>(null);
 
   const updateUser = useCallback(async (data: Partial<UserProfile>) => {
@@ -348,17 +346,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (authProfile) {
       setUser(authProfile);
-      
-      // Handle pending role selection from AuthView
-      if (pendingRole) {
-        setRole(pendingRole);
-        updateUser({ role: pendingRole });
-        setPendingRole(null);
-      } else if (authProfile.role && (role === UserRole.NONE || role !== authProfile.role)) {
-        // Automatically restore role from profile if none is set or mismatch
-        setRole(authProfile.role);
-      }
-
       setIsDriverOnline(!!authProfile.isOnline);
     } else if (isAuthReady) {
       // Only reset if auth is definitely finished and no profile exists
@@ -366,7 +353,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setRoleState(UserRole.NONE);
       setIsDriverOnline(false);
     }
-  }, [authProfile, isAuthReady, pendingRole, role, updateUser, setRole]);
+  }, [authProfile, isAuthReady, role, updateUser, setRole]);
 
   // Real-time Firestore Listeners
   useEffect(() => {
@@ -553,18 +540,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Theme State
   const [darkMode, setDarkMode] = useState(() => {
       if (typeof window !== 'undefined') {
-          return localStorage.getItem('codex_theme') === 'dark';
+          const stored = localStorage.getItem('codex_theme_v2');
+          if (stored) return stored === 'dark';
+          return true; // Default to dark mode strictly
       }
-      return false;
+      return true;
   });
 
   useEffect(() => {
       if (darkMode) {
           document.documentElement.classList.add('dark');
-          localStorage.setItem('codex_theme', 'dark');
+          localStorage.setItem('codex_theme_v2', 'dark');
       } else {
           document.documentElement.classList.remove('dark');
-          localStorage.setItem('codex_theme', 'light');
+          localStorage.setItem('codex_theme_v2', 'light');
       }
   }, [darkMode]);
 
@@ -1276,7 +1265,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   return (
     <AppContext.Provider value={{ 
       role, 
-      setRole: setRoleState,
+      setRole,
       user,
       users,
       updateUser,
@@ -1351,7 +1340,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       subscribeToChat,
       validateReferralCode,
       applyReferralCode,
-      setPendingRole,
       setPendingAction
     }}>
       {children}

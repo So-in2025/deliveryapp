@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => {
             name: 'Mazamitla Delivery',
             short_name: 'Mazamitla',
             description: 'Tu comida favorita a domicilio en Mazamitla',
-            theme_color: '#ffffff',
-            background_color: '#ffffff',
+            theme_color: '#0c0a09',
+            background_color: '#0c0a09',
             display: 'standalone',
             icons: [
               {
