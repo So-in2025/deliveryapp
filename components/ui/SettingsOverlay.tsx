@@ -9,7 +9,7 @@ import { uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText } from 'lucide-react';
 
 // Internal navigation state for the overlay
-type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER' | 'PRIVACY' | 'TERMS' | 'HELP';
+type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'PRIVACY' | 'TERMS' | 'HELP';
 
 export const SettingsOverlay: React.FC = () => {
   const { isSettingsOpen, toggleSettings, user, updateUser, createStore, darkMode, toggleDarkMode, role, verifyAdminPin, setRole } = useApp();
@@ -33,22 +33,6 @@ export const SettingsOverlay: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     typeof Notification !== 'undefined' && Notification.permission === 'granted' && !!user.pushSubscription
   );
-  
-  // Store Reg State
-  const [storeName, setStoreName] = useState('');
-  const [storeLegalName, setStoreLegalName] = useState('');
-  const [storeTaxId, setStoreTaxId] = useState('');
-  const [storePhone, setStorePhone] = useState('');
-  const [storeBankAccount, setStoreBankAccount] = useState('');
-  const [storeCategory, setStoreCategory] = useState('Hamburguesas');
-  const [storeTime, setStoreTime] = useState('20');
-  
-  // Driver Reg State
-  const [driverVehicle, setDriverVehicle] = useState('Moto');
-  const [driverPlate, setDriverPlate] = useState('');
-  const [driverPhone, setDriverPhone] = useState('');
-  const [driverLicense, setDriverLicense] = useState('');
-  const [driverInsurance, setDriverInsurance] = useState('');
 
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
@@ -137,64 +121,6 @@ export const SettingsOverlay: React.FC = () => {
       }
   };
 
-  const handleRegisterMerchant = () => {
-      if (user.uid === 'guest') {
-          showToast('Debes iniciar sesión con Google para crear una tienda real.', 'error');
-          return;
-      }
-      
-      if (!storeName || !storeLegalName || !storeTaxId || !storePhone) {
-          showToast('Por favor completa todos los campos obligatorios', 'error');
-          return;
-      }
-
-      const newStore: Store = {
-          id: `store-${Date.now()}`,
-          name: storeName,
-          category: storeCategory,
-          rating: 5.0, // Heuristic: New stores start high
-          reviewsCount: 0,
-          deliveryTimeMin: Number(storeTime),
-          deliveryTimeMax: Number(storeTime) + 15,
-          deliveryFee: 45,
-          image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80', // Default fancy image
-          products: [],
-          createdAt: new Date().toISOString(), // Triggers "NEW" badge
-          ownerId: user.uid,
-          legalName: storeLegalName,
-          taxId: storeTaxId,
-          phone: storePhone,
-          bankAccount: storeBankAccount
-      };
-      createStore(newStore);
-      updateUser({ ownedStoreId: newStore.id, role: UserRole.MERCHANT });
-      setRole(UserRole.MERCHANT);
-      showToast('¡Local creado exitosamente!', 'success');
-      toggleSettings();
-      setCurrentView('MAIN');
-  };
-
-  const handleRegisterDriver = () => {
-      const phoneRegex = /^[0-9]{7,15}$/;
-      if (!driverPhone || !phoneRegex.test(driverPhone) || !driverLicense || !driverPlate) {
-          showToast('Por favor completa todos los campos obligatorios correctamente', 'error');
-          return;
-      }
-
-      updateUser({ 
-          isDriver: true, 
-          role: UserRole.DRIVER, 
-          phone: driverPhone,
-          driverLicense: driverLicense,
-          vehicleInsurance: driverInsurance,
-          vehiclePlate: driverPlate
-      });
-      setRole(UserRole.DRIVER);
-      showToast('¡Registro de Driver completo!', 'success');
-      toggleSettings();
-      setCurrentView('MAIN');
-  };
-
   const switchRole = async (newRole: UserRole) => {
       if (newRole === UserRole.ADMIN) {
           const pin = prompt('Ingrese el PIN de administrador:');
@@ -248,8 +174,8 @@ export const SettingsOverlay: React.FC = () => {
 
                     {/* Merchant Option */}
                     <div 
-                        onClick={() => user.ownedStoreId ? switchRole(UserRole.MERCHANT) : setCurrentView('REGISTER_MERCHANT')}
-                        className="flex items-center justify-between p-4 border-b border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
+                        onClick={() => user.ownedStoreId ? switchRole(UserRole.MERCHANT) : null}
+                        className={`flex items-center justify-between p-4 border-b border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors ${!user.ownedStoreId ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
                             <div className="p-2 bg-brand-50 dark:bg-brand-900/30 text-brand-950 dark:text-brand-400 rounded-lg group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition-colors">
@@ -257,10 +183,10 @@ export const SettingsOverlay: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white">
-                                    {user.ownedStoreId ? 'Ir a mi Comercio' : 'Registrar mi Negocio'}
+                                    Ir a mi Comercio
                                 </p>
                                 <p className="text-[10px] text-stone-400 dark:text-stone-500">
-                                    {user.ownedStoreId ? 'Gestionar productos y pedidos' : 'Vende tus productos aquí'}
+                                    {user.ownedStoreId ? 'Gestionar productos y pedidos' : 'No tienes un comercio registrado'}
                                 </p>
                             </div>
                         </div>
@@ -269,8 +195,8 @@ export const SettingsOverlay: React.FC = () => {
 
                     {/* Driver Option */}
                     <div 
-                        onClick={() => user.isDriver ? switchRole(UserRole.DRIVER) : setCurrentView('REGISTER_DRIVER')}
-                        className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
+                        onClick={() => user.isDriver ? switchRole(UserRole.DRIVER) : null}
+                        className={`flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors ${!user.isDriver ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
                             <div className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg group-hover:bg-amber-100 dark:group-hover:bg-amber-900/50 transition-colors">
@@ -278,10 +204,10 @@ export const SettingsOverlay: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white">
-                                    {user.isDriver ? 'Ir a modo Driver' : 'Registrarme como Driver'}
+                                    Ir a modo Driver
                                 </p>
                                 <p className="text-[10px] text-stone-400 dark:text-stone-500">
-                                    {user.isDriver ? 'Ver rutas y entregas' : 'Gana dinero repartiendo'}
+                                    {user.isDriver ? 'Ver rutas y entregas' : 'No estás registrado como driver'}
                                 </p>
                             </div>
                         </div>
@@ -297,12 +223,8 @@ export const SettingsOverlay: React.FC = () => {
                     <div onClick={() => { setEditName(user.name); setEditEmail(user.email); setCurrentView('EDIT_PROFILE'); }}>
                         <SettingItem icon={<User size={18} />} label="Editar Perfil" />
                     </div>
-                    <div onClick={toggleNotifications}>
-                        <SettingItem icon={<Bell size={18} />} label="Notificaciones" hasSwitch active={notificationsEnabled} />
-                    </div>
-                    <div onClick={toggleDarkMode}>
-                        <SettingItem icon={<Moon size={18} />} label="Modo Oscuro" hasSwitch active={darkMode} />
-                    </div>
+                    <SettingItem icon={<Bell size={18} />} label="Notificaciones" hasSwitch active={notificationsEnabled} onClick={toggleNotifications} />
+                    <SettingItem icon={<Moon size={18} />} label="Modo Oscuro" hasSwitch active={darkMode} onClick={toggleDarkMode} />
                     <div onClick={handlePrivacy}>
                         <SettingItem icon={<Shield size={18} />} label="Privacidad y Datos" />
                     </div>
@@ -394,184 +316,6 @@ export const SettingsOverlay: React.FC = () => {
           </div>
 
           <Button fullWidth onClick={handleSaveProfile}>Guardar Cambios</Button>
-      </div>
-  );
-
-  const renderRegisterMerchantView = () => (
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right transition-colors duration-300">
-          <div className="bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl p-6 text-brand-950 shadow-lg shadow-brand-900/20">
-              <StoreIcon size={32} className="mb-3 opacity-80" />
-              <h2 className="text-xl font-bold">Crea tu Tienda</h2>
-              <p className="text-brand-900/80 text-sm mt-1">Empieza a vender en minutos. Completamente gratis para empezar.</p>
-          </div>
-
-          <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 space-y-5 transition-colors duration-300">
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Nombre del Local</label>
-                  <input 
-                    placeholder="Ej: Burger King"
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
-                  />
-              </div>
-
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Razón Social / Nombre Legal</label>
-                  <input 
-                    placeholder="Ej: Burger King S.A."
-                    value={storeLegalName}
-                    onChange={(e) => setStoreLegalName(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
-                  />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                  <div>
-                      <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">RFC / Identificación Fiscal</label>
-                      <input 
-                        placeholder="30-XXXXXXXX-X"
-                        value={storeTaxId}
-                        onChange={(e) => setStoreTaxId(e.target.value)}
-                        className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
-                      />
-                  </div>
-                  <div>
-                      <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Teléfono Comercial</label>
-                      <input 
-                        placeholder="11 1234 5678"
-                        value={storePhone}
-                        onChange={(e) => setStorePhone(e.target.value)}
-                        className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
-                      />
-                  </div>
-              </div>
-
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">CBU / Cuenta Bancaria (Pagos)</label>
-                  <input 
-                    placeholder="0000000000000000000000"
-                    value={storeBankAccount}
-                    onChange={(e) => setStoreBankAccount(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
-                  />
-              </div>
-              
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Categoría</label>
-                  <select 
-                    value={storeCategory}
-                    onChange={(e) => setStoreCategory(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium appearance-none text-stone-900 dark:text-white transition-colors"
-                  >
-                      <option>Hamburguesas</option>
-                      <option>Pizza & Pasta</option>
-                      <option>Japonesa</option>
-                      <option>Mexicana</option>
-                      <option>Cafetería</option>
-                      <option>Postres</option>
-                  </select>
-              </div>
-
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Tiempo de Entrega (min)</label>
-                  <div className="flex items-center gap-2 mt-1">
-                      <Clock size={18} className="text-stone-400" />
-                      <input 
-                        type="number"
-                        placeholder="20"
-                        value={storeTime}
-                        onChange={(e) => setStoreTime(e.target.value)}
-                        className="flex-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
-                      />
-                  </div>
-              </div>
-          </div>
-
-          <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl flex gap-3 items-start text-sm text-amber-800 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50 transition-colors duration-300">
-               <Check size={18} className="shrink-0 mt-0.5" />
-               <p>Al crear tu tienda, aparecerás inmediatamente en la sección <b>"Nuevos en la App"</b> con visibilidad destacada.</p>
-          </div>
-
-          <Button fullWidth onClick={handleRegisterMerchant} disabled={!storeName} className="bg-brand-500 hover:bg-brand-600 text-brand-950 shadow-brand-500/30">
-              Lanzar Negocio
-          </Button>
-      </div>
-  );
-
-  const renderRegisterDriverView = () => (
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right transition-colors duration-300">
-          <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg shadow-amber-900/20">
-              <Bike size={32} className="mb-3 opacity-80" />
-              <h2 className="text-xl font-bold">Únete como Driver</h2>
-              <p className="text-amber-100 text-sm mt-1">Gana dinero extra con tu vehículo en tus propios horarios.</p>
-          </div>
-
-          <div className="bg-white dark:bg-stone-900 p-5 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 space-y-5 transition-colors duration-300">
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Tipo de Vehículo</label>
-                  <div className="grid grid-cols-2 gap-3 mt-2">
-                      {['Moto', 'Bici', 'Auto', 'Pie'].map(v => (
-                          <div 
-                            key={v}
-                            onClick={() => setDriverVehicle(v)}
-                            className={`p-3 rounded-xl border text-center font-bold text-sm cursor-pointer transition-all ${driverVehicle === v ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-500 text-amber-700 dark:text-amber-400' : 'border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:border-stone-300 dark:hover:border-stone-600'}`}
-                          >
-                              {v}
-                          </div>
-                      ))}
-                  </div>
-              </div>
-
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Teléfono de Contacto</label>
-                  <input 
-                    placeholder="11 1234 5678"
-                    value={driverPhone}
-                    onChange={(e) => setDriverPhone(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-amber-500 font-medium text-stone-900 dark:text-white transition-colors"
-                  />
-              </div>
-
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Número de Licencia</label>
-                  <input 
-                    placeholder="ABC-123456"
-                    value={driverLicense}
-                    onChange={(e) => setDriverLicense(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-amber-500 font-medium text-stone-900 dark:text-white transition-colors"
-                  />
-              </div>
-
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Póliza de Seguro (Opcional)</label>
-                  <input 
-                    placeholder="Nro de Póliza"
-                    value={driverInsurance}
-                    onChange={(e) => setDriverInsurance(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-amber-500 font-medium text-stone-900 dark:text-white transition-colors"
-                  />
-              </div>
-
-              <div>
-                  <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Patente / ID Vehículo</label>
-                  <input 
-                    placeholder="ABC-123"
-                    value={driverPlate}
-                    onChange={(e) => setDriverPlate(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-amber-500 font-medium uppercase text-stone-900 dark:text-white transition-colors"
-                  />
-              </div>
-          </div>
-
-           <div className="bg-stone-100 dark:bg-stone-800 p-4 rounded-xl flex gap-3 items-center text-sm text-stone-600 dark:text-stone-400 border border-stone-200 dark:border-stone-700 transition-colors duration-300">
-               <MapPin size={18} />
-               <p>Tu ubicación se compartirá solo cuando estés activo.</p>
-          </div>
-
-          <Button fullWidth onClick={handleRegisterDriver} className="bg-amber-500 hover:bg-amber-600 shadow-amber-500/30">
-              Completar Registro
-          </Button>
       </div>
   );
 
@@ -775,8 +519,6 @@ export const SettingsOverlay: React.FC = () => {
                  <div className="mt-2 text-center animate-fade-in">
                      <h2 className="font-bold text-xl">
                         {currentView === 'EDIT_PROFILE' && 'Editar Perfil'}
-                        {currentView === 'REGISTER_MERCHANT' && 'Registro'}
-                        {currentView === 'REGISTER_DRIVER' && 'Registro'}
                         {currentView === 'PRIVACY' && 'Privacidad'}
                         {currentView === 'TERMS' && 'Términos'}
                         {currentView === 'HELP' && 'Ayuda'}
@@ -788,8 +530,6 @@ export const SettingsOverlay: React.FC = () => {
         {/* Dynamic Content */}
         {currentView === 'MAIN' && renderMainView()}
         {currentView === 'EDIT_PROFILE' && renderEditProfileView()}
-        {currentView === 'REGISTER_MERCHANT' && renderRegisterMerchantView()}
-        {currentView === 'REGISTER_DRIVER' && renderRegisterDriverView()}
         {currentView === 'PRIVACY' && renderPrivacyView()}
         {currentView === 'TERMS' && renderTermsView()}
         {currentView === 'HELP' && renderHelpView()}

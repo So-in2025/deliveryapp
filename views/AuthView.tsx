@@ -35,6 +35,8 @@ export const AuthView: React.FC = () => {
   const [storeBankName, setStoreBankName] = useState('');
   const [storeBankAccount, setStoreBankAccount] = useState('');
   const [storeClabe, setStoreClabe] = useState('');
+  const [storeAddress, setStoreAddress] = useState('');
+  const [storePhone, setStorePhone] = useState('');
 
   const [vehicleType, setVehicleType] = useState('Moto');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -143,21 +145,6 @@ export const AuthView: React.FC = () => {
       return;
     }
 
-    // Professional Onboarding Interception
-    if (role === UserRole.MERCHANT) {
-        if (!appUser?.ownedStoreId) {
-            setOnboardingStep('MERCHANT');
-            return;
-        }
-    }
-    
-    if (role === UserRole.DRIVER) {
-        if (!appUser?.isDriver) {
-            setOnboardingStep('DRIVER');
-            return;
-        }
-    }
-
     updateUser({ role });
     setRole(role);
   };
@@ -180,7 +167,7 @@ export const AuthView: React.FC = () => {
   ];
 
   const handleRegisterMerchant = async () => {
-      if (!storeName || !storeTaxId || !storeClabe || !storeBankName) {
+      if (!storeName || !storeTaxId || !storeClabe || !storeBankName || !storeAddress || !storePhone) {
           showToast('Por favor completa todos los campos obligatorios', 'error');
           return;
       }
@@ -217,12 +204,15 @@ export const AuthView: React.FC = () => {
           bankName: storeBankName,
           bankAccount: storeBankAccount,
           clabe: storeClabe,
+          address: storeAddress,
+          phone: storePhone,
           isActive: true, // Instant public store
           isOpen: true
       };
       
       try {
           await createStore(newStore);
+          updateUser({ ownedStoreId: storeId, role: UserRole.MERCHANT });
           setRole(UserRole.MERCHANT);
           showToast('¡Tienda creada exitosamente!', 'success');
       } catch (error) {
@@ -696,6 +686,26 @@ export const AuthView: React.FC = () => {
                                      className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />
                              </div>
+                             <div>
+                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Dirección del Local *</label>
+                                 <input 
+                                     type="text" 
+                                     value={storeAddress}
+                                     onChange={(e) => setStoreAddress(e.target.value)}
+                                     placeholder="Ej. Av. Principal 123"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                 />
+                             </div>
+                             <div>
+                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Teléfono del Local *</label>
+                                 <input 
+                                     type="tel" 
+                                     value={storePhone}
+                                     onChange={(e) => setStorePhone(e.target.value)}
+                                     placeholder="Ej. 33 1234 5678"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                 />
+                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Categoría</label>
@@ -725,7 +735,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <button 
                                 onClick={handleRegisterMerchant}
-                                disabled={!storeName || !storeTaxId || !storeBankAccount}
+                                disabled={!storeName || !storeTaxId || !storeBankName || !storeClabe || !storeAddress || !storePhone}
                                 className="w-full mt-4 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:hover:bg-brand-500 text-brand-950 font-black py-4 px-6 rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
                             >
                                 <StoreIcon size={20} />

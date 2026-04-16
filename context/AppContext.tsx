@@ -6,7 +6,7 @@ import { loadCart, saveCart } from '../services/dataService';
 import { APP_CONFIG } from '../constants';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
-import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage } from '../firebase';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage, getDocs } from '../firebase';
 import { io, Socket } from 'socket.io-client';
 
 // App Context Type and Provider
@@ -359,23 +359,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (!isAuthReady) return;
 
-    // Listen to Stores (Phase 1: Cached Backend Fetch)
+    // Listen to Stores
     const fetchStores = async () => {
       try {
-        const response = await fetch('/api/stores');
-        if (response.ok) {
-          const storesData = await response.json();
-          // If merchant, filter locally to avoid complex backend logic for now
-          if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
-            setStores(storesData.filter((s: Store) => s.id === authProfile.ownedStoreId));
-          } else {
-            setStores(storesData);
-          }
+        const storesQuery = collection(db, 'stores');
+        const storesSnapshot = await getDocs(storesQuery);
+        const storesData = storesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Store[];
+        
+        if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+          setStores(storesData.filter(s => s.id === authProfile.ownedStoreId));
         } else {
-          console.error('Failed to fetch stores from backend');
+          setStores(storesData);
         }
       } catch (error) {
-        console.error('Error fetching stores:', error);
+        console.error('Error fetching stores from Firestore:', error);
       }
     };
 
@@ -407,7 +404,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           return { 
             id: doc.id, 
             ...data, 
-            createdAt: (data.createdAt as Timestamp)?.toDate() || new Date() 
+            createdAt: data.createdAt && typeof data.createdAt.toDate === 'function' 
+              ? data.createdAt.toDate() 
+              : new Date(data.createdAt || Date.now())
           } as Order;
         });
 
@@ -548,6 +547,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
 
   useEffect(() => {
+      console.log('Dark mode changed to:', darkMode);
       if (darkMode) {
           document.documentElement.classList.add('dark');
           localStorage.setItem('codex_theme_v2', 'dark');
@@ -557,7 +557,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
   }, [darkMode]);
 
-  const toggleDarkMode = () => setDarkMode(prev => !prev);
+  const toggleDarkMode = () => {
+      console.log('Toggling dark mode from:', darkMode);
+      setDarkMode(prev => !prev);
+  };
 
   // Lifted State
   const [clientViewState, setClientViewState] = useState<ViewState>('BROWSE');
@@ -817,7 +820,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return { 
           id: doc.id, 
           ...data, 
-          timestamp: (data.timestamp as Timestamp)?.toDate() || new Date() 
+          timestamp: data.timestamp && typeof data.timestamp.toDate === 'function' 
+            ? data.timestamp.toDate() 
+            : new Date(data.timestamp || Date.now())
         } as ChatMessage;
       }).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       callback(messages);
