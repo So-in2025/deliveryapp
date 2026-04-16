@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
 
 export const AuthView: React.FC = () => {
-  const { user: appUser, createStore, updateUser, setRole, config, requestAdminAccess } = useApp();
+  const { user: appUser, createStore, updateUser, setRole, config, requestAdminAccess, myStore } = useApp();
   const { showToast } = useToast();
   const { user: authUser, login, loginEmail, registerEmail, resetPass, signOut, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
@@ -61,21 +61,30 @@ export const AuthView: React.FC = () => {
     }
 
     // Role-specific onboarding check
+    const hasMerchantAccount = appUser.ownedStoreId || myStore;
+    const hasDriverAccount = appUser.isDriver;
+
     // If selecting Merchant but has no store, show onboarding form instead of switching role
-    if (role === UserRole.MERCHANT && !appUser.ownedStoreId) {
+    if (role === UserRole.MERCHANT && !hasMerchantAccount) {
       setOnboardingStep('MERCHANT');
       return;
     }
     
     // If selecting Driver but hasn't registered as driver, show onboarding form
-    if (role === UserRole.DRIVER && !appUser.isDriver) {
+    if (role === UserRole.DRIVER && !hasDriverAccount) {
       setOnboardingStep('DRIVER');
       return;
     }
 
-    updateUser({ role });
+    // Auto-fix profile if store ID was missing but store exists
+    if (role === UserRole.MERCHANT && !appUser.ownedStoreId && myStore) {
+        updateUser({ ownedStoreId: myStore.id, role });
+    } else {
+        updateUser({ role });
+    }
+    
     setRole(role);
-  }, [authUser, appUser.ownedStoreId, appUser.isDriver, login, showToast, updateUser, setRole]);
+  }, [authUser, appUser.ownedStoreId, appUser.isDriver, myStore, login, showToast, updateUser, setRole]);
 
   // Handle Redirection/Role selection after login
   useEffect(() => {
@@ -678,9 +687,9 @@ export const AuthView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-4 max-h-[65vh] lg:max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar scroll-smooth">
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Nombre del Local *</label>
+                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Nombre del Local *</label>
                                 <input 
                                     type="text" 
                                     value={storeName}
@@ -701,7 +710,7 @@ export const AuthView: React.FC = () => {
                                  />
                              </div>
                              <div>
-                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Banco *</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Banco *</label>
                                  <select 
                                      value={storeBankName}
                                      onChange={(e) => setStoreBankName(e.target.value)}
@@ -714,7 +723,7 @@ export const AuthView: React.FC = () => {
                                  </select>
                              </div>
                              <div>
-                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">CLABE Interbancaria (18 dígitos) *</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria (18 dígitos) *</label>
                                  <input 
                                      type="text" 
                                      inputMode="numeric"
@@ -728,7 +737,7 @@ export const AuthView: React.FC = () => {
                                  />
                              </div>
                              <div>
-                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Número de Cuenta (Opcional)</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Número de Cuenta (Opcional)</label>
                                  <input 
                                      type="text" 
                                      value={storeBankAccount}
@@ -738,7 +747,7 @@ export const AuthView: React.FC = () => {
                                  />
                              </div>
                              <div>
-                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Dirección del Local *</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Dirección del Local *</label>
                                  <input 
                                      type="text" 
                                      value={storeAddress}
@@ -748,7 +757,7 @@ export const AuthView: React.FC = () => {
                                  />
                              </div>
                              <div>
-                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Teléfono del Local *</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Teléfono del Local *</label>
                                  <input 
                                      type="tel" 
                                      value={storePhone}
@@ -759,7 +768,7 @@ export const AuthView: React.FC = () => {
                              </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Categoría</label>
+                                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Categoría</label>
                                     <select 
                                         value={storeCategory}
                                         onChange={(e) => setStoreCategory(e.target.value)}
@@ -771,7 +780,7 @@ export const AuthView: React.FC = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Tiempo (Min)</label>
+                                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Tiempo (Min)</label>
                                     <select 
                                         value={storeTime}
                                         onChange={(e) => setStoreTime(e.target.value)}
@@ -818,9 +827,9 @@ export const AuthView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-4 max-h-[65vh] lg:max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Vehículo *</label>
+                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Vehículo *</label>
                                 <select 
                                     value={vehicleType}
                                     onChange={(e) => setVehicleType(e.target.value)}
@@ -832,7 +841,7 @@ export const AuthView: React.FC = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Teléfono de Contacto *</label>
+                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Teléfono de Contacto *</label>
                                 <input 
                                     type="tel" 
                                     value={phoneNumber}
@@ -842,7 +851,7 @@ export const AuthView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Licencia de Conducir *</label>
+                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Licencia de Conducir *</label>
                                 <input 
                                     type="text" 
                                     value={driverLicense}
@@ -852,7 +861,7 @@ export const AuthView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Placa del Vehículo *</label>
+                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Placa del Vehículo *</label>
                                 <input 
                                     type="text" 
                                     value={vehiclePlate}
@@ -862,7 +871,7 @@ export const AuthView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Póliza de Seguro</label>
+                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Póliza de Seguro</label>
                                 <input 
                                     type="text" 
                                     value={vehicleInsurance}
