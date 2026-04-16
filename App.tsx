@@ -18,6 +18,7 @@ import { DriverLayout } from './components/layouts/DriverLayout';
 import { AdminLayout } from './components/layouts/AdminLayout';
 import { PWAInstallPrompt } from './components/ui/PWAInstallPrompt';
 import { NotificationOverlay } from './components/ui/NotificationOverlay';
+import { StatusBarrier } from './components/ui/StatusBarrier';
 
 import { APP_CONFIG } from './constants';
 
@@ -80,7 +81,7 @@ const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
 // Component to handle View Switching based on Role
 const ViewRouter = () => {
-  const { role, isNotificationsOpen, setIsNotificationsOpen } = useApp();
+  const { role, isNotificationsOpen, setIsNotificationsOpen, user, myStore } = useApp();
 
   return (
     <>
@@ -97,12 +98,20 @@ const ViewRouter = () => {
               </ClientLayout>
             );
           case UserRole.MERCHANT:
+            // SECURITY GUARD: Approval Verification
+            if (myStore && !myStore.isActive) {
+                return <StatusBarrier type="MERCHANT" />;
+            }
             return (
               <MerchantLayout>
                 <MerchantView />
               </MerchantLayout>
             );
           case UserRole.DRIVER:
+            // SECURITY GUARD: Approval Verification
+            if (!user.isApprovedDriver) {
+                return <StatusBarrier type="DRIVER" />;
+            }
             return (
               <DriverLayout>
                 <DriverView />

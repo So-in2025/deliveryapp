@@ -761,7 +761,16 @@ export const MerchantView: React.FC = () => {
   const lastOrderCountRef = useRef(0);
 
   const isMobile = window.innerWidth < 1024;
-  
+
+  // IDENTITY INTEGRATION:
+  // If user owns a store, use it. If not, show "No Store" state.
+  // Use useMemo to avoid recalc on every render and ensure it picks up changes
+  const myStore = React.useMemo(() => {
+    return stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid);
+  }, [stores, user.ownedStoreId, user.uid]);
+
+  const [wasPending, setWasPending] = useState(myStore ? !myStore.isActive : false);
+
   const merchantTourSteps: TourStep[] = [
     {
         targetId: 'store-status',
@@ -814,8 +823,6 @@ export const MerchantView: React.FC = () => {
     lastOrderCountRef.current = pendingOrders.length;
   }, [orders, user.ownedStoreId, showToast, myStore?.isActive]);
 
-  const [wasPending, setWasPending] = useState(myStore ? !myStore.isActive : false);
-
   React.useEffect(() => {
     if (myStore?.isActive && wasPending) {
         soundService.play('SUCCESS');
@@ -823,13 +830,6 @@ export const MerchantView: React.FC = () => {
         setWasPending(false);
     }
   }, [myStore?.isActive, wasPending, showToast]);
-
-  // IDENTITY INTEGRATION:
-  // If user owns a store, use it. If not, show "No Store" state.
-  // Use useMemo to avoid recalc on every render and ensure it picks up changes
-  const myStore = React.useMemo(() => {
-    return stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid);
-  }, [stores, user.ownedStoreId, user.uid]);
 
   // If we are definitely a merchant but store hasn't loaded yet, show loading
   // Check both app-level role and user-profile role for robustness
@@ -843,78 +843,6 @@ export const MerchantView: React.FC = () => {
       );
   }
 
-  if (myStore && !myStore.isActive) {
-      return (
-        <div className="flex flex-col items-center justify-center p-10 text-center space-y-8 animate-fade-in py-20 min-h-screen bg-stone-50 dark:bg-stone-950">
-            <div className="relative">
-                <div className="absolute inset-0 bg-brand-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                <div className="w-32 h-32 bg-stone-900 border-4 border-white/10 rounded-[3rem] shadow-2xl flex items-center justify-center relative">
-                    <Shield size={48} className="text-brand-500 animate-float" />
-                    <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-brand-500 rounded-full flex items-center justify-center shadow-lg border-2 border-stone-900">
-                        <Clock size={20} className="text-brand-950 animate-spin-slow" />
-                    </div>
-                </div>
-            </div>
-            
-            <div className="space-y-4 max-w-sm">
-                <h2 className="text-3xl font-black text-stone-900 dark:text-white tracking-tighter uppercase">Solicitud en Revisión</h2>
-                <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed">
-                    Nuestros administradores están validando tu información comercial. Te notificaremos por WhatsApp cuando sea aprobada.
-                </p>
-            </div>
-
-            <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-black/[0.03] dark:border-white/[0.03] shadow-xl w-full max-w-md text-left space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-500/10 rounded-xl flex items-center justify-center">
-                        <StoreIcon size={20} className="text-brand-600 dark:text-brand-400" />
-                    </div>
-                    <div>
-                        <h4 className="text-sm font-black text-stone-900 dark:text-white uppercase tracking-wider">{myStore?.name}</h4>
-                        <p className="text-[10px] text-stone-500 font-bold uppercase">Estado: Pendiente de Aprobación</p>
-                    </div>
-                </div>
-                <div className="h-2 w-full bg-stone-100 dark:bg-stone-900 rounded-full overflow-hidden">
-                    <div className="h-full bg-brand-500 w-2/3 animate-shimmer" />
-                </div>
-                <p className="text-[10px] text-stone-400 italic text-center">Te notificaremos tan pronto seas activado.</p>
-            </div>
-
-            <Button 
-                variant="outline" 
-                onClick={() => {
-                    updateUser({ role: UserRole.CLIENT });
-                    setRole(UserRole.CLIENT);
-                }}
-                className="rounded-2xl border-stone-200 dark:border-stone-800 text-xs font-black uppercase tracking-widest px-8"
-            >
-                Volver al Inicio (Modo Cliente)
-            </Button>
-        </div>
-      );
-  }
-
-  if (!myStore) {
-      return (
-          <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-900 animate-fade-in">
-              <div className="bg-brand-400/10 p-6 rounded-full shadow-inner mb-6">
-                  <StoreIcon size={48} className="text-brand-500" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Registro Incompleto</h2>
-              <p className="text-stone-400 mb-8 max-w-xs mx-auto text-sm">Parece que el registro de tu tienda no se completó o los datos (RFC, CLABE, etc) aún no han sido vinculados a tu cuenta.</p>
-              
-              <Button 
-                  onClick={() => {
-                    updateUser({ role: UserRole.NONE, ownedStoreId: undefined });
-                    setRole(UserRole.NONE);
-                  }}
-                  variant="primary"
-              >
-                  Volver al Inicio para Registrar Tienda
-              </Button>
-          </div>
-      );
-  }
-  
   // Filter only active orders for the merchant view
   const activeOrders = orders.filter(o =>
     o.storeId === myStore.id && // Only show orders for this store

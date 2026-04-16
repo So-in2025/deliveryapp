@@ -271,59 +271,6 @@ export const DriverView: React.FC = () => {
     }
   };
 
-  // SECURITY PROTECTION: Account Review Barrier
-  if (user.role === UserRole.DRIVER && !user.isApprovedDriver) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-10 text-center space-y-8 animate-fade-in bg-stone-50 dark:bg-stone-950">
-          <div className="relative">
-              <div className="absolute inset-0 bg-brand-500/20 blur-3xl rounded-full scale-150 animate-pulse" />
-              <div className="w-32 h-32 bg-stone-900 border-4 border-white/10 rounded-[3rem] shadow-2xl flex items-center justify-center relative">
-                  <Shield size={48} className="text-brand-500 animate-float" />
-                  <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-brand-500 rounded-full flex items-center justify-center shadow-lg border-2 border-stone-900">
-                      <Clock size={20} className="text-brand-950 animate-spin-slow" />
-                  </div>
-              </div>
-          </div>
-          
-          <div className="space-y-4 max-w-sm">
-            <h2 className="text-2xl font-black text-stone-900 dark:text-white uppercase tracking-tighter">Cuenta en Revisión</h2>
-            <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed">
-                Tu perfil de repartidor está en proceso de validación técnica y de seguridad. 
-                Te notificaremos por WhatsApp cuando sea aprobada.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-black/[0.03] dark:border-white/[0.03] shadow-xl w-full max-w-md text-left space-y-4">
-              <div className="flex items-center gap-3">
-                  <div className="p-2 bg-stone-100 dark:bg-stone-900 rounded-lg">
-                      <Truck size={20} className="text-stone-400" />
-                  </div>
-                  <div>
-                      <p className="text-xs font-bold text-stone-700 dark:text-white uppercase">{user.vehicleType || 'Repartidor'}</p>
-                      <p className="text-[10px] text-stone-500 font-bold uppercase">Estado: Pendiente</p>
-                  </div>
-              </div>
-              <div className="h-2 w-full bg-stone-100 dark:bg-stone-900 rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-500 w-1/2 animate-shimmer" />
-              </div>
-              <p className="text-[10px] text-stone-400 italic text-center">¡Prepara tu equipo, ya casi empezamos!</p>
-          </div>
-
-          <Button 
-            variant="outline" 
-            fullWidth 
-            onClick={() => {
-                updateUser({ role: UserRole.CLIENT });
-                setRole(UserRole.CLIENT);
-            }}
-            className="rounded-2xl border-stone-200 dark:border-stone-800 text-xs font-black uppercase tracking-widest"
-          >
-              Volver al Inicio
-          </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full bg-stone-50 dark:bg-stone-900 animate-fade-in">
       

@@ -87,6 +87,7 @@ interface AppContextType {
   addNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
+  myStore: Store | null;
   
   // Global Config
   config: GlobalConfig;
@@ -190,6 +191,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return [];
     }
   });
+
+  const myStore = useMemo(() => {
+    return stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid) || null;
+  }, [stores, user.ownedStoreId, user.uid]);
 
   useEffect(() => {
     localStorage.setItem('codex_notifications_v1', JSON.stringify(notifications));
@@ -1346,6 +1351,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addNotification,
       markNotificationAsRead,
       clearNotifications,
+      myStore,
       config,
       updateConfig,
       driverLocation,
