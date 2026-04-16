@@ -238,8 +238,8 @@ export const AuthView: React.FC = () => {
           clabe: tClabe,
           address: tAddress,
           phone: tPhone,
-          isActive: true,
-          isOpen: true
+          isActive: false,
+          isOpen: false
       };
       
       try {
@@ -253,13 +253,16 @@ export const AuthView: React.FC = () => {
             role: UserRole.MERCHANT 
           });
           
-          // 3. Finally switch UI role
+          // 3. Ensure UI loader is off before transition
+          setIsLoggingIn(false);
+          
+          // 4. Finally switch UI role
           setRole(UserRole.MERCHANT);
+          setOnboardingStep('NONE');
           showToast('¡Tienda registrada con éxito!', 'success');
       } catch (error) {
           console.error('Error in handleRegisterMerchant:', error);
           showToast('Error al procesar el registro. Intenta de nuevo.', 'error');
-      } finally {
           setIsLoggingIn(false);
       }
   };
@@ -675,7 +678,7 @@ export const AuthView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                             <div>
                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Nombre del Local *</label>
                                 <input 
@@ -815,7 +818,7 @@ export const AuthView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                             <div>
                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">Vehículo *</label>
                                 <select 

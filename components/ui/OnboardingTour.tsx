@@ -69,12 +69,27 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
     };
 
     const margin = 12;
+    const cardWidth = 320;
+    const cardHeight = 280; // Estimated max height
+
     if (step.position === 'bottom' || !step.position) {
-        tooltipStyle.top = targetRect.bottom + margin;
-        tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - 320 - margin, targetRect.left + targetRect.width / 2 - 160));
+        const spaceBelow = window.innerHeight - targetRect.bottom;
+        if (spaceBelow < cardHeight + margin && targetRect.top > cardHeight + margin) {
+            // Not enough space below, but enough above - flip to top
+            tooltipStyle.bottom = window.innerHeight - targetRect.top + margin;
+        } else {
+            tooltipStyle.top = Math.min(window.innerHeight - cardHeight - margin, targetRect.bottom + margin);
+        }
+        tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, targetRect.left + targetRect.width / 2 - cardWidth / 2));
     } else if (step.position === 'top') {
-        tooltipStyle.bottom = window.innerHeight - targetRect.top + margin;
-        tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - 320 - margin, targetRect.left + targetRect.width / 2 - 160));
+        const spaceAbove = targetRect.top;
+        if (spaceAbove < cardHeight + margin && window.innerHeight - targetRect.bottom > cardHeight + margin) {
+             // Not enough space above, but enough below - flip to bottom
+             tooltipStyle.top = targetRect.bottom + margin;
+        } else {
+             tooltipStyle.bottom = window.innerHeight - targetRect.top + margin;
+        }
+        tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, targetRect.left + targetRect.width / 2 - cardWidth / 2));
     } else if (step.position === 'left') {
         tooltipStyle.top = targetRect.top;
         tooltipStyle.right = window.innerWidth - targetRect.left + margin;
