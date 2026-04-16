@@ -815,14 +815,19 @@ export const MerchantView: React.FC = () => {
 
   // IDENTITY INTEGRATION:
   // If user owns a store, use it. If not, show "No Store" state.
-  const myStore = stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid);
+  // Use useMemo to avoid recalc on every render and ensure it picks up changes
+  const myStore = React.useMemo(() => {
+    return stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid);
+  }, [stores, user.ownedStoreId, user.uid]);
 
-  if (!myStore && user.ownedStoreId) {
-      // Waiting for stores to sync from network
+  // If we are definitely a merchant but store hasn't loaded yet, show loading
+  // Check both app-level role and user-profile role for robustness
+  if (!myStore && (user.ownedStoreId || user.role === UserRole.MERCHANT || role === UserRole.MERCHANT)) {
       return (
-          <div className="h-full flex flex-col items-center justify-center p-8 bg-stone-50 dark:bg-stone-900">
-               <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-500 border-t-transparent mx-auto mb-4" />
-               <p className="text-stone-500 dark:text-stone-400">Cargando datos de tu tienda...</p>
+          <div className="h-full flex flex-col items-center justify-center p-8 bg-stone-900">
+               <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-500 border-t-transparent mx-auto mb-4 shadow-[0_0_15px_rgba(255,237,0,0.2)]" />
+               <p className="text-stone-400 font-medium animate-pulse">Sincronizando los datos de tu comercio...</p>
+               <p className="text-stone-600 text-[10px] uppercase tracking-widest mt-2 font-bold">Un momento por favor</p>
           </div>
       );
   }

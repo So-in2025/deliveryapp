@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Store } from '../types';
@@ -20,6 +20,7 @@ export const AuthView: React.FC = () => {
 
   const [showAdminAccess, setShowAdminAccess] = useState(false);
   const [isRequestingAccess, setIsRequestingAccess] = useState(false);
+  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
 
   // Email Auth States
   const [email, setEmail] = useState('');
@@ -43,6 +44,47 @@ export const AuthView: React.FC = () => {
   const [driverLicense, setDriverLicense] = useState('');
   const [vehicleInsurance, setVehicleInsurance] = useState('');
   const [vehiclePlate, setVehiclePlate] = useState('');
+
+  const handleRoleSelection = useCallback((role: UserRole, isGuest: boolean = false) => {
+    if (!authUser && !isGuest) {
+      setPendingRole(role);
+      showToast("Por favor, inicia sesión para continuar", "info");
+      setAuthMode('GOOGLE'); // Default to Google for quick login
+      login();
+      return;
+    }
+    
+    if (isGuest) {
+      updateUser({ role });
+      setRole(role);
+      return;
+    }
+
+    // Role-specific onboarding check
+    // If selecting Merchant but has no store, show onboarding form instead of switching role
+    if (role === UserRole.MERCHANT && !appUser.ownedStoreId) {
+      setOnboardingStep('MERCHANT');
+      return;
+    }
+    
+    // If selecting Driver but hasn't registered as driver, show onboarding form
+    if (role === UserRole.DRIVER && !appUser.isDriver) {
+      setOnboardingStep('DRIVER');
+      return;
+    }
+
+    updateUser({ role });
+    setRole(role);
+  }, [authUser, appUser.ownedStoreId, appUser.isDriver, login, showToast, updateUser, setRole]);
+
+  // Handle Redirection/Role selection after login
+  useEffect(() => {
+    // Only proceed if auth is ready AND appUser profile matches authUser (synced)
+    if (authUser && pendingRole && appUser.uid === authUser.uid) {
+      handleRoleSelection(pendingRole);
+      setPendingRole(null);
+    }
+  }, [authUser, pendingRole, appUser.uid, handleRoleSelection]);
 
   const handleLogin = async () => {
       setIsLoggingIn(true);
@@ -101,20 +143,6 @@ export const AuthView: React.FC = () => {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
-  if (loading && !authUser) {
-    return (
-      <div className="fixed inset-0 bg-stone-950 flex flex-col items-center justify-center gap-6">
-        <div className="w-24 h-24 bg-brand-500 rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-pulse">
-            <ShoppingBag size={40} className="text-brand-950" />
-        </div>
-        <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-1 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest">Iniciando plataforma...</p>
-        </div>
-      </div>
-    );
-  }
-
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
       const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
@@ -131,23 +159,19 @@ export const AuthView: React.FC = () => {
     }
   };
 
-  const handleRoleSelection = (role: UserRole, isGuest: boolean = false) => {
-    if (!authUser && !isGuest) {
-      showToast("Por favor, inicia sesión para continuar", "info");
-      setAuthMode('GOOGLE'); // Default to Google for quick login
-      login();
-      return;
-    }
-    
-    if (isGuest) {
-      updateUser({ role });
-      setRole(role);
-      return;
-    }
-
-    updateUser({ role });
-    setRole(role);
-  };
+  if (loading && !authUser) {
+    return (
+      <div className="fixed inset-0 bg-stone-950 flex flex-col items-center justify-center gap-6">
+        <div className="w-24 h-24 bg-brand-500 rounded-[2.5rem] flex items-center justify-center shadow-2xl animate-pulse">
+            <ShoppingBag size={40} className="text-brand-950" />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+            <div className="w-12 h-1 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest">Iniciando plataforma...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleRequestAdminAccess = async () => {
     if (!authUser) {
@@ -167,21 +191,28 @@ export const AuthView: React.FC = () => {
   ];
 
   const handleRegisterMerchant = async () => {
-      if (!storeName || !storeTaxId || !storeClabe || !storeBankName || !storeAddress || !storePhone) {
+      // Trim inputs for mobile autocorrect/space issues
+      const tName = storeName.trim();
+      const tTaxId = storeTaxId.trim().toUpperCase();
+      const tClabe = storeClabe.trim();
+      const tAddress = storeAddress.trim();
+      const tPhone = storePhone.trim();
+
+      if (!tName || !tTaxId || !tClabe || !storeBankName || !tAddress || !tPhone) {
           showToast('Por favor completa todos los campos obligatorios', 'error');
           return;
       }
       
       // RFC Validation (13 chars: 4 letters, 6 numbers, 3 homoclave)
       const rfcRegex = /^[A-Z]{4}[0-9]{6}[A-Z0-9]{3}$/i;
-      if (!rfcRegex.test(storeTaxId)) {
+      if (!rfcRegex.test(tTaxId)) {
           showToast('RFC inválido. Debe tener 13 caracteres (4 letras, 6 números, 3 homoclave)', 'error');
           return;
       }
 
       // CLABE Validation (18 digits)
       const clabeRegex = /^[0-9]{18}$/;
-      if (!clabeRegex.test(storeClabe)) {
+      if (!clabeRegex.test(tClabe)) {
           showToast('CLABE inválida. Debe tener 18 dígitos numéricos', 'error');
           return;
       }
@@ -190,7 +221,7 @@ export const AuthView: React.FC = () => {
       const storeId = `store-${authUser?.uid || Date.now()}`;
       const newStore: Store = {
           id: storeId,
-          name: storeName,
+          name: tName,
           category: storeCategory,
           rating: 5.0,
           reviewsCount: 0,
@@ -201,12 +232,12 @@ export const AuthView: React.FC = () => {
           products: [],
           createdAt: new Date().toISOString(),
           ownerId: authUser?.uid || 'guest',
-          taxId: storeTaxId.toUpperCase(),
+          taxId: tTaxId,
           bankName: storeBankName,
-          bankAccount: storeBankAccount,
-          clabe: storeClabe,
-          address: storeAddress,
-          phone: storePhone,
+          bankAccount: storeBankAccount.trim(),
+          clabe: tClabe,
+          address: tAddress,
+          phone: tPhone,
           isActive: true,
           isOpen: true
       };
@@ -216,6 +247,7 @@ export const AuthView: React.FC = () => {
           await createStore(newStore);
           
           // 2. Update user profile to link store AND set role atomically
+          // We wait for this to be fully committed
           await updateUser({ 
             ownedStoreId: storeId, 
             role: UserRole.MERCHANT 
@@ -565,7 +597,7 @@ export const AuthView: React.FC = () => {
                             <div className="w-12 h-12 rounded-xl bg-brand-500 p-0.5 shadow-md">
                                 <div className="w-full h-full rounded-[10px] overflow-hidden bg-stone-800">
                                     {authUser.photoURL ? (
-                                        <img src={authUser.photoURL} alt={authUser.displayName || ''} className="w-full h-full object-cover" />
+                                        <img src={authUser.photoURL} alt={authUser.displayName || ''} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-white">
                                             <UserIcon size={20} />
@@ -682,10 +714,13 @@ export const AuthView: React.FC = () => {
                                  <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">CLABE Interbancaria (18 dígitos) *</label>
                                  <input 
                                      type="text" 
+                                     inputMode="numeric"
+                                     pattern="[0-9]*"
                                      value={storeClabe}
-                                     onChange={(e) => setStoreClabe(e.target.value)}
+                                     onChange={(e) => setStoreClabe(e.target.value.replace(/\D/g, ''))}
                                      placeholder="18 dígitos numéricos"
                                      maxLength={18}
+                                     autoComplete="off"
                                      className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />
                              </div>
@@ -748,11 +783,17 @@ export const AuthView: React.FC = () => {
                             </div>
                             <button 
                                 onClick={handleRegisterMerchant}
-                                disabled={!storeName || !storeTaxId || !storeBankName || !storeClabe || !storeAddress || !storePhone}
+                                disabled={isLoggingIn}
                                 className="w-full mt-4 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:hover:bg-brand-500 text-brand-950 font-black py-4 px-6 rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
                             >
-                                <StoreIcon size={20} />
-                                Abrir Tienda
+                                {isLoggingIn ? (
+                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-brand-950 border-t-transparent" />
+                                ) : (
+                                    <>
+                                        <StoreIcon size={20} />
+                                        Abrir Tienda
+                                    </>
+                                )}
                             </button>
                         </div>
                     </motion.div>

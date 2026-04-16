@@ -49,6 +49,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({ src, alt, className = '', 
       <img
         src={src}
         alt={alt}
+        referrerPolicy="no-referrer"
         className={`w-full h-full object-cover transition-all duration-700 ease-in-out ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'} ${className}`}
         {...props}
       />

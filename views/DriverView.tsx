@@ -148,9 +148,9 @@ export const DriverView: React.FC = () => {
   const [vehicleType, setVehicleType] = useState<'MOTO' | 'BICI' | 'AUTO'>('MOTO');
     const [isSimulating, setIsSimulating] = useState(false);
     const [activeChatOrder, setActiveChatOrder] = useState<string | null>(null);
-    const [simulatedDistance, setSimulatedDistance] = useState(0.8);
+  const [simulatedDistance, setSimulatedDistance] = useState(0.8);
 
-    // Real GPS Tracking Logic
+  // Real GPS Tracking Logic
     useEffect(() => {
         if (!isDriverOnline) return;
 
@@ -261,6 +261,7 @@ export const DriverView: React.FC = () => {
     }
   };
 
+  // SECURITY PROTECTION: Account Review Barrier
   if (user.role === UserRole.DRIVER && !user.isApprovedDriver) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-50 dark:bg-stone-900 animate-fade-in">
@@ -278,7 +279,6 @@ export const DriverView: React.FC = () => {
       </div>
     );
   }
-
 
   return (
     <div className="flex flex-col h-full bg-stone-50 dark:bg-stone-900 animate-fade-in">
