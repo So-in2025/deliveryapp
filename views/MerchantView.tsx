@@ -859,7 +859,7 @@ export const MerchantView: React.FC = () => {
             <div className="space-y-4 max-w-sm">
                 <h2 className="text-3xl font-black text-stone-900 dark:text-white tracking-tighter uppercase">Solicitud en Revisión</h2>
                 <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed">
-                    Nuestros administradores están validando tu información comercial. Este proceso suele tomar menos de 24 horas.
+                    Nuestros administradores están validando tu información comercial. Te notificaremos por WhatsApp cuando sea aprobada.
                 </p>
             </div>
 

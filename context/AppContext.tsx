@@ -18,6 +18,7 @@ interface AppContextType {
   updateUser: (data: Partial<UserProfile>) => void;
   updateAnyUser: (userId: string, data: Partial<UserProfile>) => void;
   createStore: (store: Store) => void;
+  requestDriverAccess: (driverData: Partial<UserProfile>) => void;
   orders: Order[];
   stores: Store[]; 
   cart: CartItem[];
@@ -624,6 +625,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           id: storeId,
           createdAt: serverTimestamp(),
           isOpen: true,
+          isActive: false, // Start as inactive (PENDING)
           rating: 5.0,
           reviewsCount: 0,
           products: []
@@ -635,11 +637,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setStores(prev => [...prev, { ...storeData, createdAt: new Date() } as Store]);
         
         await updateUser({ ownedStoreId: storeId });
-        showToast('Tienda creada con éxito', 'success');
+        showToast('Solicitud de tienda enviada', 'success');
       } catch (error) {
         console.error('Error creating store:', error);
         showToast('Error al crear la tienda. Verifica que hayas iniciado sesión.', 'error');
       }
+  };
+
+  const requestDriverAccess = async (driverData: Partial<UserProfile>) => {
+    try {
+        await updateUser({
+            ...driverData,
+            isDriver: true,
+            isApprovedDriver: false,
+        });
+        showToast('Solicitud de Repartidor enviada', 'success');
+    } catch (error) {
+        console.error('Error requesting driver access:', error);
+        showToast('Error al enviar solicitud', 'error');
+    }
   };
 
   const addToCart = (product: Product, quantity: number, modifiers: Modifier[], storeId: string) => {
@@ -1272,6 +1288,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateUser,
       updateAnyUser,
       createStore,
+      requestDriverAccess,
       orders, 
       stores, 
       cart, 

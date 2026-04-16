@@ -289,7 +289,7 @@ export const DriverView: React.FC = () => {
             <h2 className="text-2xl font-black text-stone-900 dark:text-white uppercase tracking-tighter">Cuenta en Revisión</h2>
             <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed">
                 Tu perfil de repartidor está en proceso de validación técnica y de seguridad. 
-                Recibirás acceso total en las próximas horas.
+                Te notificaremos por WhatsApp cuando sea aprobada.
             </p>
           </div>
 

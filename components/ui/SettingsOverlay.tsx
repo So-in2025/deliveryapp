@@ -9,10 +9,10 @@ import { uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText } from 'lucide-react';
 
 // Internal navigation state for the overlay
-type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'PRIVACY' | 'TERMS' | 'HELP';
+type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'PRIVACY' | 'TERMS' | 'HELP' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER';
 
 export const SettingsOverlay: React.FC = () => {
-  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, darkMode, toggleDarkMode, role, verifyAdminPin, setRole } = useApp();
+  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, requestDriverAccess, stores, darkMode, toggleDarkMode, role, verifyAdminPin, setRole } = useApp();
   const { signOut, requestNotificationPermission } = useAuth();
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState<SettingsView>('MAIN');
@@ -33,6 +33,9 @@ export const SettingsOverlay: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(
     typeof Notification !== 'undefined' && Notification.permission === 'granted' && !!user.pushSubscription
   );
+
+  const [merchantReg, setMerchantReg] = useState({ name: '', category: 'Restaurante', address: '' });
+  const [driverReg, setDriverReg] = useState({ vehicleType: 'MOTO', phone: '' });
 
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
@@ -143,8 +146,125 @@ export const SettingsOverlay: React.FC = () => {
   };
 
   // --- SUB-VIEWS ---
+    
+  // --- PARTNER REGISTRATION STATES ---
 
-  const renderMainView = () => (
+    const handleCreateStoreRequest = () => {
+        if (!merchantReg.name || !merchantReg.address) {
+            showToast('Completa todos los campos', 'error');
+            return;
+        }
+        createStore({
+            id: '',
+            name: merchantReg.name,
+            category: merchantReg.category,
+            address: merchantReg.address,
+            rating: 5,
+            reviewsCount: 0,
+            deliveryTimeMin: 30,
+            deliveryTimeMax: 45,
+            deliveryFee: 45,
+            image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
+            products: [],
+            createdAt: new Date().toISOString(),
+            isActive: false,
+            ownerId: user.uid
+        } as any);
+        setCurrentView('MAIN');
+    };
+
+    const handleDriverRequest = () => {
+        if (!driverReg.phone) {
+            showToast('Ingresa tu teléfono', 'error');
+            return;
+        }
+        requestDriverAccess({
+            phone: driverReg.phone,
+            vehicleType: driverReg.vehicleType,
+        } as any);
+        setCurrentView('MAIN');
+    };
+
+    const renderMerchantRegistration = () => (
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right">
+            <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800">
+                <div className="w-16 h-16 bg-brand-500/10 text-brand-600 rounded-2xl flex items-center justify-center mb-4">
+                    <StoreIcon size={32} />
+                </div>
+                <h3 className="text-xl font-black text-stone-900 dark:text-white uppercase tracking-tighter">Registra tu Comercio</h3>
+                <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">Empieza a vender tus productos en la plataforma.</p>
+            </div>
+
+            <div className="space-y-4">
+                <input 
+                    placeholder="Nombre del Comercio" 
+                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white"
+                    value={merchantReg.name}
+                    onChange={e => setMerchantReg({...merchantReg, name: e.target.value})}
+                />
+                <select 
+                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white"
+                    value={merchantReg.category}
+                    onChange={e => setMerchantReg({...merchantReg, category: e.target.value})}
+                >
+                    <option value="Restaurante">Restaurante</option>
+                    <option value="Farmacia">Farmacia</option>
+                    <option value="Supermercado">Supermercado</option>
+                    <option value="Mascotas">Mascotas</option>
+                </select>
+                <input 
+                    placeholder="Dirección del Local" 
+                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white"
+                    value={merchantReg.address}
+                    onChange={e => setMerchantReg({...merchantReg, address: e.target.value})}
+                />
+                <Button fullWidth onClick={handleCreateStoreRequest}>Enviar Solicitud</Button>
+            </div>
+            <p className="text-[10px] text-center text-stone-400 font-bold uppercase tracking-wider">Tu solicitud será revisada por el equipo administrativo.</p>
+        </div>
+    );
+
+    const renderDriverRegistration = () => (
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right">
+            <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800">
+                <div className="w-16 h-16 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
+                    <Bike size={32} />
+                </div>
+                <h3 className="text-xl font-black text-stone-900 dark:text-white uppercase tracking-tighter">Únete como Repartidor</h3>
+                <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">Gana dinero realizando entregas en tu zona.</p>
+            </div>
+
+            <div className="space-y-4">
+                <input 
+                    placeholder="Teléfono (WhatsApp)" 
+                    type="tel"
+                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white font-mono"
+                    value={driverReg.phone}
+                    onChange={e => setDriverReg({...driverReg, phone: e.target.value})}
+                />
+                <div className="grid grid-cols-3 gap-2">
+                    {['MOTO', 'BICI', 'AUTO'].map(v => (
+                        <button 
+                            key={v}
+                            onClick={() => setDriverReg({...driverReg, vehicleType: v})}
+                            className={`p-3 rounded-lg border text-[10px] font-bold uppercase transition-all ${driverReg.vehicleType === v ? 'bg-amber-500 text-white border-amber-600' : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-100 dark:border-stone-800'}`}
+                        >
+                            {v}
+                        </button>
+                    ))}
+                </div>
+                <Button fullWidth onClick={handleDriverRequest}>Enviar Solicitud</Button>
+            </div>
+            <p className="text-[10px] text-center text-stone-400 font-bold uppercase tracking-wider">Te notificaremos por WhatsApp tras validar tus datos.</p>
+        </div>
+    );
+
+    const renderMainView = () => {
+      const myStore = stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid);
+      const isMerchantPending = myStore && !myStore.isActive;
+      const isDriverPending = user.isDriver && !user.isApprovedDriver;
+
+      return (
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right transition-colors duration-300">
             {/* Partners Hub */}
             <div>
@@ -174,8 +294,16 @@ export const SettingsOverlay: React.FC = () => {
 
                     {/* Merchant Option */}
                     <div 
-                        onClick={() => user.ownedStoreId ? switchRole(UserRole.MERCHANT) : null}
-                        className={`flex items-center justify-between p-4 border-b border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors ${!user.ownedStoreId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => {
+                            if (isMerchantPending) {
+                                switchRole(UserRole.MERCHANT);
+                            } else if (myStore?.isActive) {
+                                switchRole(UserRole.MERCHANT);
+                            } else {
+                                setCurrentView('REGISTER_MERCHANT');
+                            }
+                        }}
+                        className="flex items-center justify-between p-4 border-b border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
                     >
                         <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
                             <div className="p-2 bg-brand-50 dark:bg-brand-900/30 text-brand-950 dark:text-brand-400 rounded-lg group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 transition-colors">
@@ -183,20 +311,36 @@ export const SettingsOverlay: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white">
-                                    Ir a mi Comercio
+                                    {isMerchantPending ? 'Comercio en Revisión' : myStore?.isActive ? 'Ir a mi Comercio' : 'Unirse como Comercio'}
                                 </p>
                                 <p className="text-[10px] text-stone-400 dark:text-stone-500">
-                                    {user.ownedStoreId ? 'Gestionar productos y pedidos' : 'No tienes un comercio registrado'}
+                                    {isMerchantPending 
+                                        ? 'Tu solicitud está siendo validada' 
+                                        : myStore?.isActive 
+                                            ? 'Gestionar productos y pedidos' 
+                                            : 'Vende tus productos en la plataforma'}
                                 </p>
                             </div>
                         </div>
-                        <ChevronRight size={16} className="text-stone-300 dark:text-stone-600" />
+                        {isMerchantPending ? (
+                            <Clock size={16} className="text-amber-500 animate-pulse" />
+                        ) : (
+                            <ChevronRight size={16} className="text-stone-300 dark:text-stone-600" />
+                        )}
                     </div>
 
                     {/* Driver Option */}
                     <div 
-                        onClick={() => user.isDriver ? switchRole(UserRole.DRIVER) : null}
-                        className={`flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors ${!user.isDriver ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={() => {
+                            if (isDriverPending) {
+                                switchRole(UserRole.DRIVER);
+                            } else if (user.isApprovedDriver) {
+                                switchRole(UserRole.DRIVER);
+                            } else {
+                                setCurrentView('REGISTER_DRIVER');
+                            }
+                        }}
+                        className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
                     >
                         <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
                             <div className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg group-hover:bg-amber-100 dark:group-hover:bg-amber-900/50 transition-colors">
@@ -204,14 +348,22 @@ export const SettingsOverlay: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white">
-                                    Ir a modo Driver
+                                    {isDriverPending ? 'Driver en Revisión' : user.isApprovedDriver ? 'Ir a modo Driver' : 'Unirse como Driver'}
                                 </p>
                                 <p className="text-[10px] text-stone-400 dark:text-stone-500">
-                                    {user.isDriver ? 'Ver rutas y entregas' : 'No estás registrado como driver'}
+                                    {isDriverPending 
+                                        ? 'Validando tu información de seguridad' 
+                                        : user.isApprovedDriver 
+                                            ? 'Ver rutas y entregas' 
+                                            : 'Gana dinero realizando entregas'}
                                 </p>
                             </div>
                         </div>
-                        <ChevronRight size={16} className="text-stone-300 dark:text-stone-600" />
+                        {isDriverPending ? (
+                            <Clock size={16} className="text-amber-500 animate-pulse" />
+                        ) : (
+                            <ChevronRight size={16} className="text-stone-300 dark:text-stone-600" />
+                        )}
                     </div>
                 </div>
             </div>
@@ -265,6 +417,7 @@ export const SettingsOverlay: React.FC = () => {
             </div>
       </div>
   );
+};
 
   const renderEditProfileView = () => (
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right transition-colors duration-300">
@@ -522,6 +675,8 @@ export const SettingsOverlay: React.FC = () => {
                         {currentView === 'PRIVACY' && 'Privacidad'}
                         {currentView === 'TERMS' && 'Términos'}
                         {currentView === 'HELP' && 'Ayuda'}
+                        {currentView === 'REGISTER_MERCHANT' && 'Registro Comercio'}
+                        {currentView === 'REGISTER_DRIVER' && 'Registro Repartidor'}
                      </h2>
                  </div>
              )}
@@ -533,6 +688,8 @@ export const SettingsOverlay: React.FC = () => {
         {currentView === 'PRIVACY' && renderPrivacyView()}
         {currentView === 'TERMS' && renderTermsView()}
         {currentView === 'HELP' && renderHelpView()}
+        {currentView === 'REGISTER_MERCHANT' && renderMerchantRegistration()}
+        {currentView === 'REGISTER_DRIVER' && renderDriverRegistration()}
       </div>
       
       <style>{`
