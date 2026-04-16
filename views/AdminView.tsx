@@ -993,7 +993,7 @@ export const AdminView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="flex bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-4xl lg:mx-auto">
+                        <div className="flex bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 overflow-x-auto lg:hidden">
                             {[
                                 { id: 'DASHBOARD', label: 'Resumen', icon: <BarChart3 size={16} /> },
                                 { id: 'FLEET', label: 'Logística', icon: <Truck size={16} /> },

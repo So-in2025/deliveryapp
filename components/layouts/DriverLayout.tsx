@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { Truck, Map, History, Settings, LogOut, WifiOff, Navigation, ShieldCheck, Bell, HelpCircle, Shield } from 'lucide-react';
+import { Truck, Map, History, LogOut, WifiOff, Navigation, ShieldCheck, Bell, HelpCircle, Shield, User } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { UserRole } from '../../types';
 
@@ -67,7 +67,7 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
           <div className="p-4 border-t border-stone-800 space-y-2">
             <div id="settings-tab">
-                <DesktopNavItem icon={<Settings />} label="Ajustes" active={false} onClick={toggleSettings} />
+                <DesktopNavItem icon={<User />} label="Perfil" active={false} onClick={toggleSettings} />
             </div>
             <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={handleSignOut} isDanger />
           </div>
@@ -107,8 +107,9 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
                     <button 
                         onClick={toggleSettings}
                         className="p-2 rounded-full bg-white/5 text-stone-400 hover:text-white transition-colors"
+                        title="Perfil"
                     >
-                        <Settings size={18} />
+                        <User size={18} />
                     </button>
                 </div>
             </div>

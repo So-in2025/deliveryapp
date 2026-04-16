@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { ShoppingBag, Settings, LogOut, WifiOff, Heart, History, User, Bell, Shield } from 'lucide-react';
+import { ShoppingBag, LogOut, WifiOff, Heart, History, User, Bell, Shield } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { APP_CONFIG } from '../../constants';
 import { UserRole } from '../../types';
@@ -79,7 +79,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
           <div className="p-6 border-t border-stone-100 dark:border-white/[0.03] space-y-2">
             <div id="settings-tab">
-                <DesktopNavItem icon={<Settings />} label="Configuración" active={false} onClick={toggleSettings} />
+                <DesktopNavItem icon={<User />} label="Perfil" active={false} onClick={toggleSettings} />
             </div>
             <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={handleSignOut} isDanger />
           </div>
@@ -114,8 +114,9 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
                   id="settings-tab-mobile"
                   onClick={toggleSettings}
                   className="p-2 rounded-lg bg-brand-950/10 dark:bg-white/10 text-brand-950 dark:text-white hover:bg-brand-950/20 transition-colors"
+                  title="Perfil"
               >
-                  <Settings size={18} />
+                  <User size={18} />
               </button>
             </div>
           </header>

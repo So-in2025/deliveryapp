@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings, ShoppingBag, Bike, User } from 'lucide-react';
+import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings, ShoppingBag, Bike, User, Activity, DollarSign } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -42,11 +42,17 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <div id="stores-tab">
                 <DesktopNavItem icon={<Store />} label="Comercios" active={adminViewState === 'STORES'} onClick={() => setAdminViewState('STORES')} />
             </div>
+            <div id="orders-tab">
+                <DesktopNavItem icon={<Activity />} label="Pedidos" active={adminViewState === 'ORDERS'} onClick={() => setAdminViewState('ORDERS')} />
+            </div>
             <div id="fleet-tab">
                 <DesktopNavItem icon={<Truck />} label="Flota" active={adminViewState === 'FLEET'} onClick={() => setAdminViewState('FLEET')} />
             </div>
             <div id="disputes-tab">
                 <DesktopNavItem icon={<AlertTriangle />} label="Reclamos" active={adminViewState === 'DISPUTES'} onClick={() => setAdminViewState('DISPUTES')} />
+            </div>
+            <div id="settlements-tab">
+                <DesktopNavItem icon={<DollarSign />} label="Liquidaciones" active={adminViewState === 'SETTLEMENTS'} onClick={() => setAdminViewState('SETTLEMENTS')} />
             </div>
             
             <div className="pt-4 pb-2 px-4">
