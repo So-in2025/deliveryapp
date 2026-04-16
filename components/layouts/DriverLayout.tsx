@@ -6,6 +6,34 @@ import { Truck, Map, History, LogOut, WifiOff, Navigation, ShieldCheck, Bell, He
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { UserRole } from '../../types';
 
+const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }> = ({ icon, label, active, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`flex flex-col items-center gap-1 p-2 transition-colors ${active ? 'text-brand-500' : 'text-stone-600 hover:text-stone-300'}`}
+  >
+    {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
+    <span className="text-[10px] font-medium uppercase tracking-tighter">{label}</span>
+  </button>
+);
+
+const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void; isDanger?: boolean }> = ({ icon, label, active, onClick, isDanger }) => {
+  const baseClass = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all";
+  let stateClass = "text-stone-500 hover:bg-white/5 hover:text-white";
+  
+  if (active) {
+    stateClass = "bg-brand-500/10 text-brand-500 border border-brand-500/20";
+  } else if (isDanger) {
+    stateClass = "text-stone-500 hover:bg-red-500/10 hover:text-red-500";
+  }
+
+  return (
+    <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
+      {React.cloneElement(icon as React.ReactElement<unknown>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
+      <span className="text-sm">{label}</span>
+    </button>
+  );
+};
+
 export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toggleSettings, driverViewState, setDriverViewState, notifications, setIsNotificationsOpen, user, setRole } = useApp();
   const { signOut } = useAuth();
@@ -129,33 +157,5 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
         </div>
       </div>
     </div>
-  );
-};
-
-const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }> = ({ icon, label, active, onClick }) => (
-  <button 
-    onClick={onClick}
-    className={`flex flex-col items-center gap-1 p-2 transition-colors ${active ? 'text-brand-500' : 'text-stone-600 hover:text-stone-300'}`}
-  >
-    {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
-    <span className="text-[10px] font-medium uppercase tracking-tighter">{label}</span>
-  </button>
-);
-
-const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void; isDanger?: boolean }> = ({ icon, label, active, onClick, isDanger }) => {
-  const baseClass = "w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all";
-  let stateClass = "text-stone-500 hover:bg-white/5 hover:text-white";
-  
-  if (active) {
-    stateClass = "bg-brand-500/10 text-brand-500 border border-brand-500/20";
-  } else if (isDanger) {
-    stateClass = "text-stone-500 hover:bg-red-500/10 hover:text-red-500";
-  }
-
-  return (
-    <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
-      {React.cloneElement(icon as React.ReactElement<unknown>, { size: 20, strokeWidth: active ? 2.5 : 2 })}
-      <span className="text-sm">{label}</span>
-    </button>
   );
 };

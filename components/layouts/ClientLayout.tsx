@@ -7,6 +7,36 @@ import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { APP_CONFIG } from '../../constants';
 import { UserRole } from '../../types';
 
+const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }> = ({ icon, label, active, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`flex flex-col items-center gap-1 p-2 transition-colors ${active ? 'text-brand-950 dark:text-brand-400' : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'}`}
+  >
+    {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
+    <span className="text-[10px] font-medium">{label}</span>
+  </button>
+);
+
+const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void; isDanger?: boolean }> = ({ icon, label, active, onClick, isDanger }) => {
+  const baseClass = "w-full flex items-center gap-4 px-5 py-4 rounded-[1.25rem] font-black transition-all duration-300 group";
+  let stateClass = "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-white/5 hover:text-stone-950 dark:hover:text-white";
+  
+  if (active) {
+    stateClass = "bg-brand-500 text-brand-950 shadow-xl shadow-brand-500/20 scale-[1.02]";
+  } else if (isDanger) {
+    stateClass = "text-stone-500 dark:text-stone-400 hover:bg-red-500/10 hover:text-red-500";
+  }
+
+  return (
+    <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
+      <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
+        {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 3 : 2 })}
+      </div>
+      <span className="text-sm tracking-tight">{label}</span>
+    </button>
+  );
+};
+
 export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toggleSettings, setClientViewState, setSelectedStore, clientViewState, notifications, setIsNotificationsOpen, user, setRole } = useApp();
   const { signOut } = useAuth();
@@ -146,35 +176,5 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
         </div>
       </div>
     </div>
-  );
-};
-
-const NavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void }> = ({ icon, label, active, onClick }) => (
-  <button 
-    onClick={onClick}
-    className={`flex flex-col items-center gap-1 p-2 transition-colors ${active ? 'text-brand-950 dark:text-brand-400' : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'}`}
-  >
-    {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 2.5 : 2 })}
-    <span className="text-[10px] font-medium">{label}</span>
-  </button>
-);
-
-const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void; isDanger?: boolean }> = ({ icon, label, active, onClick, isDanger }) => {
-  const baseClass = "w-full flex items-center gap-4 px-5 py-4 rounded-[1.25rem] font-black transition-all duration-300 group";
-  let stateClass = "text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-white/5 hover:text-stone-950 dark:hover:text-white";
-  
-  if (active) {
-    stateClass = "bg-brand-500 text-brand-950 shadow-xl shadow-brand-500/20 scale-[1.02]";
-  } else if (isDanger) {
-    stateClass = "text-stone-500 dark:text-stone-400 hover:bg-red-500/10 hover:text-red-500";
-  }
-
-  return (
-    <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
-      <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
-        {React.cloneElement(icon as React.ReactElement<unknown>, { size: 22, strokeWidth: active ? 3 : 2 })}
-      </div>
-      <span className="text-sm tracking-tight">{label}</span>
-    </button>
   );
 };

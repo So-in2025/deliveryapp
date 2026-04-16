@@ -3,6 +3,25 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings, ShoppingBag, Bike, User, Activity, DollarSign } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
+import { UserRole } from '../../types';
+
+const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void; isDanger?: boolean }> = ({ icon, label, active, onClick, isDanger }) => {
+  const baseClass = "w-full flex items-center gap-3 px-4 py-2.5 rounded font-mono transition-all";
+  let stateClass = "text-stone-500 hover:bg-white/5 hover:text-stone-200";
+  
+  if (active) {
+    stateClass = "bg-white/5 text-white border-l-2 border-red-600 pl-[14px]";
+  } else if (isDanger) {
+    stateClass = "text-stone-500 hover:bg-red-600/10 hover:text-red-500";
+  }
+
+  return (
+    <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
+      {React.cloneElement(icon as React.ReactElement<unknown>, { size: 16, strokeWidth: active ? 2.5 : 2 })}
+      <span className="text-xs uppercase tracking-wider">{label}</span>
+    </button>
+  );
+};
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { adminViewState, setAdminViewState, notifications, setIsNotificationsOpen, toggleSettings, setRole } = useApp();
@@ -130,23 +149,5 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         </div>
       </div>
     </div>
-  );
-};
-
-const DesktopNavItem: React.FC<{ icon: React.ReactNode; label: string; active?: boolean; onClick?: () => void; isDanger?: boolean }> = ({ icon, label, active, onClick, isDanger }) => {
-  const baseClass = "w-full flex items-center gap-3 px-4 py-2.5 rounded font-mono transition-all";
-  let stateClass = "text-stone-500 hover:bg-white/5 hover:text-stone-200";
-  
-  if (active) {
-    stateClass = "bg-white/5 text-white border-l-2 border-red-600 pl-[14px]";
-  } else if (isDanger) {
-    stateClass = "text-stone-500 hover:bg-red-600/10 hover:text-red-500";
-  }
-
-  return (
-    <button onClick={onClick} className={`${baseClass} ${stateClass}`}>
-      {React.cloneElement(icon as React.ReactElement<unknown>, { size: 16, strokeWidth: active ? 2.5 : 2 })}
-      <span className="text-xs uppercase tracking-wider">{label}</span>
-    </button>
   );
 };

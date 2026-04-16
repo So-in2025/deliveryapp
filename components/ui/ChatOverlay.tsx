@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, X, User, MessageSquare } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ChatMessage, UserRole } from '../../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ChatOverlayProps {
   orderId: string;
