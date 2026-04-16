@@ -213,6 +213,34 @@ export interface ChatMessage {
   readBy: string[]; // List of UIDs who read it
 }
 
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string;
+    email?: string | null;
+    emailVerified?: boolean;
+    isAnonymous?: boolean;
+    tenantId?: string | null;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
 // UI State Types - Standardized
 export type ViewState = 'BROWSE' | 'CHECKOUT' | 'TRACKING' | 'HISTORY' | 'RECEIPT' | 'FAVORITES' | 'PROFILE';
 export type MerchantViewState = 'ORDERS' | 'MENU' | 'COUPONS' | 'HISTORY' | 'SETTINGS';

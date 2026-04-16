@@ -322,10 +322,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!code) return false;
     try {
       const q = query(collection(db, 'users'), where('referralCode', '==', code.toUpperCase()));
-      const snapshot = await onSnapshot(q, () => {}); // This is just to check existence, but we need a one-time get
-      // Actually, let's use a simple fetch or assume it's valid if found in users state
-      const found = users.find(u => u.referralCode === code.toUpperCase());
-      return !!found && found.uid !== authUser?.uid;
+      const snap = await getDocs(q);
+      return !snap.empty && snap.docs[0].id !== authUser?.uid;
     } catch (error) {
       console.error('Error validating referral code:', error);
       return false;
