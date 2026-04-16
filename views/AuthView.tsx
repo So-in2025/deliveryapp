@@ -186,7 +186,8 @@ export const AuthView: React.FC = () => {
           return;
       }
 
-      const storeId = `store-${Date.now()}`;
+      setIsLoggingIn(true);
+      const storeId = `store-${authUser?.uid || Date.now()}`;
       const newStore: Store = {
           id: storeId,
           name: storeName,
@@ -206,17 +207,28 @@ export const AuthView: React.FC = () => {
           clabe: storeClabe,
           address: storeAddress,
           phone: storePhone,
-          isActive: true, // Instant public store
+          isActive: true,
           isOpen: true
       };
       
       try {
+          // 1. Create store first
           await createStore(newStore);
-          updateUser({ ownedStoreId: storeId, role: UserRole.MERCHANT });
+          
+          // 2. Update user profile to link store AND set role atomically
+          await updateUser({ 
+            ownedStoreId: storeId, 
+            role: UserRole.MERCHANT 
+          });
+          
+          // 3. Finally switch UI role
           setRole(UserRole.MERCHANT);
-          showToast('¡Tienda creada exitosamente!', 'success');
+          showToast('¡Tienda registrada con éxito!', 'success');
       } catch (error) {
           console.error('Error in handleRegisterMerchant:', error);
+          showToast('Error al procesar el registro. Intenta de nuevo.', 'error');
+      } finally {
+          setIsLoggingIn(false);
       }
   };
 
@@ -228,13 +240,14 @@ export const AuthView: React.FC = () => {
       }
       updateUser({ 
           isDriver: true, 
+          isApprovedDriver: false,
           role: UserRole.DRIVER, 
           phone: phoneNumber,
           driverLicense: driverLicense,
           vehicleInsurance: vehicleInsurance,
           vehiclePlate: vehiclePlate
       });
-      showToast('¡Registro de Repartidor completo!', 'success');
+      showToast('Registro enviado. Tu cuenta está bajo revisión por el administrador.', 'success');
       setRole(UserRole.DRIVER);
   };
 

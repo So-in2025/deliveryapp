@@ -16,6 +16,7 @@ export interface UserProfile {
   role: UserRole;
   avatar?: string; // URL or base64 placeholder
   isDriver?: boolean; // Has completed driver onboarding
+  isApprovedDriver?: boolean; // Platform Admin approval status
   ownedStoreId?: string; // Has completed merchant onboarding
   addresses?: string[]; // Saved addresses
   phone?: string; // New: Driver phone number

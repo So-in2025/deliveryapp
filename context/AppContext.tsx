@@ -234,7 +234,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Derive real drivers from users collection
   const drivers = useMemo(() => {
     return users
-      .filter(u => u.role === UserRole.DRIVER)
+      .filter(u => u.role === UserRole.DRIVER && u.isApprovedDriver)
       .map(u => ({ id: u.uid, name: u.name }));
   }, [users]);
 
@@ -360,25 +360,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!isAuthReady) return;
 
     // Listen to Stores
-    const fetchStores = async () => {
-      try {
-        const storesQuery = collection(db, 'stores');
-        const storesSnapshot = await getDocs(storesQuery);
-        const storesData = storesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Store[];
-        
-        if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
-          setStores(storesData.filter(s => s.id === authProfile.ownedStoreId));
+    const storesQuery = collection(db, 'stores');
+    const unsubscribeStores = onSnapshot(storesQuery, (snapshot) => {
+        const storesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Store[];
+        setStores(storesData); 
+    }, (error) => {
+        if (error.code === 'permission-denied') {
+          console.warn('Stores permission denied');
         } else {
-          setStores(storesData);
+          console.error('Error fetching stores from Firestore:', error);
         }
-      } catch (error) {
-        console.error('Error fetching stores from Firestore:', error);
-      }
-    };
-
-    fetchStores();
-    // Refresh stores every 5 minutes (matches Redis TTL)
-    const storesInterval = setInterval(fetchStores, 300000);
+    });
 
     // Listen to Orders (Filtered by role)
     let ordersQuery;
@@ -527,7 +519,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     return () => {
-      clearInterval(storesInterval);
+      unsubscribeStores();
       unsubscribeOrders();
       unsubscribeUsers();
       unsubscribeReviews();
@@ -614,6 +606,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const toggleSettings = () => setIsSettingsOpen(prev => !prev);
   
   const toggleDriverStatus = () => {
+      if (!user.isApprovedDriver && !isDriverOnline) {
+          showToast('Tu cuenta aún no ha sido aprobada por el administrador', 'info');
+          return;
+      }
       const nextStatus = !isDriverOnline;
       setIsDriverOnline(nextStatus);
       updateUser({ isOnline: nextStatus });

@@ -817,17 +817,31 @@ export const MerchantView: React.FC = () => {
   // If user owns a store, use it. If not, show "No Store" state.
   const myStore = stores.find(s => s.id === user.ownedStoreId || s.ownerId === user.uid);
 
+  if (!myStore && user.ownedStoreId) {
+      // Waiting for stores to sync from network
+      return (
+          <div className="h-full flex flex-col items-center justify-center p-8 bg-stone-50 dark:bg-stone-900">
+               <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-500 border-t-transparent mx-auto mb-4" />
+               <p className="text-stone-500 dark:text-stone-400">Cargando datos de tu tienda...</p>
+          </div>
+      );
+  }
+
   if (!myStore) {
       return (
-          <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-50 dark:bg-stone-900 animate-fade-in">
-              <div className="bg-brand-100 dark:bg-brand-900/30 p-6 rounded-full shadow-inner mb-6">
-                  <StoreIcon size={48} className="text-brand-600 dark:text-brand-400" />
+          <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-900 animate-fade-in">
+              <div className="bg-brand-400/10 p-6 rounded-full shadow-inner mb-6">
+                  <StoreIcon size={48} className="text-brand-500" />
               </div>
-              <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Registro Incompleto</h2>
-              <p className="text-stone-500 dark:text-stone-400 mb-8 max-w-xs mx-auto">Parece que aún no has completado el registro de tu tienda con todos los datos requeridos (RFC, Banco, etc).</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Registro Incompleto</h2>
+              <p className="text-stone-400 mb-8 max-w-xs mx-auto text-sm">Parece que el registro de tu tienda no se completó o los datos (RFC, CLABE, etc) aún no han sido vinculados a tu cuenta.</p>
               
               <Button 
-                  onClick={() => setRole(UserRole.NONE)}
+                  onClick={() => {
+                    updateUser({ role: UserRole.NONE, ownedStoreId: undefined });
+                    setRole(UserRole.NONE);
+                  }}
+                  variant="primary"
               >
                   Volver al Inicio para Registrar Tienda
               </Button>

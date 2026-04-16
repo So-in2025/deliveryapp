@@ -794,6 +794,41 @@ export const AdminView: React.FC = () => {
                           </div>
                         </div>
                       )}
+
+                      {userProfile?.role === UserRole.DRIVER && (
+                        <div className="mt-4 pt-4 border-t border-stone-100">
+                          <p className="text-xs font-bold text-stone-400 uppercase mb-3">Seguridad Repartidor</p>
+                          <div className="flex flex-col gap-3 text-left">
+                             <div className="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-100">
+                                <div>
+                                   <p className="text-xs font-bold text-stone-700">Estado de Aprobación</p>
+                                   <p className="text-[10px] text-stone-500">{userProfile.isApprovedDriver ? 'Aprobado para trabajar' : 'Pendiente de revisión'}</p>
+                                </div>
+                                <Button 
+                                  size="sm"
+                                  variant={userProfile.isApprovedDriver ? 'outline' : 'primary'}
+                                  onClick={() => {
+                                    updateAnyUser(userProfile.uid, { isApprovedDriver: !userProfile.isApprovedDriver });
+                                    showToast(userProfile.isApprovedDriver ? 'Acceso revocado' : 'Repartidor aprobado', 'success');
+                                  }}
+                                >
+                                  {userProfile.isApprovedDriver ? 'Revocar' : 'Aprobar'}
+                                </Button>
+                             </div>
+                             
+                             <div className="grid grid-cols-2 gap-2">
+                                <div className="p-2 bg-stone-50 rounded-lg">
+                                   <p className="text-[8px] uppercase font-bold text-stone-400">Placa</p>
+                                   <p className="text-xs font-bold text-stone-800">{userProfile.vehiclePlate || 'N/A'}</p>
+                                </div>
+                                <div className="p-2 bg-stone-50 rounded-lg">
+                                   <p className="text-[8px] uppercase font-bold text-stone-400">Licencia</p>
+                                   <p className="text-xs font-bold text-stone-800">{userProfile.driverLicense || 'N/A'}</p>
+                                </div>
+                             </div>
+                          </div>
+                        </div>
+                      )}
                   </div>
 
                   <div>
@@ -866,6 +901,9 @@ export const AdminView: React.FC = () => {
                            <div className="flex items-center gap-2">
                              <p className="text-sm font-bold text-stone-900">{u.name || 'Sin nombre'}</p>
                              <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{u.role}</span>
+                             {u.role === UserRole.DRIVER && !u.isApprovedDriver && (
+                               <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-600">Pendiente</span>
+                             )}
                            </div>
                            <p className="text-[10px] text-stone-500">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>
                        </div>

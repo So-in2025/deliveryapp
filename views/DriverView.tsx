@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
-import { OrderStatus, PaymentMethod, OrderType, Order } from '../types';
+import { OrderStatus, PaymentMethod, OrderType, Order, UserRole } from '../types';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Navigation, DollarSign, LocateFixed, Bike, Banknote, Shield, MapPin, Truck, FileText, X, Clock, Eye, MessageSquare } from 'lucide-react';
@@ -96,8 +96,10 @@ const DriverTrackingMap: React.FC<{
 };
 
 export const DriverView: React.FC = () => {
-  const { user, orders, stores, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, updateLocation, completeTour } = useApp();
+  const { user, role, setRole, orders, stores, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, updateLocation, completeTour } = useApp();
   const { showToast } = useToast();
+
+  const { UserRole: UR } = { UserRole }; // Dummy to avoid unused import if needed, but it is used in types.ts anyway
 
   const isMobile = window.innerWidth < 1024;
 
@@ -258,6 +260,25 @@ export const DriverView: React.FC = () => {
       showToast('¡Pedido entregado! Ganancias actualizadas.', 'success');
     }
   };
+
+  if (user.role === UserRole.DRIVER && !user.isApprovedDriver) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-50 dark:bg-stone-900 animate-fade-in">
+          <div className="bg-brand-100 dark:bg-brand-900/30 p-6 rounded-full shadow-inner mb-6">
+              <Shield size={48} className="text-brand-600 dark:text-brand-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-stone-900 dark:text-white mb-2">Cuenta en Revisión</h2>
+          <p className="text-stone-500 dark:text-stone-400 mb-8 max-w-xs mx-auto">
+              Tu registro como repartidor está siendo revisado por nuestro equipo de seguridad. 
+              Te notificaremos en cuanto puedas empezar a realizar entregas.
+          </p>
+          <Button onClick={() => setRole(UserRole.NONE)}>
+              Volver al Inicio
+          </Button>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex flex-col h-full bg-stone-50 dark:bg-stone-900 animate-fade-in">
