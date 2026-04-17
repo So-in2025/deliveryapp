@@ -159,10 +159,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateAnyUser = useCallback(async (userId: string, data: Partial<UserProfile>) => {
     try {
       await updateDoc(doc(db, 'users', userId), data);
+      
+      // If we are updating ourselves (Admin managing own account)
+      if (userId === user?.uid && data.role) {
+        setRoleState(data.role);
+        localStorage.setItem('codex_user_role', data.role);
+      }
     } catch (error) {
       console.error('Error updating any user:', error);
     }
-  }, []);
+  }, [user?.uid]);
 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
@@ -359,13 +365,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (authProfile) {
       setUser(authProfile);
       setIsDriverOnline(!!authProfile.isOnline);
+      
+      // Auto-sync UI role on login or if local state is NONE but DB has a role
+      // This prevents the "sticky login view" when a user already has a role assigned
+      if (authProfile.role && (role === UserRole.NONE || (authProfile.role === UserRole.ADMIN && role !== UserRole.ADMIN))) {
+          setRoleState(authProfile.role);
+          localStorage.setItem('codex_user_role', authProfile.role);
+      }
     } else if (isAuthReady) {
       // Only reset if auth is definitely finished and no profile exists
       setUser(DEFAULT_USER);
       setRoleState(UserRole.NONE);
       setIsDriverOnline(false);
     }
-  }, [authProfile, isAuthReady, role, updateUser, setRole]);
+  }, [authProfile, isAuthReady, role, setRole]);
 
   // Real-time Firestore Listeners
   useEffect(() => {

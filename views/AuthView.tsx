@@ -64,6 +64,10 @@ export const AuthView: React.FC = () => {
     const hasMerchantAccount = appUser.ownedStoreId || myStore;
     const hasDriverAccount = appUser.isDriver;
 
+    // PROTECTION: If current DB role is ADMIN, do not downgrade it in Firestore
+    // just switch the UI role state
+    const isActuallyAdmin = appUser.role === UserRole.ADMIN;
+
     // If selecting Merchant but has no store, show onboarding form instead of switching role
     if (role === UserRole.MERCHANT && !hasMerchantAccount) {
       setOnboardingStep('MERCHANT');
@@ -78,13 +82,14 @@ export const AuthView: React.FC = () => {
 
     // Auto-fix profile if store ID was missing but store exists
     if (role === UserRole.MERCHANT && !appUser.ownedStoreId && myStore) {
-        updateUser({ ownedStoreId: myStore.id, role });
-    } else {
+        updateUser({ ownedStoreId: myStore.id, role: isActuallyAdmin ? UserRole.ADMIN : role });
+    } else if (!isActuallyAdmin) {
+        // Only update DB role if they are NOT admin
         updateUser({ role });
     }
     
     setRole(role);
-  }, [authUser, appUser.ownedStoreId, appUser.isDriver, myStore, login, showToast, updateUser, setRole]);
+  }, [authUser, appUser.ownedStoreId, appUser.role, appUser.isDriver, myStore, login, showToast, updateUser, setRole]);
 
   // Handle Redirection/Role selection after login
   useEffect(() => {
