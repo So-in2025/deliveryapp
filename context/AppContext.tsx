@@ -203,7 +203,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     referralRewardAmount: 500, // $500 reward
     referralDiscountPct: 0.05, // 5% off for the new user
     firstPurchaseDiscountPct: 0.20, // 20% off
-    adminEmails: ['daniel.acevedo3134@gmail.com', 'ofeliaacevedo41@gmail.com']
+    adminEmails: [] // Managed via Firestore Console
   });
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
@@ -549,7 +549,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           referralRewardAmount: 500,
           referralDiscountPct: 0.05,
           firstPurchaseDiscountPct: 0.20,
-          adminEmails: ['daniel.acevedo3134@gmail.com', 'ofeliaacevedo41@gmail.com'],
+          adminEmails: [], // Manually add admin emails in Firebase Console
           categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales']
         }).catch(err => console.warn('Silent config initialization skip:', err.message));
       }

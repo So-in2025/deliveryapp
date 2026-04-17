@@ -31,11 +31,15 @@ service cloud.firestore {
       return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    // Dynamic Admin Check: Fetched from the database instead of hardcoded strings
     function isAdmin() {
       return isVerified() && (
-        request.auth.token.email in ["daniel.acevedo3134@gmail.com", "ofeliaacevedo41@gmail.com"] ||
+        // Check 1: User has explicit ADMIN role in their profile
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN')
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN') ||
+        // Check 2: User email is in the global admin list managed via Firestore Console
+        (exists(/databases/$(database)/documents/config/global) && 
+         request.auth.token.email in get(/databases/$(database)/documents/config/global).data.adminEmails)
       );
     }
 
@@ -83,16 +87,17 @@ service cloud.firestore {
     // ===============================================================
 
     match /users/{userId} {
-      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin() || existing().role == 'DRIVER');
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin() || (existing().role == 'DRIVER' && isAuthenticated()));
       allow list: if isAdmin() || (isAuthenticated() && resource.data.role == 'DRIVER');
 
-      allow create: if isVerified() && isOwner(userId) && isValidUser(incoming()) && 
+      // Allow initial profile creation upon registration even if email is not yet verified
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(incoming()) && 
                     (incoming().role in ['CLIENT', 'DRIVER'] || isAdmin()) &&
                     (!('createdAt' in incoming()) || isRecent(incoming().createdAt));
 
-      allow update: if isVerified() && (
+      allow update: if isAuthenticated() && (
         (isOwner(userId) && 
-         (!('role' in incoming()) || incoming().role in ['CLIENT', 'MERCHANT', 'DRIVER'] || (incoming().role == 'ADMIN' && isAdmin())) &&
+         (!('role' in incoming()) || (incoming().role in ['CLIENT', 'MERCHANT', 'DRIVER'] && (isVerified() || incoming().role == existing().role)) || (incoming().role == 'ADMIN' && isAdmin())) &&
          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline', 'completedTours', 'lat', 'lng', 'referralCode', 'referralEarnings', 'referredBy', 'isFirstPurchaseDone', 'isApprovedDriver', 'ownedStoreId', 'isDriver', 'driverLicense', 'vehicleInsurance', 'vehiclePlate', 'role'])) ||
         isAdmin()
       );
@@ -181,9 +186,10 @@ service cloud.firestore {
     }
 
     match /config/{configId} {
+      // Configuration is readable by everyone for system stability
       allow read: if true;
+      // Only validated Admins can push changes to global config
       allow write: if isAdmin();
     }
   }
 }
-

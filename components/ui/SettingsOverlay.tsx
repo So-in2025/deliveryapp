@@ -514,7 +514,7 @@ export const SettingsOverlay: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Back to Hub Option */}
+                    {/* Back to Hub Option - Always visible for quick switching */}
                     <div 
                         onClick={() => { setRole(UserRole.NONE); toggleSettings(); }}
                         className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
@@ -525,10 +525,10 @@ export const SettingsOverlay: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white uppercase tracking-tight">
-                                    Menú Principal
+                                    Menu Principal (Hub)
                                 </p>
                                 <p className="text-[10px] text-stone-400 dark:text-stone-500 italic">
-                                    Regresar al Hub de Selección
+                                    Regresar a Selección de Rol
                                 </p>
                             </div>
                         </div>
