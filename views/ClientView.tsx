@@ -3,7 +3,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { MapSelector } from '../components/ui/MapSelector';
-import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order } from '../types';
+import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order, UserRole } from '../types';
 import { Button } from '../components/ui/Button';
 import { LazyImage } from '../components/ui/LazyImage';
 import { ChatOverlay } from '../components/ui/ChatOverlay';

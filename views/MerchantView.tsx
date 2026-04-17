@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
-import { OrderStatus, Order, PaymentMethod, OrderType, Product, ModifierGroup, Modifier, Store } from '../types';
+import { OrderStatus, Order, PaymentMethod, OrderType, Product, ModifierGroup, Modifier, Store, UserRole } from '../types';
 import { Button } from '../components/ui/Button';
 import { Badge, PaymentBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
