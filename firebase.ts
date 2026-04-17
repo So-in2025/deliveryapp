@@ -13,7 +13,7 @@ import {
   type User
 } from 'firebase/auth';
 import { 
-  getFirestore, 
+  initializeFirestore,
   collection, 
   doc, 
   getDoc, 
@@ -73,7 +73,11 @@ if (typeof window !== 'undefined' && getEnv('NODE_ENV') !== 'production') {
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(config) : getApp();
 const auth = getAuth(app);
-const db = getFirestore(app, config.firestoreDatabaseId);
+
+// Use initializeFirestore with settings to solve Internal Assertion errors in some environments
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, config.firestoreDatabaseId);
 
 // Messaging setup (only in browser)
 let messaging: any = null;

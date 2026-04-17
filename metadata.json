@@ -1,5 +1,9 @@
 {
-  "name": "Te lo Llevo",
-  "description": "Abarrotes, Farmacia, Comida, Vinos, Licores y más.",
-  "requestFramePermissions": []
+  "name": "Te lo Llevo - Elite Delivery",
+  "description": "Plataforma premium de entrega a domicilio: Abarrotes, Farmacia, Comida, Vinos y servicios logísticos integrales.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation",
+    "microphone"
+  ]
 }

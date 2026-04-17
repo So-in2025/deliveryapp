@@ -709,7 +709,7 @@ export const AuthView: React.FC = () => {
                                      type="text" 
                                      value={storeTaxId}
                                      onChange={(e) => setStoreTaxId(e.target.value)}
-                                     placeholder="Ej. CESA600203MY0"
+                                     placeholder="Ej. ABCD900101XYZ"
                                      maxLength={13}
                                      className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />

@@ -50,6 +50,7 @@
     "@capacitor/core": "^8.3.0",
     "@capacitor/ios": "^8.3.0",
     "@eslint/js": "^9.10.0",
+    "@firebase/eslint-plugin-security-rules": "^0.0.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
