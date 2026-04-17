@@ -200,6 +200,7 @@ export interface GlobalConfig {
   referralRewardAmount: number; // New: Fixed amount for referral reward
   referralDiscountPct: number; // New: e.g., 0.05 for 5% off for the new user
   firstPurchaseDiscountPct: number; // New: e.g., 0.20 for 20% off
+  adminEmails: string[]; // New: For UI visibility of Admin Panel
 }
 
 export interface ChatMessage {

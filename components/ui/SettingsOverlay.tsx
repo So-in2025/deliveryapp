@@ -465,7 +465,7 @@ export const SettingsOverlay: React.FC = () => {
                                 setCurrentView('REGISTER_DRIVER');
                             }
                         }}
-                        className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
+                        className="flex items-center justify-between p-4 border-b border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
                     >
                         <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
                             <div className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg group-hover:bg-amber-100 dark:group-hover:bg-amber-900/50 transition-colors">
@@ -489,6 +489,50 @@ export const SettingsOverlay: React.FC = () => {
                         ) : (
                             <ChevronRight size={16} className="text-stone-300 dark:text-stone-600" />
                         )}
+                    </div>
+
+                    {/* Admin Option - Professional & Discreet */}
+                    {(user.role === UserRole.ADMIN || config.adminEmails?.includes(user.email)) && (
+                        <div 
+                            onClick={() => switchRole(UserRole.ADMIN)}
+                            className="flex items-center justify-between p-4 border-b border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
+                        >
+                            <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
+                                <div className="p-2 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 rounded-lg group-hover:bg-stone-200 dark:group-hover:bg-stone-700 transition-colors">
+                                    <Shield size={18} />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-sm text-stone-900 dark:text-white uppercase tracking-tight">
+                                        Panel de Staff Admin
+                                    </p>
+                                    <p className="text-[10px] text-brand-600 dark:text-brand-400 font-bold uppercase tracking-widest">
+                                        Gestionar Plataforma
+                                    </p>
+                                </div>
+                            </div>
+                            <ChevronRight size={16} className="text-stone-300 dark:text-stone-600" />
+                        </div>
+                    )}
+
+                    {/* Back to Hub Option */}
+                    <div 
+                        onClick={() => { setRole(UserRole.NONE); toggleSettings(); }}
+                        className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer group transition-colors"
+                    >
+                        <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
+                            <div className="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50 transition-colors">
+                                <Sparkles size={18} />
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm text-stone-900 dark:text-white uppercase tracking-tight">
+                                    Menú Principal
+                                </p>
+                                <p className="text-[10px] text-stone-400 dark:text-stone-500 italic">
+                                    Regresar al Hub de Selección
+                                </p>
+                            </div>
+                        </div>
+                        <ChevronRight size={16} className="text-stone-300 dark:text-stone-600" />
                     </div>
                 </div>
             </div>
