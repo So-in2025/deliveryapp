@@ -162,6 +162,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Local state will be updated by the onSnapshot listener in AuthContext -> useEffect in AppContext
     } catch (error) {
       console.error('Error updating user:', error);
+      throw error;
     }
   }, [authUser?.uid]);
 
@@ -387,11 +388,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       setIsDriverOnline(!!authProfile.isOnline);
       
-      // Auto-sync UI role on login or if local state is NONE but DB has a role
-      // This prevents the "sticky login view" when a user already has a role assigned
-      if (authProfile.role && (role === UserRole.NONE || (authProfile.role === UserRole.ADMIN && role !== UserRole.ADMIN))) {
-          setRoleState(authProfile.role);
-          localStorage.setItem('codex_user_role', authProfile.role);
+      // Auto-sync UI role on login ONLY for Admin to ensure they don't lose access
+      // For all other roles, we do NOT auto-sync so the user returns to the Hub (AuthView)
+      // to choose what they want to do this session (Client, Merchant, Driver).
+      if (authProfile.role === UserRole.ADMIN && role !== UserRole.ADMIN) {
+          setRoleState(UserRole.ADMIN);
+          localStorage.setItem('codex_user_role', UserRole.ADMIN);
       }
     } else if (isAuthReady) {
       // Only reset if auth is definitely finished and no profile exists
@@ -567,6 +569,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const unsubscribeCoupons = onSnapshot(couponsQuery, (snapshot) => {
       const couponsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Coupon));
       setCoupons(couponsData);
+    }, (error) => {
+      if (error.code === 'permission-denied') {
+        console.warn('Coupons permission denied - local only mode');
+      } else {
+        handleFirestoreError(error, OperationType.GET, 'coupons');
+      }
     });
 
     return () => {
@@ -688,9 +696,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         await updateUser({ ownedStoreId: storeId });
         showToast('Solicitud de tienda enviada', 'success');
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error creating store:', error);
-        showToast('Error al crear la tienda. Verifica que hayas iniciado sesión.', 'error');
+        if (error.code === 'permission-denied') {
+            showToast('Permiso denegado. Verifica que hayas iniciado sesión y confirmado tu correo electrónico.', 'error');
+        } else {
+            showToast('Error al crear la tienda. Intenta nuevamente.', 'error');
+        }
+        throw error;
       }
   };
 
@@ -1317,6 +1330,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setDriverLocation({ lat: data.lat, lng: data.lng });
           }
         }
+      }, (error) => {
+        console.warn('Driver tracking permission denied:', error.message);
       });
       return () => unsubscribe();
     }

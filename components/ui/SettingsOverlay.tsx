@@ -12,7 +12,7 @@ import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshC
 type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'PRIVACY' | 'TERMS' | 'HELP' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER';
 
 export const SettingsOverlay: React.FC = () => {
-  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, requestDriverAccess, stores, darkMode, toggleDarkMode, role, verifyAdminPin, setRole } = useApp();
+  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, requestDriverAccess, stores, darkMode, toggleDarkMode, role, verifyAdminPin, setRole, config } = useApp();
   const { signOut, requestNotificationPermission } = useAuth();
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState<SettingsView>('MAIN');
@@ -34,8 +34,16 @@ export const SettingsOverlay: React.FC = () => {
     typeof Notification !== 'undefined' && Notification.permission === 'granted' && !!user.pushSubscription
   );
 
-  const [merchantReg, setMerchantReg] = useState({ name: '', category: 'Restaurante', address: '' });
+  const [merchantReg, setMerchantReg] = useState({ 
+    name: '', category: 'Restaurante', address: '', time: '30', taxId: '', bankName: '', bankAccount: '', clabe: '', phone: '' 
+  });
   const [driverReg, setDriverReg] = useState({ vehicleType: 'MOTO', phone: '' });
+
+  const MEXICAN_BANKS = [
+    'BBVA México', 'Santander México', 'Banorte', 'Citibanamex', 'HSBC México', 
+    'Scotiabank', 'Banco Azteca', 'Bancoppel', 'Inbursa', 'Afirme', 'BanBajío', 
+    'Banco del Bienestar', 'Nu México', 'Stori', 'Hey Banco'
+  ];
 
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
 
@@ -149,28 +157,68 @@ export const SettingsOverlay: React.FC = () => {
     
   // --- PARTNER REGISTRATION STATES ---
 
-    const handleCreateStoreRequest = () => {
-        if (!merchantReg.name || !merchantReg.address) {
-            showToast('Completa todos los campos', 'error');
+    const handleCreateStoreRequest = async () => {
+        // Trim inputs
+        const tName = merchantReg.name.trim();
+        const tTaxId = merchantReg.taxId.trim().toUpperCase();
+        const tClabe = merchantReg.clabe.trim();
+        const tAddress = merchantReg.address.trim();
+        const tPhone = merchantReg.phone.trim();
+
+        if (!tName || !tTaxId || !tClabe || !merchantReg.bankName || !tAddress || !tPhone) {
+            showToast('Por favor completa todos los campos obligatorios', 'error');
             return;
         }
-        createStore({
-            id: '',
-            name: merchantReg.name,
+
+        // RFC Validation (13 chars: 4 letters, 6 numbers, 3 homoclave)
+        const rfcRegex = /^[A-Z]{4}[0-9]{6}[A-Z0-9]{3}$/i;
+        if (!rfcRegex.test(tTaxId)) {
+            showToast('RFC inválido. Debe tener 13 caracteres (4 letras, 6 números, 3 homoclave)', 'error');
+            return;
+        }
+
+        // CLABE Validation (18 digits)
+        const clabeRegex = /^[0-9]{18}$/;
+        if (!clabeRegex.test(tClabe)) {
+            showToast('CLABE inválida. Debe tener 18 dígitos numéricos', 'error');
+            return;
+        }
+
+        const storeId = `store-${user.uid || Date.now()}`;
+        
+        await createStore({
+            id: storeId,
+            name: tName,
             category: merchantReg.category,
-            address: merchantReg.address,
+            address: tAddress,
             rating: 5,
             reviewsCount: 0,
-            deliveryTimeMin: 30,
-            deliveryTimeMax: 45,
+            deliveryTimeMin: Number(merchantReg.time),
+            deliveryTimeMax: Number(merchantReg.time) + 15,
             deliveryFee: 45,
             image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
             products: [],
             createdAt: new Date().toISOString(),
+            ownerId: user.uid,
+            taxId: tTaxId,
+            bankName: merchantReg.bankName,
+            bankAccount: merchantReg.bankAccount.trim(),
+            clabe: tClabe,
+            phone: tPhone,
             isActive: false,
-            ownerId: user.uid
+            isOpen: false
         } as any);
+
+        await updateUser({ 
+            ownedStoreId: storeId, 
+            role: UserRole.MERCHANT 
+        });
+
+        // Switch to MERCHANT view immediately
+        setRole(UserRole.MERCHANT);
         setCurrentView('MAIN');
+        toggleSettings();
+        showToast('¡Tienda registrada con éxito!', 'success');
     };
 
     const handleDriverRequest = () => {
@@ -195,31 +243,108 @@ export const SettingsOverlay: React.FC = () => {
                 <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">Empieza a vender tus productos en la plataforma.</p>
             </div>
 
-            <div className="space-y-4">
-                <input 
-                    placeholder="Nombre del Comercio" 
-                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white"
-                    value={merchantReg.name}
-                    onChange={e => setMerchantReg({...merchantReg, name: e.target.value})}
-                />
-                <select 
-                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white"
-                    value={merchantReg.category}
-                    onChange={e => setMerchantReg({...merchantReg, category: e.target.value})}
-                >
-                    <option value="Restaurante">Restaurante</option>
-                    <option value="Farmacia">Farmacia</option>
-                    <option value="Supermercado">Supermercado</option>
-                    <option value="Mascotas">Mascotas</option>
-                </select>
-                <input 
-                    placeholder="Dirección del Local" 
-                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white"
-                    value={merchantReg.address}
-                    onChange={e => setMerchantReg({...merchantReg, address: e.target.value})}
-                />
-                <Button fullWidth onClick={handleCreateStoreRequest}>Enviar Solicitud</Button>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Nombre del Local *</label>
+                    <input 
+                        placeholder="Ej. Tacos El Gordo" 
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                        value={merchantReg.name}
+                        onChange={e => setMerchantReg({...merchantReg, name: e.target.value})}
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">RFC (13 Caracteres) *</label>
+                    <input 
+                        placeholder="Ej. ABCD900101XYZ" 
+                        maxLength={13}
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                        value={merchantReg.taxId}
+                        onChange={e => setMerchantReg({...merchantReg, taxId: e.target.value})}
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Banco *</label>
+                    <select 
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                        value={merchantReg.bankName}
+                        onChange={e => setMerchantReg({...merchantReg, bankName: e.target.value})}
+                    >
+                        <option value="">Selecciona un banco</option>
+                        {MEXICAN_BANKS.map(bank => (
+                            <option key={bank} value={bank}>{bank}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria *</label>
+                    <input 
+                        placeholder="18 dígitos numéricos" 
+                        maxLength={18}
+                        inputMode="numeric"
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                        value={merchantReg.clabe}
+                        onChange={e => setMerchantReg({...merchantReg, clabe: e.target.value.replace(/\D/g, '')})}
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Número de Cuenta (Opcional)</label>
+                    <input 
+                        placeholder="Cuenta bancaria" 
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                        value={merchantReg.bankAccount}
+                        onChange={e => setMerchantReg({...merchantReg, bankAccount: e.target.value})}
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Teléfono del Local *</label>
+                    <input 
+                        type="tel"
+                        placeholder="Ej. 33 1234 5678" 
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                        value={merchantReg.phone}
+                        onChange={e => setMerchantReg({...merchantReg, phone: e.target.value})}
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Dirección del Local *</label>
+                    <input 
+                        placeholder="Ej. Av. Principal 123" 
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                        value={merchantReg.address}
+                        onChange={e => setMerchantReg({...merchantReg, address: e.target.value})}
+                    />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Categoría</label>
+                        <select 
+                            className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                            value={merchantReg.category}
+                            onChange={e => setMerchantReg({...merchantReg, category: e.target.value})}
+                        >
+                            {config?.categories?.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            )) || <option value="Comida">Comida</option>}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Tiempo (Min)</label>
+                        <select 
+                            className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                            value={merchantReg.time}
+                            onChange={e => setMerchantReg({...merchantReg, time: e.target.value})}
+                        >
+                            <option value="15">15 min</option>
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60">60 min</option>
+                        </select>
+                    </div>
+                </div>
+                <Button fullWidth onClick={handleCreateStoreRequest} className="mt-4">Enviar Solicitud</Button>
             </div>
+
             <p className="text-[10px] text-center text-stone-400 font-bold uppercase tracking-wider">Tu solicitud será revisada por el equipo administrativo.</p>
         </div>
     );
