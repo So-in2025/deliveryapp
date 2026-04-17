@@ -34,6 +34,7 @@ export const MOCK_STORES: Store[] = [];
 export const INITIAL_ORDERS: Order[] = [];
 
 export const APP_CONFIG = {
+  version: '1.0.6', // Increment this to force all clients to reload and clear state if needed
   currency: '$',
   appName: 'Te lo Llevo',
   logoUrl: 'https://res.cloudinary.com/dfrb7fkni/image/upload/v1775205995/117a5ec6-76ad-444d-ade2-7077d936ded3_ubbnbi.jpg',

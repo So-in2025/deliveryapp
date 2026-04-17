@@ -24,7 +24,13 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
     const [isVisible, setIsVisible] = useState(false);
 
     const updateTargetRect = useCallback(() => {
-        const element = document.getElementById(steps[currentStep].targetId);
+        const step = steps[currentStep];
+        if (!step) {
+            setIsVisible(false);
+            return;
+        }
+
+        const element = document.getElementById(step.targetId);
         if (element) {
             setTargetRect(element.getBoundingClientRect());
             setIsVisible(true);
@@ -47,6 +53,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
         if (currentStep < steps.length - 1) {
             setCurrentStep(prev => prev + 1);
         } else {
+            setIsVisible(false);
             onComplete();
         }
     };
@@ -57,7 +64,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
         }
     };
 
-    if (!isVisible || !targetRect) return null;
+    if (!isVisible || !targetRect || !steps[currentStep]) return null;
 
     const step = steps[currentStep];
     
@@ -72,7 +79,9 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
     const cardWidth = 320;
     const cardHeight = 280; // Estimated max height
 
-    if (step.position === 'bottom' || !step.position) {
+    const stepPosition = step.position || 'bottom';
+
+    if (stepPosition === 'bottom') {
         const spaceBelow = window.innerHeight - targetRect.bottom;
         if (spaceBelow < cardHeight + margin && targetRect.top > cardHeight + margin) {
             // Not enough space below, but enough above - flip to top
@@ -81,7 +90,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
             tooltipStyle.top = Math.min(window.innerHeight - cardHeight - margin, targetRect.bottom + margin);
         }
         tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, targetRect.left + targetRect.width / 2 - cardWidth / 2));
-    } else if (step.position === 'top') {
+    } else if (stepPosition === 'top') {
         const spaceAbove = targetRect.top;
         if (spaceAbove < cardHeight + margin && window.innerHeight - targetRect.bottom > cardHeight + margin) {
              // Not enough space above, but enough below - flip to bottom
@@ -90,10 +99,10 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
              tooltipStyle.bottom = window.innerHeight - targetRect.top + margin;
         }
         tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, targetRect.left + targetRect.width / 2 - cardWidth / 2));
-    } else if (step.position === 'left') {
+    } else if (stepPosition === 'left') {
         tooltipStyle.top = targetRect.top;
         tooltipStyle.right = window.innerWidth - targetRect.left + margin;
-    } else if (step.position === 'right') {
+    } else if (stepPosition === 'right') {
         tooltipStyle.top = targetRect.top;
         tooltipStyle.left = targetRect.right + margin;
     }

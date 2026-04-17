@@ -88,6 +88,8 @@ const ViewRouter = () => {
       <PWAInstallPrompt />
       <NotificationOverlay isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
       {(() => {
+        if (!role) return <AuthView />;
+        
         switch (role) {
           case UserRole.NONE:
             return <AuthView />;
@@ -133,6 +135,24 @@ const ViewRouter = () => {
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
+
+  // Version Control & Cache Busting
+  useEffect(() => {
+    const currentVersion = APP_CONFIG.version;
+    const storedVersion = localStorage.getItem('app_version');
+    
+    if (storedVersion && storedVersion !== currentVersion) {
+      console.log(`Actualización detectada: ${currentVersion}. Limpiando caché...`);
+      const theme = localStorage.getItem('codex_theme_v2');
+      localStorage.clear();
+      if (theme) localStorage.setItem('codex_theme_v2', theme);
+      localStorage.setItem('app_version', currentVersion);
+      // Force reload to get newest JS files
+      window.location.href = window.location.origin + window.location.pathname + '?v=' + currentVersion;
+    } else {
+      localStorage.setItem('app_version', currentVersion);
+    }
+  }, []);
 
   return (
     <ConnectivityProvider>

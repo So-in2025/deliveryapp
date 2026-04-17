@@ -123,8 +123,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const { user: authUser, profile: authProfile, isAuthReady } = useAuth();
 
   const [role, setRoleState] = useState<UserRole>(() => {
-    const saved = localStorage.getItem('codex_user_role');
-    return (saved as UserRole) || UserRole.NONE;
+    try {
+      const saved = localStorage.getItem('codex_user_role');
+      // Validate that the saved role exists in the enum
+      if (saved && Object.values(UserRole).includes(saved as UserRole)) {
+        return saved as UserRole;
+      }
+      return UserRole.NONE;
+    } catch {
+      return UserRole.NONE;
+    }
   });
 
   const setRole = useCallback((newRole: UserRole) => {
