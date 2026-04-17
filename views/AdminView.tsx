@@ -253,8 +253,156 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
     );
 };
 
+const BannersManagementTab = ({ 
+    banners, 
+    addBanner, 
+    updateBanner, 
+    deleteBanner 
+}: { 
+    banners: any[], 
+    addBanner: (b: any) => void, 
+    updateBanner: (id: string, d: any) => void, 
+    deleteBanner: (id: string) => void 
+}) => {
+    const [isAdding, setIsAdding] = useState(false);
+    const [newBanner, setNewBanner] = useState({
+        title: '',
+        subtitle: '',
+        image: '',
+        badge: 'PROMO',
+        isActive: true,
+        priority: 0,
+        link: ''
+    });
+
+    const handleAdd = () => {
+        if (!newBanner.title || !newBanner.image) return;
+        addBanner(newBanner);
+        setIsAdding(false);
+        setNewBanner({ title: '', subtitle: '', image: '', badge: 'PROMO', isActive: true, priority: 0, link: '' });
+    };
+
+    return (
+        <div className="space-y-6 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+            <div className="flex justify-between items-center bg-white dark:bg-stone-900 p-4 rounded-xl border border-stone-100 dark:border-stone-800 shadow-sm transition-colors">
+                <div>
+                    <h3 className="text-lg font-black text-stone-900 dark:text-white uppercase tracking-tighter">Promociones Globales</h3>
+                    <p className="text-xs text-stone-500 font-medium">Gestiona los banners de la pantalla principal</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button onClick={() => setIsAdding(!isAdding)} variant={isAdding ? 'secondary' : 'primary'}>
+                        {isAdding ? <X size={20} /> : <div className="flex items-center gap-2"><Plus size={20} /> <span className="hidden sm:inline">Nueva Promo</span></div>}
+                    </Button>
+                </div>
+            </div>
+
+            {isAdding && (
+                <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-brand-500/30 shadow-2xl animate-slide-in-bottom space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Título Principal</label>
+                            <input 
+                                className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all font-bold"
+                                placeholder="Ej. 20% OFF en Tu Primera Orden"
+                                value={newBanner.title}
+                                onChange={e => setNewBanner({...newBanner, title: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Subtítulo / Texto</label>
+                            <input 
+                                className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all"
+                                placeholder="Ej. Toca para aplicar"
+                                value={newBanner.subtitle}
+                                onChange={e => setNewBanner({...newBanner, subtitle: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">URL de la Imagen (Unsplash/Directo)</label>
+                            <input 
+                                className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all"
+                                placeholder="https://images.unsplash.com/..."
+                                value={newBanner.image}
+                                onChange={e => setNewBanner({...newBanner, image: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Badge / Etiqueta</label>
+                            <input 
+                                className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all font-mono"
+                                placeholder="PROMO, NUEVO, HOT"
+                                value={newBanner.badge}
+                                onChange={e => setNewBanner({...newBanner, badge: e.target.value.toUpperCase()})}
+                            />
+                        </div>
+                    </div>
+                    <Button fullWidth onClick={handleAdd} className="h-14 text-lg">Guardar Promoción</Button>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {banners.map(banner => (
+                    <div key={banner.id} className="group bg-white dark:bg-stone-900 rounded-3xl border border-stone-100 dark:border-stone-800 shadow-lg overflow-hidden transition-all hover:shadow-2xl">
+                        <div className="relative h-40 overflow-hidden">
+                            <img src={banner.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" referrerPolicy="no-referrer" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
+                                <span className="bg-brand-500 text-brand-950 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest w-fit mb-2">{banner.badge}</span>
+                                <h4 className="text-white font-black text-xl leading-tight">{banner.title}</h4>
+                                <p className="text-stone-300 text-xs">{banner.subtitle}</p>
+                            </div>
+                            <div className="absolute top-4 right-4 flex gap-2">
+                                <button 
+                                    onClick={() => updateBanner(banner.id, { isActive: !banner.isActive })}
+                                    className={`p-2 rounded-xl backdrop-blur-md transition-all ${banner.isActive ? 'bg-green-500 text-white shadow-green-500/40' : 'bg-red-500 text-white shadow-red-500/40'}`}
+                                >
+                                    <TrendingUp size={16} />
+                                </button>
+                                <button 
+                                    onClick={() => deleteBanner(banner.id)}
+                                    className="p-2 bg-black/40 text-white rounded-xl backdrop-blur-md hover:bg-red-600 transition-all border border-white/10"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${banner.isActive ? 'bg-green-500' : 'bg-stone-300 animate-pulse'}`}></div>
+                                <span className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">{banner.isActive ? 'Activo' : 'Desactivado'}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1">
+                                    <label className="text-[10px] font-black text-stone-400 uppercase">Prioridad:</label>
+                                    <input 
+                                        type="number"
+                                        className="w-12 bg-stone-50 dark:bg-stone-950 rounded border dark:border-stone-800 text-[10px] font-bold p-1"
+                                        value={banner.priority}
+                                        onChange={(e) => updateBanner(banner.id, { priority: parseInt(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {banners.length === 0 && (
+                    <div className="col-span-full py-20 text-center bg-stone-50 dark:bg-stone-900/40 rounded-3xl border-2 border-dashed border-stone-200 dark:border-stone-800">
+                        <Tag size={48} className="mx-auto text-stone-300 mb-4" />
+                        <h4 className="text-stone-900 dark:text-white font-black text-xl">Sin Promociones Activas</h4>
+                        <p className="text-stone-500">Haz clic en el botón "+" para crear tu primer banner promocional.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 export const AdminView: React.FC = () => {
-  const { orders, stores, assignDriver, drivers, resolveClaim, users, adminViewState, setAdminViewState, updateAnyUser, updateStore, config, updateConfig, user, completeTour, settleMerchantOrder, settleDriverOrder } = useApp();
+  const { 
+    orders, stores, assignDriver, drivers, resolveClaim, users, 
+    adminViewState, setAdminViewState, updateAnyUser, updateStore, 
+    config, updateConfig, user, completeTour, settleMerchantOrder, 
+    settleDriverOrder, banners, addBanner, updateBanner, deleteBanner 
+  } = useApp();
   const { showToast } = useToast();
 
   const isMobile = window.innerWidth < 1024;
@@ -998,6 +1146,7 @@ export const AdminView: React.FC = () => {
                                 { id: 'DASHBOARD', label: 'Resumen', icon: <BarChart3 size={16} /> },
                                 { id: 'FLEET', label: 'Logística', icon: <Truck size={16} /> },
                                 { id: 'ORDERS', label: 'Pedidos', icon: <Activity size={16} /> },
+                                { id: 'BANNERS', label: 'Promos', icon: <Tag size={16} /> },
                                 { id: 'SETTLEMENTS', label: 'Liquidaciones', icon: <DollarSign size={16} /> },
                                 { id: 'STORES', label: 'Comercios', icon: <StoreIcon size={16} /> },
                                 { id: 'USERS', label: 'Usuarios', icon: <Users size={16} /> },
@@ -1028,6 +1177,7 @@ export const AdminView: React.FC = () => {
                         {adminViewState === 'DASHBOARD' && renderDashboardTab()}
                         {adminViewState === 'FLEET' && renderDispatchTab()}
                         {adminViewState === 'ORDERS' && <OrdersTab orders={orders} />}
+                        {adminViewState === 'BANNERS' && <BannersManagementTab banners={banners} addBanner={addBanner} updateBanner={updateBanner} deleteBanner={deleteBanner} />}
                         {adminViewState === 'SETTLEMENTS' && <SettlementsTab orders={orders} settleMerchantOrder={settleMerchantOrder} settleDriverOrder={settleDriverOrder} />}
                         {adminViewState === 'STORES' && renderStoresTab()}
                         {adminViewState === 'USERS' && renderUsersTab()}

@@ -82,9 +82,12 @@ export const AuthView: React.FC = () => {
 
     // Auto-fix profile if store ID was missing but store exists
     if (role === UserRole.MERCHANT && !appUser.ownedStoreId && myStore) {
-        updateUser({ ownedStoreId: myStore.id, role: isActuallyAdmin ? UserRole.ADMIN : role });
-    } else if (!isActuallyAdmin) {
-        // Only update DB role if they are NOT admin
+        updateUser({ ownedStoreId: myStore.id });
+    }
+
+    // Only update DB role if they are NOT admin and it's a "promotion" 
+    // or they don't have a primary role yet.
+    if (!isActuallyAdmin && (appUser.role === UserRole.NONE || !appUser.role)) {
         updateUser({ role });
     }
     

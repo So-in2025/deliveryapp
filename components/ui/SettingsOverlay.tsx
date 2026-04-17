@@ -134,13 +134,21 @@ export const SettingsOverlay: React.FC = () => {
 
   const switchRole = async (newRole: UserRole) => {
       if (newRole === UserRole.ADMIN) {
+          // If already admin in Firestore or config, just switch UI view
+          if (user.role === UserRole.ADMIN || config.adminEmails?.includes(user.email)) {
+              setRole(UserRole.ADMIN);
+              showToast('Panel de Staff activado', 'success');
+              toggleSettings();
+              return;
+          }
+
           const pin = prompt('Ingrese el PIN de administrador:');
           if (pin) {
               const isValid = await verifyAdminPin(pin);
               if (isValid) {
-                  updateUser({ role: UserRole.ADMIN });
+                  await updateUser({ role: UserRole.ADMIN });
                   setRole(UserRole.ADMIN);
-                  showToast('Modo Administrador activado', 'success');
+                  showToast('Modo Administrador activado permanentemente', 'success');
                   toggleSettings();
               } else {
                   showToast('PIN incorrecto', 'error');
@@ -148,7 +156,9 @@ export const SettingsOverlay: React.FC = () => {
           }
           return;
       }
-      updateUser({ role: newRole });
+      
+      // Just switch the UI View (Session Role)
+      // We DO NOT update Firestore role here to avoid downgrading Admins/Merchants
       setRole(newRole);
       toggleSettings();
   };

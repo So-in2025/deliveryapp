@@ -81,6 +81,17 @@ export interface Product {
   modifierGroups?: ModifierGroup[]; // Layer 4: Customization
 }
 
+export interface Banner {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  badge?: string;
+  link?: string;
+  isActive: boolean;
+  priority: number;
+}
+
 export interface Store {
   id: string;
   name: string;
@@ -246,4 +257,4 @@ export interface FirestoreErrorInfo {
 export type ViewState = 'BROWSE' | 'CHECKOUT' | 'TRACKING' | 'HISTORY' | 'RECEIPT' | 'FAVORITES' | 'PROFILE';
 export type MerchantViewState = 'ORDERS' | 'MENU' | 'COUPONS' | 'HISTORY' | 'SETTINGS';
 export type DriverViewState = 'MAP' | 'DELIVERIES' | 'HISTORY' | 'PROFILE' | 'WALLET';
-export type AdminViewState = 'DASHBOARD' | 'USERS' | 'STORES' | 'FLEET' | 'DISPUTES' | 'SETTINGS' | 'ORDERS' | 'SETTLEMENTS';
+export type AdminViewState = 'DASHBOARD' | 'USERS' | 'STORES' | 'FLEET' | 'DISPUTES' | 'SETTINGS' | 'ORDERS' | 'SETTLEMENTS' | 'BANNERS';

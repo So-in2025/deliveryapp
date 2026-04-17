@@ -203,7 +203,7 @@ const ProductRow = React.memo(({ product, onAdd, onCustomize, accentColor }: { p
 
 export const ClientView: React.FC = () => {
   // Consume Global State for navigation
-  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour, config, applyReferralCode, setRole, setPendingAction, getRouteDistance, socket } = useApp();
+  const { stores, addToCart, cart, placeOrder, orders, favorites, toggleFavorite, coupons, toggleSettings, user, updateUser, clientViewState, setClientViewState, selectedStore, setSelectedStore, addReview, reviews, addCoupon, submitClaim, clearCart, updateCartItemQuantity, removeFromCart, users, completeTour, config, applyReferralCode, setRole, setPendingAction, getRouteDistance, socket, banners } = useApp();
   const { showToast } = useToast();
   const { signOut, user: authUser, login } = useAuth();
   const [showChat, setShowChat] = useState(false);
@@ -710,42 +710,39 @@ export const ClientView: React.FC = () => {
       );
   };
 
-  const BannerCarousel = () => (
-      <div className="overflow-x-auto scrollbar-hide flex gap-4 px-4 pb-4 snap-x lg:grid lg:grid-cols-2 lg:gap-6 lg:px-8 lg:overflow-visible">
-            <div 
-                onClick={() => {
-                    addCoupon({ id: `promo-${Date.now()}`, code: 'BENVENUTO20', discountPct: 0.2, active: true, description: 'Promo Bienvenida' });
-                    showToast('¡Cupón BENVENUTO20 copiado y aplicado!', 'success');
-                }}
-                className="snap-center shrink-0 w-[85%] relative h-40 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform lg:w-full lg:h-56"
-            >
-             <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" />
-             <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex items-center p-6">
-                 <div>
-                     <span className="bg-brand-500 text-brand-950 text-[10px] font-bold px-2 py-0.5 rounded-md mb-2 inline-block">PROMO</span>
-                     <h3 className="text-white text-xl font-bold leading-tight lg:text-3xl">20% OFF en<br/>Tu Primera Orden</h3>
-                     <p className="text-stone-200 text-xs mt-1 lg:text-sm">Toca para aplicar</p>
-                 </div>
-             </div>
-          </div>
-          <div 
-            onClick={() => {
-                setSelectedCategory('Pizza & Pasta');
-                showToast('Filtrando: Pizza Artesanal', 'info');
-            }}
-            className="snap-center shrink-0 w-[85%] relative h-40 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform lg:w-full lg:h-56"
-          >
-             <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" />
-             <div className="absolute inset-0 bg-gradient-to-r from-orange-900/70 to-transparent flex items-center p-6">
-                 <div>
-                     <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md mb-2 inline-block">NUEVO</span>
-                     <h3 className="text-white text-xl font-bold leading-tight lg:text-3xl">Festival de<br/>Pizza Artesanal</h3>
-                     <p className="text-stone-200 text-xs mt-1 lg:text-sm">Ver restaurantes</p>
-                 </div>
-             </div>
-          </div>
-      </div>
-  );
+  const BannerCarousel = () => {
+    const activeBanners = banners.filter(b => b.isActive);
+    
+    if (activeBanners.length === 0) return null;
+
+    return (
+        <div className="overflow-x-auto scrollbar-hide flex gap-4 px-4 pb-4 snap-x lg:grid lg:grid-cols-2 lg:gap-6 lg:px-8 lg:overflow-visible">
+            {activeBanners.map(banner => (
+                <div 
+                    key={banner.id}
+                    className="snap-center shrink-0 w-[85%] relative h-40 rounded-2xl overflow-hidden shadow-sm cursor-pointer active:scale-[0.98] transition-transform lg:w-full lg:h-56 group"
+                >
+                    <img src={banner.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" referrerPolicy="no-referrer" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-stone-900/80 to-stone-900/10 flex items-center p-6 lg:p-10">
+                        <div className="max-w-[80%]">
+                            {banner.badge && (
+                                <span className="bg-brand-500 text-brand-950 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest mb-3 inline-block">
+                                    {banner.badge}
+                                </span>
+                            )}
+                            <h3 className="text-white text-xl font-black leading-tight lg:text-4xl lg:tracking-tighter">
+                                {banner.title}
+                            </h3>
+                            <p className="text-stone-300 text-xs mt-2 lg:text-base font-medium opacity-90">
+                                {banner.subtitle}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+  };
 
   const CategoryPills = () => {
     const displayCategories = ['Todos', ...config.categories];

@@ -80,7 +80,7 @@ export const StatusBarrier: React.FC<StatusBarrierProps> = ({ type }) => {
                         variant="secondary" 
                         fullWidth 
                         onClick={() => {
-                            updateUser({ role: UserRole.CLIENT });
+                            // Only switch the UI view, do NOT downgrade the Firestore role
                             setRole(UserRole.CLIENT);
                         }}
                         className="rounded-2xl h-12 text-[10px] font-black uppercase tracking-widest"

@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { soundService } from '../services/soundService';
-import { UserRole, Order, Store, Product, OrderStatus, CartItem, Modifier, PaymentMethod, OrderType, Coupon, UserProfile, ViewState, Review, MerchantViewState, DriverViewState, AdminViewState, AppNotification, GlobalConfig } from '../types';
+import { UserRole, Order, Store, Product, OrderStatus, CartItem, Modifier, PaymentMethod, OrderType, Coupon, UserProfile, ViewState, Review, MerchantViewState, DriverViewState, AdminViewState, AppNotification, GlobalConfig, Banner } from '../types';
 import { loadCart, saveCart } from '../services/dataService';
 import { APP_CONFIG } from '../constants';
 import { useToast } from './ToastContext';
@@ -92,6 +92,12 @@ interface AppContextType {
   // Global Config
   config: GlobalConfig;
   updateConfig: (data: Partial<GlobalConfig>) => void;
+
+  // Banners
+  banners: Banner[];
+  addBanner: (banner: Omit<Banner, 'id'>) => void;
+  updateBanner: (id: string, data: Partial<Banner>) => void;
+  deleteBanner: (id: string) => void;
   
   // Driver GPS Simulation
   driverLocation: { lat: number, lng: number };
@@ -183,6 +189,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -392,7 +399,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       // Auto-sync UI role on login ONLY for Admin to ensure they don't lose access
       // For all other roles, we do NOT auto-sync so the user returns to the Hub (AuthView)
       // to choose what they want to do this session (Client, Merchant, Driver).
-      if (authProfile.role === UserRole.ADMIN && role !== UserRole.ADMIN) {
+      // We only force it if the current role is NONE to avoid jumping back 
+      // when the admin is trying to test the client view.
+      if (authProfile.role === UserRole.ADMIN && role === UserRole.NONE) {
           setRoleState(UserRole.ADMIN);
           localStorage.setItem('codex_user_role', UserRole.ADMIN);
       }
@@ -582,6 +591,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     });
 
+    // Listen to Banners
+    const bannersQuery = collection(db, 'banners');
+    const unsubscribeBanners = onSnapshot(bannersQuery, (snapshot) => {
+      const bannersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Banner));
+      setBanners(bannersData.sort((a,b) => b.priority - a.priority));
+    }, (error) => {
+      console.warn('Banners listener error:', error.message);
+    });
+
     return () => {
       unsubscribeStores();
       unsubscribeOrders();
@@ -589,6 +607,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       unsubscribeReviews();
       unsubscribeConfig();
       unsubscribeCoupons();
+      unsubscribeBanners();
     };
   }, [isAuthReady, authProfile, authUser?.uid, authUser?.email, addNotification]);
   
@@ -1222,6 +1241,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
   };
 
+  const addBanner = async (banner: Omit<Banner, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'banners'), banner);
+      showToast('Banner añadido', 'success');
+    } catch (error) {
+      console.error('Error adding banner:', error);
+    }
+  };
+
+  const updateBanner = async (id: string, data: Partial<Banner>) => {
+    try {
+      await updateDoc(doc(db, 'banners', id), data);
+      showToast('Banner actualizado', 'success');
+    } catch (error) {
+      console.error('Error updating banner:', error);
+    }
+  };
+
+  const deleteBanner = async (id: string) => {
+    try {
+      // Small abstraction if deleteDoc isn't present, but updateDoc with isActive is safer for history
+      await updateDoc(doc(db, 'banners', id), { isActive: false });
+      showToast('Banner desactivado', 'success');
+    } catch (error) {
+      console.error('Error deleting banner:', error);
+    }
+  };
+
   const deleteCoupon = async (id: string) => {
       try {
         await updateDoc(doc(db, 'coupons', id), { active: false }); // Soft delete or real delete
@@ -1432,6 +1479,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       myStore,
       config,
       updateConfig,
+      banners,
+      addBanner,
+      updateBanner,
+      deleteBanner,
       driverLocation,
       setDriverLocation,
       completeTour,
