@@ -396,15 +396,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       setIsDriverOnline(!!authProfile.isOnline);
       
-      // Auto-sync UI role on login ONLY for Admin to ensure they don't lose access
-      // For all other roles, we do NOT auto-sync so the user returns to the Hub (AuthView)
-      // to choose what they want to do this session (Client, Merchant, Driver).
-      // We only force it if the current role is NONE to avoid jumping back 
-      // when the admin is trying to test the client view.
-      if (authProfile.role === UserRole.ADMIN && role === UserRole.NONE) {
-          setRoleState(UserRole.ADMIN);
-          localStorage.setItem('codex_user_role', UserRole.ADMIN);
-      }
+      // Removed: Auto-sync UI role on login. 
+      // User now always stays in the Hub (UserRole.NONE) upon login to choose their context manually.
     } else if (isAuthReady) {
       // Only reset if auth is definitely finished and no profile exists
       setUser(DEFAULT_USER);

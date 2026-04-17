@@ -2159,10 +2159,10 @@ export const ClientView: React.FC = () => {
 
   return (
       <div className="bg-white dark:bg-[#050505] h-full transition-colors duration-300 flex flex-col">
-        {showLocationSelector && <LocationModal />}
-        {productToCustomize && <ProductModal />}
-        {reviewOrder && <ReviewModal />}
-        {claimOrder && <ClaimModal />}
+        {showLocationSelector && LocationModal()}
+        {productToCustomize && ProductModal()}
+        {reviewOrder && ReviewModal()}
+        {claimOrder && ClaimModal()}
         
         {activeOrder && clientViewState !== 'TRACKING' && !productToCustomize && clientViewState !== 'HISTORY' && clientViewState !== 'RECEIPT' && (
             <div 
@@ -2191,18 +2191,18 @@ export const ClientView: React.FC = () => {
         )}
 
         <div className="flex-1 overflow-hidden relative">
-        {clientViewState === 'RECEIPT' ? <ReceiptView /> :
-         clientViewState === 'TRACKING' ? <TrackingView /> : 
-         clientViewState === 'CHECKOUT' ? <CheckoutView /> : 
-         clientViewState === 'HISTORY' ? <HistoryView /> :
-         clientViewState === 'FAVORITES' ? <FavoritesView /> :
-         clientViewState === 'PROFILE' ? <ProfileView /> :
-         selectedStore ? <StoreDetail /> : (
+        {clientViewState === 'RECEIPT' ? ReceiptView() :
+         clientViewState === 'TRACKING' ? TrackingView() : 
+         clientViewState === 'CHECKOUT' ? CheckoutView() : 
+         clientViewState === 'HISTORY' ? HistoryView() :
+         clientViewState === 'FAVORITES' ? FavoritesView() :
+         clientViewState === 'PROFILE' ? ProfileView() :
+         selectedStore ? StoreDetail() : (
             <div className="h-full flex flex-col lg:max-w-7xl lg:mx-auto lg:w-full">
-                <StoreList />
+                {StoreList()}
                 <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
-                    <BannerCarousel />
-                    <CategoryPills />
+                    {BannerCarousel()}
+                    {CategoryPills()}
                     <HorizontalSection title="Cerca de ti" icon={<MapPin size={18} className="text-brand-800" />} data={recommendedStores} />
                     <HorizontalSection title="Servicios Profesionales" icon={<User size={18} className="text-blue-500" />} data={stores.filter(s => s.isActive === true && s.category === 'Servicios Profesionales')} />
                     <HorizontalSection title="Nuevos" icon={<Sparkles size={18} className="text-amber-500" />} data={stores.filter(s => s.isActive === true && isNewStore(s.createdAt))} />
