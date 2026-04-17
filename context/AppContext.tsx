@@ -115,7 +115,8 @@ const DEFAULT_USER: UserProfile = {
     avatar: undefined,
     isDriver: false,
     ownedStoreId: undefined,
-    addresses: ['Mi Ubicación Actual']
+    addresses: ['Mi Ubicación Actual'],
+    completedTours: []
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -140,7 +141,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.setItem('codex_user_role', newRole);
   }, []);
   
-  const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
+  const [user, setUser] = useState<UserProfile>(() => {
+    try {
+      const storedTours = localStorage.getItem('codex_completed_tours_v1');
+      const completedTours = storedTours ? JSON.parse(storedTours) : [];
+      return { ...DEFAULT_USER, completedTours };
+    } catch {
+      return DEFAULT_USER;
+    }
+  });
   const [pendingAction, setPendingAction] = useState<{ type: 'PLACE_ORDER'; data: any } | null>(null);
 
   const updateUser = useCallback(async (data: Partial<UserProfile>) => {
@@ -363,7 +372,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Sync User Profile from AuthContext
   useEffect(() => {
     if (authProfile) {
-      setUser(authProfile);
+      // Merge local completed tours with remote ones to avoid F5 flicker or loss of guest progress
+      const localTours = JSON.parse(localStorage.getItem('codex_completed_tours_v1') || '[]');
+      const remoteTours = authProfile.completedTours || [];
+      const mergedTours = Array.from(new Set([...localTours, ...remoteTours]));
+      
+      setUser({
+        ...authProfile,
+        completedTours: mergedTours
+      });
+
+      // Update localStorage to keep it in sync
+      localStorage.setItem('codex_completed_tours_v1', JSON.stringify(mergedTours));
+
       setIsDriverOnline(!!authProfile.isOnline);
       
       // Auto-sync UI role on login or if local state is NONE but DB has a role
@@ -1304,9 +1325,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const completeTour = useCallback((tourId: string) => {
     const currentTours = user.completedTours || [];
     if (!currentTours.includes(tourId)) {
-      updateUser({ completedTours: [...currentTours, tourId] });
+      const updatedTours = [...currentTours, tourId];
+      
+      // 1. Persist to localStorage immediately (for Guest and for Instant Feedback)
+      localStorage.setItem('codex_completed_tours_v1', JSON.stringify(updatedTours));
+      
+      // 2. Update local state
+      setUser(prev => ({ ...prev, completedTours: updatedTours }));
+
+      // 3. Persist to Firestore if logged in
+      if (authUser?.uid && authUser.uid !== 'guest') {
+        updateUser({ completedTours: updatedTours });
+      }
     }
-  }, [user.completedTours, updateUser]);
+  }, [user.completedTours, authUser?.uid, updateUser]);
 
   return (
     <AppContext.Provider value={{ 

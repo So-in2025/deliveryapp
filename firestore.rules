@@ -92,7 +92,7 @@ service cloud.firestore {
 
       allow update: if isVerified() && (
         (isOwner(userId) && incoming().role == existing().role && 
-         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline', 'fcmToken'])) ||
+         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline', 'completedTours', 'lat', 'lng', 'referralCode', 'referralEarnings', 'referredBy', 'isFirstPurchaseDone', 'isApprovedDriver', 'ownedStoreId'])) ||
         isAdmin()
       );
     }

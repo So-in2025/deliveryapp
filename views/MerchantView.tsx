@@ -756,7 +756,7 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
 };
 
 export const MerchantView: React.FC = () => {
-  const { user, orders, stores, merchantViewState, setMerchantViewState, updateStore, completeTour, setRole } = useApp();
+  const { role, user, orders, stores, merchantViewState, setMerchantViewState, updateStore, completeTour, setRole } = useApp();
   const { showToast } = useToast();
   const lastOrderCountRef = useRef(0);
 
