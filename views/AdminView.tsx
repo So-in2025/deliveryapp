@@ -10,7 +10,7 @@ import {
   TrendingUp, Users, Store as StoreIcon, Activity, 
   DollarSign, Shield, Search, 
   AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail,
-  BarChart3, PieChart as PieChartIcon, Filter, Tag, X
+  BarChart3, PieChart as PieChartIcon, Filter, Tag, X, Plus
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
