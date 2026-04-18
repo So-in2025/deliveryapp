@@ -157,8 +157,8 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
         )}
       </div>
 
-      {/* Logic Update: Only show button if action is available for Merchant */}
-      {!(order.status === OrderStatus.READY && order.type === OrderType.DELIVERY) && order.status !== OrderStatus.PICKED_UP && order.status !== OrderStatus.DRIVER_ASSIGNED && order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.DISPUTED && (
+      {/* Action / Information Bar */}
+      {order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.DISPUTED && (
         <div className="p-3 bg-stone-50 dark:bg-stone-800/50 border-t border-stone-100 dark:border-stone-700 flex gap-2">
           <button 
             onClick={() => setShowChat(true)}
@@ -166,6 +166,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
           >
             <MessageSquare size={20} />
           </button>
+          
           {order.status === OrderStatus.PENDING && (
               <button 
                   onClick={handleCancel}
@@ -174,15 +175,31 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
                   Rechazar
               </button>
           )}
-          <Button
-            fullWidth
-            variant={order.status === OrderStatus.PENDING ? 'primary' : 'secondary'}
-            onClick={handleAction}
-            className="flex-1"
-          >
-            {order.status === OrderStatus.PENDING && <CheckCircle size={18} className="mr-2" />}
-            {getButtonText()}
-          </Button>
+
+          {/* Action Button or Status Info Box */}
+          {order.status === OrderStatus.READY && order.type === OrderType.DELIVERY ? (
+             <div className="flex-1 flex items-center justify-center bg-stone-100 dark:bg-stone-700 border dark:border-stone-600 text-stone-500 dark:text-stone-300 font-bold text-sm rounded-xl">
+                Esperando repartidor...
+             </div>
+          ) : order.status === OrderStatus.DRIVER_ASSIGNED ? (
+             <div className="flex-1 flex items-center justify-center bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 font-bold text-sm rounded-xl">
+                Repartidor en camino al local
+             </div>
+          ) : order.status === OrderStatus.PICKED_UP ? (
+             <div className="flex-1 flex items-center justify-center bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 font-bold text-sm rounded-xl">
+                En ruta de entrega
+             </div>
+          ) : (
+            <Button
+              fullWidth
+              variant={order.status === OrderStatus.PENDING ? 'primary' : 'secondary'}
+              onClick={handleAction}
+              className="flex-1"
+            >
+              {order.status === OrderStatus.PENDING && <CheckCircle size={18} className="mr-2" />}
+              {getButtonText()}
+            </Button>
+          )}
         </div>
       )}
       

@@ -2185,7 +2185,7 @@ export const ClientView: React.FC = () => {
                         <WifiOff size={10} /> Esperando red
                     </span>
                 ) : (
-                    <BadgeStatus status={activeOrder.status} />
+                    <BadgeStatus status={activeOrder.status} type={activeOrder.type} />
                 )}
             </div>
         )}
@@ -2260,15 +2260,15 @@ export const ClientView: React.FC = () => {
   );
 };
 
-const BadgeStatus: React.FC<{ status: OrderStatus }> = ({ status }) => {
+const BadgeStatus: React.FC<{ status: OrderStatus, type?: OrderType }> = ({ status, type }) => {
     const labels: Record<string, string> = {
         [OrderStatus.PENDING]: 'Enviando...',
         [OrderStatus.ACCEPTED]: 'Aceptado',
         [OrderStatus.PREPARING]: 'Preparando',
-        [OrderStatus.READY]: 'Buscando Driver',
-        [OrderStatus.DRIVER_ASSIGNED]: 'Driver Asignado',
+        [OrderStatus.READY]: type === OrderType.PICKUP ? '¡Listo para recoger!' : 'Buscando Repartidor',
+        [OrderStatus.DRIVER_ASSIGNED]: 'Repartidor Asignado',
         [OrderStatus.PICKED_UP]: 'En camino',
         [OrderStatus.DELIVERED]: 'Entregado'
     };
-    return <span className="text-xs font-bold bg-black/10 px-3 py-1.5 rounded-xl text-black shadow-sm border border-black/5">{labels[status]}</span>;
+    return <span className={`text-xs font-bold px-3 py-1.5 rounded-xl shadow-sm border ${status === OrderStatus.READY && type === OrderType.PICKUP ? 'bg-brand-500 text-brand-950 border-brand-400' : 'bg-black/10 text-black border-black/5 dark:bg-white/10 dark:text-white dark:border-white/5'}`}>{labels[status]}</span>;
 }

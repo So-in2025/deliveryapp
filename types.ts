@@ -32,6 +32,11 @@ export interface UserProfile {
   driverLicense?: string; // Strict: Licencia de conducir
   vehicleInsurance?: string; // Strict: Seguro del vehículo
   vehiclePlate?: string; // Strict: Placa del vehículo
+  vehicleType?: string; // Tipo de vehículo (MOTO, BICI, AUTO)
+  driverSelfieUrl?: string; // Foto del repartidor tomada en el registro
+  driverIneUrl?: string; // Foto de la identificación oficial (INE)
+  driverAddress?: string; // Dirección del repartidor
+  driverPersonalReference?: string; // Nombre y teléfono de una referencia personal
 }
 
 export enum OrderStatus {

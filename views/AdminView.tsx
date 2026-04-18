@@ -977,13 +977,36 @@ export const AdminView: React.FC = () => {
                              
                              <div className="grid grid-cols-2 gap-2">
                                 <div className="p-2 bg-stone-50 rounded-lg">
-                                   <p className="text-[8px] uppercase font-bold text-stone-400">Placa</p>
-                                   <p className="text-xs font-bold text-stone-800">{userProfile.vehiclePlate || 'N/A'}</p>
+                                   <p className="text-[8px] uppercase font-bold text-stone-400">Dirección M.</p>
+                                   <p className="text-xs font-bold text-stone-800">{userProfile.driverAddress || 'N/A'}</p>
                                 </div>
                                 <div className="p-2 bg-stone-50 rounded-lg">
-                                   <p className="text-[8px] uppercase font-bold text-stone-400">Licencia</p>
-                                   <p className="text-xs font-bold text-stone-800">{userProfile.driverLicense || 'N/A'}</p>
+                                   <p className="text-[8px] uppercase font-bold text-stone-400">Referencia Per.</p>
+                                   <p className="text-xs font-bold text-stone-800">{userProfile.driverPersonalReference || 'N/A'}</p>
                                 </div>
+                                <div className="p-2 bg-stone-50 rounded-lg">
+                                   <p className="text-[8px] uppercase font-bold text-stone-400">T. Vehículo</p>
+                                   <p className="text-xs font-bold text-stone-800">{userProfile.vehicleType || 'N/A'}</p>
+                                </div>
+                                <div className="p-2 bg-stone-50 rounded-lg">
+                                   <p className="text-[8px] uppercase font-bold text-stone-400">Teléfono</p>
+                                   <p className="text-xs font-bold text-stone-800">{userProfile.phone || 'N/A'}</p>
+                                </div>
+                             </div>
+
+                             <div className="grid grid-cols-2 gap-2 mt-2">
+                                {userProfile.driverIneUrl && (
+                                    <div className="relative group cursor-pointer" onClick={() => window.open(userProfile.driverIneUrl, '_blank')}>
+                                        <p className="text-[10px] uppercase font-bold text-stone-400 mb-1">INE</p>
+                                        <img src={userProfile.driverIneUrl} alt="INE" className="w-full h-24 object-cover rounded-xl border border-stone-200" />
+                                    </div>
+                                )}
+                                {userProfile.driverSelfieUrl && (
+                                    <div className="relative group cursor-pointer" onClick={() => window.open(userProfile.driverSelfieUrl, '_blank')}>
+                                        <p className="text-[10px] uppercase font-bold text-stone-400 mb-1">Selfie</p>
+                                        <img src={userProfile.driverSelfieUrl} alt="Selfie" className="w-full h-24 object-cover rounded-xl border border-stone-200" />
+                                    </div>
+                                )}
                              </div>
                           </div>
                         </div>

@@ -6,7 +6,7 @@ import { resetAppData } from '../../services/dataService';
 import { UserRole, Store } from '../../types';
 import { Button } from './Button';
 import { uploadImageToCloudinary } from '../../services/cloudinaryService';
-import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText, Sparkles } from 'lucide-react';
+import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText, Sparkles, Image as ImageIcon } from 'lucide-react';
 
 // Internal navigation state for the overlay
 type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'PRIVACY' | 'TERMS' | 'HELP' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER';
@@ -37,7 +37,16 @@ export const SettingsOverlay: React.FC = () => {
   const [merchantReg, setMerchantReg] = useState({ 
     name: '', category: 'Restaurante', address: '', time: '30', taxId: '', bankName: '', bankAccount: '', clabe: '', phone: '' 
   });
-  const [driverReg, setDriverReg] = useState({ vehicleType: 'MOTO', phone: '' });
+  const [driverReg, setDriverReg] = useState({ 
+      vehicleType: 'MOTO', 
+      phone: user.phone || '', 
+      name: user.name || '',
+      address: '',
+      personalReference: '',
+      ineUrl: '',
+      selfieUrl: '',
+      isUploading: false
+  });
 
   const MEXICAN_BANKS = [
     'BBVA México', 'Santander México', 'Banorte', 'Citibanamex', 'HSBC México', 
@@ -233,15 +242,21 @@ export const SettingsOverlay: React.FC = () => {
     };
 
     const handleDriverRequest = () => {
-        if (!driverReg.phone) {
-            showToast('Ingresa tu teléfono', 'error');
+        if (!driverReg.phone || !driverReg.name || !driverReg.address || !driverReg.ineUrl || !driverReg.selfieUrl || !driverReg.personalReference) {
+            showToast('Por favor, completa todos los campos y sube tus fotos (INE y Selfie)', 'error');
             return;
         }
         requestDriverAccess({
+            name: driverReg.name,
             phone: driverReg.phone,
             vehicleType: driverReg.vehicleType,
+            driverAddress: driverReg.address,
+            driverPersonalReference: driverReg.personalReference,
+            driverIneUrl: driverReg.ineUrl,
+            driverSelfieUrl: driverReg.selfieUrl
         } as any);
         setCurrentView('MAIN');
+        showToast('Solicitud enviada, te contactaremos pronto', 'success');
     };
 
     const renderMerchantRegistration = () => (
@@ -367,31 +382,136 @@ export const SettingsOverlay: React.FC = () => {
                     <Bike size={32} />
                 </div>
                 <h3 className="text-xl font-black text-stone-900 dark:text-white uppercase tracking-tighter">Únete como Repartidor</h3>
-                <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">Gana dinero realizando entregas en tu zona.</p>
+                <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">Completa tu perfil para que podamos validar tus datos.</p>
             </div>
 
-            <div className="space-y-4">
-                <input 
-                    placeholder="Teléfono (WhatsApp)" 
-                    type="tel"
-                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white font-mono"
-                    value={driverReg.phone}
-                    onChange={e => setDriverReg({...driverReg, phone: e.target.value})}
-                />
-                <div className="grid grid-cols-3 gap-2">
-                    {['MOTO', 'BICI', 'AUTO'].map(v => (
-                        <button 
-                            key={v}
-                            onClick={() => setDriverReg({...driverReg, vehicleType: v})}
-                            className={`p-3 rounded-lg border text-[10px] font-bold uppercase transition-all ${driverReg.vehicleType === v ? 'bg-amber-500 text-white border-amber-600' : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-100 dark:border-stone-800'}`}
-                        >
-                            {v}
-                        </button>
-                    ))}
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div>
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Nombre Completo *</label>
+                    <input 
+                        type="text"
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white font-mono"
+                        value={driverReg.name}
+                        onChange={e => setDriverReg({...driverReg, name: e.target.value})}
+                    />
                 </div>
-                <Button fullWidth onClick={handleDriverRequest}>Enviar Solicitud</Button>
+                <div>
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Teléfono (WhatsApp) *</label>
+                    <input 
+                        placeholder="Teléfono" 
+                        type="tel"
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white font-mono"
+                        value={driverReg.phone}
+                        onChange={e => setDriverReg({...driverReg, phone: e.target.value})}
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Dirección Completa *</label>
+                    <input 
+                        placeholder="Calle, Número, Colonia..."
+                        type="text"
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white font-mono"
+                        value={driverReg.address}
+                        onChange={e => setDriverReg({...driverReg, address: e.target.value})}
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Referencia Personal (Nombre y Tel) *</label>
+                    <input 
+                        placeholder="Ej. Juan Pérez - 555-123-4567"
+                        type="text"
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white font-mono"
+                        value={driverReg.personalReference}
+                        onChange={e => setDriverReg({...driverReg, personalReference: e.target.value})}
+                    />
+                </div>
+                
+                <div>
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Foto de tu INE (Frente) *</label>
+                    {driverReg.ineUrl ? (
+                         <div className="relative">
+                            <img src={driverReg.ineUrl} alt="INE" className="w-full h-32 object-cover rounded-xl border border-stone-200" />
+                            <button onClick={() => setDriverReg({...driverReg, ineUrl: ''})} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md"><X size={14}/></button>
+                         </div>
+                    ) : (
+                        <div className="border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-xl p-6 flex flex-col items-center justify-center bg-white dark:bg-stone-900 relative">
+                            <input 
+                                type="file" 
+                                accept="image/*"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if(file) {
+                                        setDriverReg({...driverReg, isUploading: true});
+                                        const url = await uploadImageToCloudinary(file);
+                                        setDriverReg(prev => ({...prev, ineUrl: url || '', isUploading: false}));
+                                    }
+                                }}
+                            />
+                            <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-500 rounded-xl flex items-center justify-center mb-2">
+                                <ImageIcon size={20} />
+                            </div>
+                            <span className="text-xs font-bold text-stone-600 dark:text-stone-300">Subir INE</span>
+                            {driverReg.isUploading && <span className="text-[10px] text-stone-400 mt-2">Subiendo...</span>}
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Foto Selfie (Tu rostro claro) *</label>
+                    {driverReg.selfieUrl ? (
+                         <div className="relative">
+                            <img src={driverReg.selfieUrl} alt="Selfie" className="w-full h-32 object-cover rounded-xl border border-stone-200" />
+                            <button onClick={() => setDriverReg({...driverReg, selfieUrl: ''})} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md"><X size={14}/></button>
+                         </div>
+                    ) : (
+                        <div className="border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-xl p-6 flex flex-col items-center justify-center bg-white dark:bg-stone-900 relative">
+                            <input 
+                                type="file" 
+                                accept="image/*"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if(file) {
+                                        setDriverReg({...driverReg, isUploading: true});
+                                        const url = await uploadImageToCloudinary(file);
+                                        setDriverReg(prev => ({...prev, selfieUrl: url || '', isUploading: false}));
+                                    }
+                                }}
+                            />
+                            <div className="w-10 h-10 bg-amber-50 dark:bg-amber-900/30 text-amber-500 rounded-xl flex items-center justify-center mb-2">
+                                <Camera size={20} />
+                            </div>
+                            <span className="text-xs font-bold text-stone-600 dark:text-stone-300">Tomar/Subir Selfie</span>
+                            {driverReg.isUploading && <span className="text-[10px] text-stone-400 mt-2">Subiendo...</span>}
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Tipo de Vehículo *</label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {['MOTO', 'BICI', 'AUTO'].map(v => (
+                            <button 
+                                key={v}
+                                onClick={() => setDriverReg({...driverReg, vehicleType: v})}
+                                className={`p-3 rounded-lg border text-[10px] font-bold uppercase transition-all ${driverReg.vehicleType === v ? 'bg-amber-500 text-white border-amber-600' : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-100 dark:border-stone-800'}`}
+                            >
+                                {v}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <Button 
+                    fullWidth 
+                    onClick={handleDriverRequest}
+                    disabled={driverReg.isUploading}
+                >
+                    {driverReg.isUploading ? 'Subiendo fotos...' : 'Enviar Solicitud'}
+                </Button>
             </div>
-            <p className="text-[10px] text-center text-stone-400 font-bold uppercase tracking-wider">Te notificaremos por WhatsApp tras validar tus datos.</p>
+            <p className="text-[10px] text-center text-stone-400 font-bold uppercase tracking-wider">Toda información es cifrada y procesada según normativas mexicanas de protección de datos.</p>
         </div>
     );
 
