@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
 import { OrderStatus, Store, OrderType, UserRole, Order } from '../types';
 import { formatCurrency } from '../constants';
-import { Badge, PaymentBadge } from '../components/ui/Badge';
+import { Badge, PaymentBadge, StoreBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
 import { Button } from '../components/ui/Button';
 import { 
@@ -202,6 +202,19 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
 const OrdersTab = ({ orders }: { orders: Order[] }) => {
     const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
     
+    // Diccionario de traducción para los estados del pedido
+    const statusLabels: Record<OrderStatus, string> = {
+        [OrderStatus.PENDING]: 'Pendiente',
+        [OrderStatus.ACCEPTED]: 'Aceptado',
+        [OrderStatus.PREPARING]: 'Preparando',
+        [OrderStatus.READY]: 'Listo',
+        [OrderStatus.DRIVER_ASSIGNED]: 'Asignado',
+        [OrderStatus.PICKED_UP]: 'En Camino',
+        [OrderStatus.DELIVERED]: 'Entregado',
+        [OrderStatus.CANCELLED]: 'Cancelado',
+        [OrderStatus.DISPUTED]: 'En Disputa',
+    };
+
     const filteredOrders = useMemo(() => {
         if (statusFilter === 'ALL') return orders;
         return orders.filter(o => o.status === statusFilter);
@@ -222,7 +235,7 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
                         onClick={() => setStatusFilter(status)}
                         className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${statusFilter === status ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
                     >
-                        {status}
+                        {statusLabels[status]}
                     </button>
                 ))}
             </div>
@@ -878,9 +891,7 @@ export const AdminView: React.FC = () => {
               <h4 className="font-bold text-stone-900">{store.name}</h4>
               <p className="text-xs text-stone-500">{store.category} • {store.createdAt ? 'Nuevo' : 'Veterano'}</p>
               <div className="flex items-center gap-3 mt-1">
-                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${store.isActive ? 'bg-brand-500 text-brand-950' : 'bg-amber-100 text-amber-700'}`}>
-                    {store.isActive ? 'Activo' : 'Pendiente'}
-                 </span>
+                 <StoreBadge isActive={store.isActive} />
                  <span className="text-[10px] text-stone-400">ID: {store.id}</span>
               </div>
            </div>

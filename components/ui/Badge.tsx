@@ -37,6 +37,18 @@ export const Badge: React.FC<BadgeProps> = ({ status }) => {
   );
 };
 
+interface StoreBadgeProps {
+  isActive: boolean;
+}
+
+export const StoreBadge: React.FC<StoreBadgeProps> = ({ isActive }) => {
+    return (
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${isActive ? 'bg-brand-500 text-brand-950 border-brand-600' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+            {isActive ? 'Activa' : 'Pendiente'}
+        </span>
+    );
+};
+
 interface PaymentBadgeProps {
   status?: 'PENDING' | 'PAID' | 'FAILED';
   method: string;
