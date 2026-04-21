@@ -912,7 +912,7 @@ export const ClientView: React.FC = () => {
     if (displayOrder.status === OrderStatus.CANCELLED) {
          return (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-50 dark:bg-stone-950 animate-fade-in">
-                <div className="w-24 h-24 bg-red-500/10 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-inner border border-red-500/20">
+                <div className="w-24 h-24 bg-red-50 dark:bg-red-900/200/10 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-inner border border-red-500/20">
                     <X size={48} strokeWidth={1.5} className="text-red-500" />
                 </div>
                 <h2 className="text-3xl font-black text-stone-950 dark:text-white mb-3 tracking-tight">Pedido Cancelado</h2>
@@ -955,7 +955,7 @@ export const ClientView: React.FC = () => {
                             })()}
                         </div>
                         {displayOrder.isOfflinePending && (
-                            <div className="absolute -top-2 -right-2 bg-red-500 rounded-2xl p-2 border-4 border-white dark:border-stone-900 shadow-xl">
+                            <div className="absolute -top-2 -right-2 bg-red-50 dark:bg-red-900/200 rounded-2xl p-2 border-4 border-white dark:border-stone-900 shadow-xl">
                                 <WifiOff size={16} className="text-white" />
                             </div>
                         )}
@@ -986,7 +986,7 @@ export const ClientView: React.FC = () => {
                          <div className="mt-6 flex gap-3 justify-center">
                              <button 
                                 onClick={() => setClaimOrder(displayOrder)}
-                                className="text-[10px] text-red-500 font-black uppercase tracking-widest bg-red-500/10 px-6 py-2.5 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all"
+                                className="text-[10px] text-red-500 font-black uppercase tracking-widest bg-red-50 dark:bg-red-900/200/10 px-6 py-2.5 rounded-xl border border-red-500/20 hover:bg-red-50 dark:bg-red-900/200/20 transition-all"
                              >
                                  Reclamar
                              </button>
@@ -1359,7 +1359,7 @@ export const ClientView: React.FC = () => {
           {!user.referredBy && (
             <div className="bg-white dark:bg-stone-900/40 p-6 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm">
                 <h3 className="font-black text-stone-950 dark:text-white mb-4 flex items-center gap-3 tracking-tight">
-                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/200/10 rounded-xl flex items-center justify-center">
                       <User size={20} className="text-blue-500" />
                   </div>
                   Código de Referido
@@ -1540,8 +1540,8 @@ export const ClientView: React.FC = () => {
                               </div>
                               <div className={`text-[10px] font-black px-4 py-2 rounded-2xl tracking-[0.1em] shadow-sm ${
                                   order.status === OrderStatus.DELIVERED ? 'bg-brand-500 text-brand-950' : 
-                                  order.status === OrderStatus.DISPUTED ? 'bg-amber-500 text-amber-950' :
-                                  'bg-red-500 text-white'
+                                  order.status === OrderStatus.DISPUTED ? 'bg-amber-50 dark:bg-amber-900/200 text-amber-950' :
+                                  'bg-red-50 dark:bg-red-900/200 text-white'
                               }`}>
                                   {(order.status === OrderStatus.DELIVERED ? 'ENTREGADO' : 
                                    order.status === OrderStatus.DISPUTED ? 'EN RECLAMO' : 'CANCELADO').toUpperCase()}
@@ -1565,12 +1565,12 @@ export const ClientView: React.FC = () => {
                           </div>
                           
                           {order.status === OrderStatus.CANCELLED && order.cancelledReason && (
-                              <div className="mb-6 bg-red-500/10 p-4 rounded-2xl border border-red-500/20">
+                              <div className="mb-6 bg-red-50 dark:bg-red-900/200/10 p-4 rounded-2xl border border-red-500/20">
                                 <p className="text-xs text-red-600 dark:text-red-400 font-bold"><span className="uppercase tracking-widest mr-2">Motivo:</span> {order.cancelledReason}</p>
                               </div>
                           )}
                           {order.status === OrderStatus.DISPUTED && order.claimReason && (
-                              <div className="mb-6 bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20">
+                              <div className="mb-6 bg-amber-50 dark:bg-amber-900/200/10 p-4 rounded-2xl border border-amber-500/20">
                                   <p className="text-xs text-amber-600 dark:text-amber-400 font-black uppercase tracking-widest mb-1">Reclamo ({order.claimStatus})</p>
                                   <p className="text-xs text-stone-600 dark:text-stone-300 font-medium">{order.claimReason}</p>
                               </div>
@@ -1586,7 +1586,7 @@ export const ClientView: React.FC = () => {
                                   {order.status === OrderStatus.DELIVERED && !order.isReviewed && (
                                       <button
                                           onClick={() => setReviewOrder(order)}
-                                          className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center gap-2 hover:bg-amber-500/20 transition-all border border-amber-500/20"
+                                          className="p-3 bg-amber-50 dark:bg-amber-900/200/10 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center gap-2 hover:bg-amber-50 dark:bg-amber-900/200/20 transition-all border border-amber-500/20"
                                       >
                                           <Star size={18} fill="currentColor" />
                                           <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Calificar</span>
@@ -1595,7 +1595,7 @@ export const ClientView: React.FC = () => {
                                   {order.status === OrderStatus.DELIVERED && (
                                       <button
                                           onClick={() => setClaimOrder(order)}
-                                          className="p-3 bg-red-500/10 text-red-600 dark:text-red-400 rounded-2xl flex items-center gap-2 hover:bg-red-500/20 transition-all border border-red-500/20"
+                                          className="p-3 bg-red-50 dark:bg-red-900/200/10 text-red-600 dark:text-red-400 rounded-2xl flex items-center gap-2 hover:bg-red-50 dark:bg-red-900/200/20 transition-all border border-red-500/20"
                                       >
                                           <AlertCircle size={18} />
                                           <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Reclamar</span>
@@ -1630,7 +1630,7 @@ export const ClientView: React.FC = () => {
           <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-5xl lg:mx-auto lg:w-full">
               {favoriteStores.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-                      <div className="w-24 h-24 bg-red-500/10 rounded-[2.5rem] flex items-center justify-center text-red-500 shadow-inner">
+                      <div className="w-24 h-24 bg-red-50 dark:bg-red-900/200/10 rounded-[2.5rem] flex items-center justify-center text-red-500 shadow-inner">
                           <Heart size={48} strokeWidth={1.5} />
                       </div>
                       <div>
@@ -1878,7 +1878,7 @@ export const ClientView: React.FC = () => {
                   </button>
                   <button onClick={() => setClientViewState('FAVORITES')} className="w-full flex items-center justify-between p-6 bg-white dark:bg-stone-900/40 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm hover:scale-[1.02] transition-all duration-300 group">
                       <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 shadow-inner group-hover:bg-red-500 group-hover:text-white transition-colors">
+                          <div className="w-14 h-14 bg-red-50 dark:bg-red-900/200/10 rounded-2xl flex items-center justify-center text-red-500 shadow-inner group-hover:bg-red-50 dark:bg-red-900/200 group-hover:text-white transition-colors">
                               <Heart size={24} />
                           </div>
                           <div className="text-left">
@@ -1903,7 +1903,7 @@ export const ClientView: React.FC = () => {
               </div>
 
               <div className="pt-6">
-                  <Button fullWidth variant="outline" className="!rounded-[2rem] py-6 text-red-500 border-red-500/20 hover:bg-red-500/10 font-black tracking-widest" onClick={() => signOut()}>CERRAR SESIÓN</Button>
+                  <Button fullWidth variant="outline" className="!rounded-[2rem] py-6 text-red-500 border-red-500/20 hover:bg-red-50 dark:bg-red-900/200/10 font-black tracking-widest" onClick={() => signOut()}>CERRAR SESIÓN</Button>
               </div>
           </div>
       </div>
@@ -2033,7 +2033,7 @@ export const ClientView: React.FC = () => {
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-3">
                         <span className="bg-brand-500 text-brand-950 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">{selectedStore?.category}</span>
-                        {selectedStore?.isOpen === false && <span className="bg-red-500 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">Cerrado</span>}
+                        {selectedStore?.isOpen === false && <span className="bg-red-50 dark:bg-red-900/200 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">Cerrado</span>}
                     </div>
                     <h2 className="font-black text-4xl text-white lg:text-7xl tracking-tighter drop-shadow-2xl">{selectedStore?.name}</h2>
                 </div>

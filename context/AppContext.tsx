@@ -95,7 +95,6 @@ interface AppContextType {
   clearCart: () => void;
   placeOrder: (storeId: string, storeName: string, address: string, paymentMethod: PaymentMethod, notes: string, type: OrderType, discount?: number, coordinates?: { lat: number, lng: number }) => void;
   getRouteDistance: (start: { lat: number, lng: number }, end: { lat: number, lng: number }) => Promise<number>;
-  verifyAdminPin: (pin: string) => Promise<boolean>;
   updateOrder: (orderId: string, status: OrderStatus) => void;
   cancelOrder: (orderId: string, reason: string) => void;
   submitClaim: (orderId: string, reason: string) => void;

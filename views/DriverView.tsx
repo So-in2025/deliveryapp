@@ -637,7 +637,7 @@ export const DriverView: React.FC = () => {
                            {/* Pickup Point */}
                            <div className={`relative z-10 transition-all duration-500 ${task.status !== OrderStatus.DRIVER_ASSIGNED ? 'opacity-30 scale-95' : 'scale-100'}`}>
                              <div className={`absolute -left-[33px] top-1 w-6 h-6 rounded-full border-4 border-white dark:border-stone-800 shadow-sm flex items-center justify-center ${task.status !== OrderStatus.DRIVER_ASSIGNED ? 'bg-stone-300' : 'bg-stone-900 dark:bg-stone-100'}`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${task.status !== OrderStatus.DRIVER_ASSIGNED ? 'bg-stone-500' : 'bg-white dark:bg-stone-900'}`}></div>
+                                <div className={`w-1.5 h-1.5 rounded-full ${task.status !== OrderStatus.DRIVER_ASSIGNED ? 'bg-stone-50 dark:bg-stone-800/500' : 'bg-white dark:bg-stone-900'}`}></div>
                              </div>
                              <div className="w-full">
                                <p className="text-[10px] text-stone-400 dark:text-stone-500 font-black uppercase tracking-widest">Paso 1: Recoger Pedido</p>
@@ -658,7 +658,7 @@ export const DriverView: React.FC = () => {
                            {/* Dropoff Point */}
                            <div className={`relative z-10 transition-all duration-500 ${task.status === OrderStatus.DRIVER_ASSIGNED ? 'opacity-30 scale-95' : 'scale-100'}`}>
                              <div className={`absolute -left-[33px] top-1 w-6 h-6 rounded-full border-4 border-white dark:border-stone-800 shadow-sm flex items-center justify-center ${task.status === OrderStatus.DRIVER_ASSIGNED ? 'bg-stone-300' : 'bg-brand-500'}`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${task.status === OrderStatus.DRIVER_ASSIGNED ? 'bg-stone-500' : 'bg-brand-950'}`}></div>
+                                <div className={`w-1.5 h-1.5 rounded-full ${task.status === OrderStatus.DRIVER_ASSIGNED ? 'bg-stone-50 dark:bg-stone-800/500' : 'bg-brand-950'}`}></div>
                              </div>
                              <div className="w-full">
                                <p className="text-[10px] text-stone-400 dark:text-stone-500 font-black uppercase tracking-widest">Paso 2: Entregar a Cliente</p>
@@ -722,7 +722,7 @@ export const DriverView: React.FC = () => {
                         <p className="text-2xl font-black text-stone-900 dark:text-white">{formatCurrency(tipEarnings)}</p>
                     </div>
                     <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-stone-100 dark:border-stone-700 shadow-sm">
-                        <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4">
+                        <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/200/10 rounded-xl flex items-center justify-center mb-4">
                             <Bike className="text-blue-500" size={20} />
                         </div>
                         <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Envíos</p>

@@ -12,7 +12,7 @@ import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshC
 type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'PRIVACY' | 'TERMS' | 'HELP' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER';
 
 export const SettingsOverlay: React.FC = () => {
-  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, requestDriverAccess, stores, darkMode, toggleDarkMode, role, verifyAdminPin, setRole, config } = useApp();
+  const { isSettingsOpen, toggleSettings, user, updateUser, createStore, requestDriverAccess, stores, darkMode, toggleDarkMode, role, setRole, config } = useApp();
   const { signOut, requestNotificationPermission } = useAuth();
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState<SettingsView>('MAIN');
@@ -144,7 +144,7 @@ export const SettingsOverlay: React.FC = () => {
 
   const switchRole = async (newRole: UserRole) => {
       if (newRole === UserRole.ADMIN) {
-          // If already admin in Firestore or config, just switch UI view
+          // If already admin in Firestore or config, switch UI view. If not, reject.
           if (user.role === UserRole.ADMIN || config.adminEmails?.includes(user.email)) {
               setRole(UserRole.ADMIN);
               showToast('Panel de Staff activado', 'success');
@@ -152,18 +152,8 @@ export const SettingsOverlay: React.FC = () => {
               return;
           }
 
-          const pin = prompt('Ingrese el PIN de administrador:');
-          if (pin) {
-              const isValid = await verifyAdminPin(pin);
-              if (isValid) {
-                  await updateUser({ role: UserRole.ADMIN });
-                  setRole(UserRole.ADMIN);
-                  showToast('Modo Administrador activado permanentemente', 'success');
-                  toggleSettings();
-              } else {
-                  showToast('PIN incorrecto', 'error');
-              }
-          }
+          // Reject directly since PIN backdoor is removed
+          showToast('No tienes permisos de Administrador', 'error');
           return;
       }
       
@@ -380,7 +370,7 @@ export const SettingsOverlay: React.FC = () => {
     const renderDriverRegistration = () => (
         <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right">
             <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800">
-                <div className="w-16 h-16 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/200/10 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
                     <Bike size={32} />
                 </div>
                 <h3 className="text-xl font-black text-stone-900 dark:text-white uppercase tracking-tighter">Únete como Repartidor</h3>
@@ -433,7 +423,7 @@ export const SettingsOverlay: React.FC = () => {
                     {driverReg.ineUrl ? (
                          <div className="relative">
                             <img src={driverReg.ineUrl} alt="INE" className="w-full h-32 object-cover rounded-xl border border-stone-200" />
-                            <button onClick={() => setDriverReg({...driverReg, ineUrl: ''})} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md"><X size={14}/></button>
+                            <button onClick={() => setDriverReg({...driverReg, ineUrl: ''})} className="absolute top-2 right-2 bg-red-50 dark:bg-red-900/200 text-white p-1.5 rounded-full shadow-md"><X size={14}/></button>
                          </div>
                     ) : (
                         <div className="border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-xl p-6 flex flex-col items-center justify-center bg-white dark:bg-stone-900 relative">
@@ -464,7 +454,7 @@ export const SettingsOverlay: React.FC = () => {
                     {driverReg.selfieUrl ? (
                          <div className="relative">
                             <img src={driverReg.selfieUrl} alt="Selfie" className="w-full h-32 object-cover rounded-xl border border-stone-200" />
-                            <button onClick={() => setDriverReg({...driverReg, selfieUrl: ''})} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md"><X size={14}/></button>
+                            <button onClick={() => setDriverReg({...driverReg, selfieUrl: ''})} className="absolute top-2 right-2 bg-red-50 dark:bg-red-900/200 text-white p-1.5 rounded-full shadow-md"><X size={14}/></button>
                          </div>
                     ) : (
                         <div className="border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-xl p-6 flex flex-col items-center justify-center bg-white dark:bg-stone-900 relative">
@@ -497,7 +487,7 @@ export const SettingsOverlay: React.FC = () => {
                             <button 
                                 key={v}
                                 onClick={() => setDriverReg({...driverReg, vehicleType: v})}
-                                className={`p-3 rounded-lg border text-[10px] font-bold uppercase transition-all ${driverReg.vehicleType === v ? 'bg-amber-500 text-white border-amber-600' : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-100 dark:border-stone-800'}`}
+                                className={`p-3 rounded-lg border text-[10px] font-bold uppercase transition-all ${driverReg.vehicleType === v ? 'bg-amber-50 dark:bg-amber-900/200 text-white border-amber-600' : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-100 dark:border-stone-800'}`}
                             >
                                 {v}
                             </button>

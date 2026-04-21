@@ -366,7 +366,7 @@ const BannersManagementTab = ({
                             <div className="absolute top-4 right-4 flex gap-2">
                                 <button 
                                     onClick={() => updateBanner(banner.id, { isActive: !banner.isActive })}
-                                    className={`p-2 rounded-xl backdrop-blur-md transition-all ${banner.isActive ? 'bg-green-500 text-white shadow-green-500/40' : 'bg-red-500 text-white shadow-red-500/40'}`}
+                                    className={`p-2 rounded-xl backdrop-blur-md transition-all ${banner.isActive ? 'bg-green-500 text-white shadow-green-500/40' : 'bg-red-50 dark:bg-red-900/200 text-white shadow-red-500/40'}`}
                                 >
                                     <TrendingUp size={16} />
                                 </button>
@@ -1197,7 +1197,7 @@ export const AdminView: React.FC = () => {
                                     {tab.id === 'DISPUTES' && orders.some(o => o.status === OrderStatus.DISPUTED && o.claimStatus === 'PENDING') && (
                                         <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-50 dark:bg-red-900/200"></span>
                                         </span>
                                     )}
                                 </button>
@@ -1447,7 +1447,7 @@ export const AdminView: React.FC = () => {
                                             </div>
                                             <div 
                                                 onClick={() => setLocalConfig({...localConfig, maintenanceMode: !localConfig.maintenanceMode})}
-                                                className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localConfig.maintenanceMode ? 'bg-red-500' : 'bg-stone-200'}`}
+                                                className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localConfig.maintenanceMode ? 'bg-red-50 dark:bg-red-900/200' : 'bg-stone-200'}`}
                                             >
                                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${localConfig.maintenanceMode ? 'left-7' : 'left-1'}`}></div>
                                             </div>
