@@ -1255,38 +1255,99 @@ export const AdminView: React.FC = () => {
                                                 />
                                             </div>
                                         </div>
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm font-bold text-stone-800">Costo de Envío Base</p>
-                                                <p className="text-xs text-stone-500">Tarifa mínima</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-stone-400">$</span>
-                                                <input 
-                                                    type="number" 
-                                                    value={localConfig.baseDeliveryFee} 
-                                                    onChange={(e) => setLocalConfig({...localConfig, baseDeliveryFee: Number(e.target.value)})}
-                                                    className="w-20 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
-                                                />
+                                    </div>
+                                </div>
+
+                                {/* MOTOR DINÁMICO DE TARIFAS */}
+                                {localConfig.deliveryRates && (
+                                <div className="p-4 border-b border-stone-100">
+                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
+                                        <MapPin size={18} className="text-brand-800" /> Motor Dinámico de Tarifas
+                                    </h3>
+                                    
+                                    <div className="space-y-6">
+                                        <div className="bg-stone-50 p-4 rounded-xl space-y-4 border border-stone-200">
+                                            <h4 className="font-bold text-xs text-stone-500 uppercase tracking-widest border-b pb-2">Zonificación</h4>
+                                            
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-stone-700">Radio Local (km)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.localRadiusKm} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localRadiusKm: Number(e.target.value)}})} className="w-full p-2 bg-white border border-stone-200 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-stone-700">KM Base (Sin Extra)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.baseDistanceKm} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, baseDistanceKm: Number(e.target.value)}})} className="w-full p-2 bg-white border border-stone-200 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-stone-700">Plataforma Com. Local ($)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.platformFeeLocal} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, platformFeeLocal: Number(e.target.value)}})} className="w-full p-2 bg-white border border-stone-200 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-stone-700">Com. Foránea ($)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.platformFeeForaneo} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, platformFeeForaneo: Number(e.target.value)}})} className="w-full p-2 bg-white border border-stone-200 rounded-lg text-sm font-bold" />
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm font-bold text-stone-800">Costo por KM</p>
-                                                <p className="text-xs text-stone-500">Tarifa adicional por distancia</p>
+
+                                        <div className="bg-blue-50 p-4 rounded-xl space-y-4 border border-blue-100">
+                                            <h4 className="font-bold text-xs text-blue-500 uppercase tracking-widest border-b border-blue-200 pb-2">Tarifa Día (Normal)</h4>
+                                            
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-blue-700">Base Local ($)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.localBaseDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localBaseDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-blue-700">Base Foráneo ($)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.foraneoBaseDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoBaseDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-blue-700">+ Extra / 100m Local</p>
+                                                    <input type="number" value={localConfig.deliveryRates.localExtraPer100mDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localExtraPer100mDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-blue-700">+ Extra / 1km Foráneo</p>
+                                                    <input type="number" value={localConfig.deliveryRates.foraneoExtraPerKmDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoExtraPerKmDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold" />
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold text-stone-400">$</span>
-                                                <input 
-                                                    type="number" 
-                                                    value={localConfig.feePerKm} 
-                                                    onChange={(e) => setLocalConfig({...localConfig, feePerKm: Number(e.target.value)})}
-                                                    className="w-20 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
-                                                />
+                                        </div>
+
+                                        <div className="bg-indigo-950 p-4 rounded-xl space-y-4 border border-indigo-900">
+                                            <h4 className="font-bold text-xs text-indigo-400 uppercase tracking-widest border-b border-indigo-800 pb-2">Tarifa Noche</h4>
+                                            
+                                            <div className="flex gap-4">
+                                                <div className="flex-1">
+                                                    <p className="text-[10px] font-bold text-indigo-300">Inicia (Hr)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.nightStartHour} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, nightStartHour: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-[10px] font-bold text-indigo-300">Termina (Hr)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.nightEndHour} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, nightEndHour: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-indigo-300">Base Local Noche ($)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.localBaseNight} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localBaseNight: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-indigo-300">Base Foráneo Noche ($)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.foraneoBaseNight} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoBaseNight: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-indigo-300">+ Extra / 100m Noche</p>
+                                                    <input type="number" value={localConfig.deliveryRates.localExtraPer100mNight} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localExtraPer100mNight: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-indigo-300">+ Extra / 1km Noche</p>
+                                                    <input type="number" value={localConfig.deliveryRates.foraneoExtraPerKmNight} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoExtraPerKmNight: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                                )}
 
                                 <div className="p-4 border-b border-stone-100">
                                     <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">

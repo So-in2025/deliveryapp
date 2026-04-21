@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, calculateDynamicDeliveryDetails } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { MapSelector } from '../components/ui/MapSelector';
 import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order, UserRole } from '../types';
@@ -1136,8 +1136,8 @@ export const ClientView: React.FC = () => {
             const distance = await getRouteDistance({ lat: selectedStore.lat, lng: selectedStore.lng }, userCoords);
             if (distance > 0) {
                 setDistanceKm(distance);
-                const fee = config.baseDeliveryFee + (distance * config.feePerKm);
-                setDynamicDeliveryFee(Math.round(fee));
+                const details = calculateDynamicDeliveryDetails(distance, selectedStore.deliveryFee || config.baseDeliveryFee, config.driverCommissionPct, config.deliveryRates);
+                setDynamicDeliveryFee(details.deliveryFee);
             } else {
                 setDynamicDeliveryFee(selectedStore.deliveryFee || config.baseDeliveryFee);
             }
@@ -1437,7 +1437,7 @@ export const ClientView: React.FC = () => {
                 {orderType === OrderType.DELIVERY && (
                     <div className="flex justify-between text-sm">
                         <span className="text-white/60 dark:text-stone-500 font-bold">Costo de Envío</span>
-                        <span className="font-black">{formatCurrency(deliveryFee)}</span>
+                        <span className="font-black">{formatCurrency(dynamicDeliveryFee)}</span>
                     </div>
                 )}
                 {tip > 0 && (
@@ -1465,6 +1465,16 @@ export const ClientView: React.FC = () => {
                     </div>
                 )}
              </div>
+
+             {/* Dynamic Pricing Disclaimer */}
+             {orderType === OrderType.DELIVERY && (
+                 <div className="mt-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 p-3 rounded-xl flex items-start gap-2 text-xs">
+                     <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                     <p className="text-amber-700 dark:text-amber-400">
+                         <strong>Tarifa Dinámica y Clima:</strong> La tarifa se calcula según distancia y hora. En lluvias o condiciones extremas, el repartidor puede reservarse el derecho de aceptar el viaje.
+                     </p>
+                 </div>
+             )}
 
              <div className="mt-8 pt-8 border-t-4 border-white/10 dark:border-stone-100 flex justify-between items-center">
                <span className="font-black text-2xl tracking-tighter uppercase">Total</span>

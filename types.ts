@@ -202,6 +202,23 @@ export interface AppNotification {
     orderId?: string;
 }
 
+export interface DeliveryRatesConfig {
+  localRadiusKm: number;
+  baseDistanceKm: number;
+  localBaseDay: number;
+  localBaseNight: number;
+  localExtraPer100mDay: number;
+  localExtraPer100mNight: number;
+  foraneoBaseDay: number;
+  foraneoBaseNight: number;
+  foraneoExtraPerKmDay: number;
+  foraneoExtraPerKmNight: number;
+  nightStartHour: number;
+  nightEndHour: number;
+  platformFeeLocal: number;
+  platformFeeForaneo: number;
+}
+
 export interface GlobalConfig {
   platformCommissionPct: number; // e.g., 0.15 for 15%
   driverCommissionPct: number; // e.g., 0.80 for 80% of delivery fee
@@ -217,6 +234,7 @@ export interface GlobalConfig {
   referralDiscountPct: number; // New: e.g., 0.05 for 5% off for the new user
   firstPurchaseDiscountPct: number; // New: e.g., 0.20 for 20% off
   adminEmails: string[]; // New: For UI visibility of Admin Panel
+  deliveryRates?: DeliveryRatesConfig; // New: Dynamic pricing parameters
 }
 
 export interface ChatMessage {

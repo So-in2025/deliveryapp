@@ -185,16 +185,18 @@ export const SettingsOverlay: React.FC = () => {
         const tAddress = merchantReg.address.trim();
         const tPhone = merchantReg.phone.trim();
 
-        if (!tName || !tTaxId || !tClabe || !merchantReg.bankName || !tAddress || !tPhone) {
+        if (!tName || !tClabe || !merchantReg.bankName || !tAddress || !tPhone) {
             showToast('Por favor completa todos los campos obligatorios', 'error');
             return;
         }
 
-        // RFC Validation (13 chars: 4 letters, 6 numbers, 3 homoclave)
-        const rfcRegex = /^[A-Z]{4}[0-9]{6}[A-Z0-9]{3}$/i;
-        if (!rfcRegex.test(tTaxId)) {
-            showToast('RFC inválido. Debe tener 13 caracteres (4 letras, 6 números, 3 homoclave)', 'error');
-            return;
+        // RFC Validation ONLY if provided (it is optional)
+        if (tTaxId.length > 0) {
+            const rfcRegex = /^[A-Z]{3,4}[0-9]{6}[A-Z0-9]{3}$/i; // Valid for Personas Físicas (4) y Morales (3)
+            if (!rfcRegex.test(tTaxId)) {
+                showToast('RFC inválido. Debe tener 12 o 13 caracteres, o déjelo vacío.', 'error');
+                return;
+            }
         }
 
         // CLABE Validation (18 digits)
@@ -280,11 +282,11 @@ export const SettingsOverlay: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">RFC (13 Caracteres) *</label>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">RFC (Opcional)</label>
                     <input 
                         placeholder="Ej. ABCD900101XYZ" 
                         maxLength={13}
-                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
+                        className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500 uppercase"
                         value={merchantReg.taxId}
                         onChange={e => setMerchantReg({...merchantReg, taxId: e.target.value})}
                     />

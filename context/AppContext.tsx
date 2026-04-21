@@ -9,6 +9,67 @@ import { useAuth } from './AuthContext';
 import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage, getDocs } from '../firebase';
 import { io, Socket } from 'socket.io-client';
 
+export const calculateDynamicDeliveryDetails = (distanceKm: number | null, fallbackFee: number, fallbackCommissionPct: number, rates?: DeliveryRatesConfig) => {
+    if (distanceKm && distanceKm > 0) {
+        // Fallback to hardcoded defaults if config is missing (for backward compatibility before admin configures it)
+        const localRadius = rates?.localRadiusKm ?? 5;
+        const nightStart = rates?.nightStartHour ?? 22;
+        const nightEnd = rates?.nightEndHour ?? 6;
+        
+        // Enforce Mexico City timezone for accurate night fare calculations
+        const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Mexico_City',
+            hour: 'numeric',
+            hourCycle: 'h23',
+        });
+        const currentHour = parseInt(formatter.format(new Date()), 10);
+        
+        // Night shift checking
+        const isNight = currentHour >= nightStart || currentHour < nightEnd;
+        
+        const isLocal = distanceKm <= localRadius; 
+        const extraDistanceKm = Math.max(0, distanceKm - (rates?.baseDistanceKm ?? 2));
+
+        let fee = 0;
+        let driverCommission = 0;
+
+        if (isLocal) {
+            const chunkBase = rates?.localExtraPer100mDay ? 0.1 : 0.1; // Currently fixed at 100m chunks
+            const extraChunks = Math.ceil(extraDistanceKm / chunkBase); 
+
+            if (isNight) {
+                fee = (rates?.localBaseNight ?? 30) + (extraChunks * (rates?.localExtraPer100mNight ?? 2));
+            } else {
+                fee = (rates?.localBaseDay ?? 20) + (extraChunks * (rates?.localExtraPer100mDay ?? 1));
+            }
+            driverCommission = rates?.platformFeeLocal ?? 5;
+        } else {
+            const extraChunks = Math.ceil(extraDistanceKm); // 1km chunks
+
+            if (isNight) {
+                fee = (rates?.foraneoBaseNight ?? 40) + (extraChunks * (rates?.foraneoExtraPerKmNight ?? 5));
+            } else {
+                fee = (rates?.foraneoBaseDay ?? 20) + (extraChunks * (rates?.foraneoExtraPerKmDay ?? 5));
+            }
+            driverCommission = rates?.platformFeeForaneo ?? 10;
+        }
+
+        const calculatedFee = Math.round(fee);
+        return {
+            deliveryFee: calculatedFee,
+            driverEarnings: Math.max(0, calculatedFee - driverCommission),
+            driverCommission: driverCommission
+        };
+    }
+    
+    // Fallback if no valid geographic coordinates
+    return { 
+        deliveryFee: fallbackFee, 
+        driverEarnings: fallbackFee * fallbackCommissionPct,
+        driverCommission: fallbackFee - (fallbackFee * fallbackCommissionPct)
+    };
+};
+
 // App Context Type and Provider
 interface AppContextType {
   role: UserRole;
@@ -210,7 +271,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     referralRewardAmount: 500, // $500 reward
     referralDiscountPct: 0.05, // 5% off for the new user
     firstPurchaseDiscountPct: 0.20, // 20% off
-    adminEmails: [] // Managed via Firestore Console
+    adminEmails: [], // Managed via Firestore Console
+    deliveryRates: {
+        localRadiusKm: 5,
+        baseDistanceKm: 2,
+        localBaseDay: 20,
+        localBaseNight: 30,
+        localExtraPer100mDay: 1,
+        localExtraPer100mNight: 2,
+        foraneoBaseDay: 20,
+        foraneoBaseNight: 40,
+        foraneoExtraPerKmDay: 5,
+        foraneoExtraPerKmNight: 5,
+        nightStartHour: 22,
+        nightEndHour: 6,
+        platformFeeLocal: 5,
+        platformFeeForaneo: 10
+    }
   });
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
@@ -955,7 +1032,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Dynamic Delivery Fee Logic
     const store = stores.find(s => s.id === storeId);
-    const deliveryFee = type === OrderType.DELIVERY ? (store?.deliveryFee ?? config.baseDeliveryFee) : 0;
+    let deliveryFee = 0;
+    let driverEarnings = 0;
+    let theDriverCommission = 0;
+    
+    if (type === OrderType.DELIVERY) {
+        const fallbackFee = store?.deliveryFee ?? config.baseDeliveryFee;
+        let activeDistance = 0;
+        
+        if (coordinates && store?.lat && store?.lng) {
+            activeDistance = await getRouteDistance({ lat: store.lat, lng: store.lng }, coordinates);
+        }
+        
+        const details = calculateDynamicDeliveryDetails(activeDistance, fallbackFee, config.driverCommissionPct, config.deliveryRates);
+        deliveryFee = details.deliveryFee;
+        driverEarnings = details.driverEarnings;
+        theDriverCommission = details.driverCommission;
+    }
     
     // Retention Logic: First Purchase & Referral
     let firstPurchaseDiscount = 0;
@@ -974,9 +1067,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Commissions Calculation: Use store-specific commission if available, otherwise global
     const storeCommissionPct = store?.commissionPct ?? config.platformCommissionPct;
-    const platformCommission = subtotal * storeCommissionPct;
-    const driverEarnings = deliveryFee * config.driverCommissionPct;
-    const merchantEarnings = subtotal - platformCommission;
+    const foodPlatformCommission = subtotal * storeCommissionPct;
+    // Platform earns the food commission plus the fixed driver commission amount
+    const platformCommission = foodPlatformCommission + theDriverCommission;
+    const merchantEarnings = subtotal - foodPlatformCommission;
     
     const orderId = `ord-${Date.now()}`;
     const newOrder: Partial<Order> = {
