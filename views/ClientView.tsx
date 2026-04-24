@@ -1508,7 +1508,7 @@ export const ClientView: React.FC = () => {
               <h2 className="text-2xl font-black dark:text-white tracking-tight">Mis Pedidos</h2>
           </div>
           
-          <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-4xl lg:mx-auto lg:w-full">
+          <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:w-full">
               {pastOrders.length === 0 ? (
                   <div className="text-center py-20">
                       <div className="w-24 h-24 bg-stone-100 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-inner dark:bg-stone-800">
@@ -1624,7 +1624,7 @@ export const ClientView: React.FC = () => {
               <h2 className="text-2xl font-black dark:text-white tracking-tight">Mis Favoritos</h2>
           </div>
           
-          <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-5xl lg:mx-auto lg:w-full">
+          <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:w-full">
               {favoriteStores.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
                       <div className="w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-[2.5rem] flex items-center justify-center text-red-500 shadow-inner">
@@ -1683,7 +1683,7 @@ export const ClientView: React.FC = () => {
               <h2 className="text-2xl font-black dark:text-white tracking-tight">Mi Perfil</h2>
           </div>
           
-          <div className="p-6 space-y-8 flex-1 overflow-y-auto pb-24 lg:max-w-4xl lg:mx-auto lg:w-full">
+          <div className="p-6 space-y-8 flex-1 overflow-y-auto pb-24 lg:w-full">
               {/* Profile Header */}
               <div className="flex flex-col items-center py-8">
                   <div className="relative group">
@@ -2018,7 +2018,7 @@ export const ClientView: React.FC = () => {
 
     return (
       <div className="animate-fade-in relative pb-40 bg-stone-50 dark:bg-stone-950 min-h-screen" style={storeStyle}>
-        <div className="relative h-72 w-full bg-stone-900 lg:h-[30rem] lg:rounded-b-[4rem] overflow-hidden lg:max-w-[90rem] lg:mx-auto lg:mt-6 lg:shadow-2xl">
+        <div className="relative h-72 w-full bg-stone-900 lg:h-[30rem] lg:rounded-b-[4rem] overflow-hidden lg:w-full lg:shadow-2xl">
             <LazyImage src={selectedStore?.image} alt={selectedStore?.name} className="w-full h-full object-cover scale-105 hover:scale-100 transition-transform duration-2000 ease-out" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent"></div>
             <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent"></div>
@@ -2046,7 +2046,7 @@ export const ClientView: React.FC = () => {
             </div>
         </div>
 
-        <div className="px-6 -mt-8 relative z-30 lg:max-w-5xl lg:mx-auto lg:-mt-12">
+        <div className="px-6 -mt-8 relative z-30 lg:w-full lg:px-12 lg:-mt-12">
             <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-3xl rounded-[3rem] p-8 shadow-2xl shadow-black/10 border border-black/[0.03] dark:border-white/[0.03] flex flex-wrap items-center justify-between gap-8">
                 <div className="flex items-center gap-8">
                     <div className="flex flex-col">
@@ -2074,7 +2074,7 @@ export const ClientView: React.FC = () => {
             </div>
         </div>
 
-        <div className="p-6 space-y-12 lg:max-w-5xl lg:mx-auto lg:p-12">
+        <div className="p-6 space-y-12 lg:w-full lg:p-12">
             {['Más vendidos', 'Entradas', 'Platos Principales', 'Bebidas'].map((categoryName) => {
                 const products = selectedStore?.products || [];
                 if (categoryName !== 'Más vendidos') return null; 
@@ -2214,7 +2214,7 @@ export const ClientView: React.FC = () => {
          clientViewState === 'FAVORITES' ? <FavoritesView /> :
          clientViewState === 'PROFILE' ? <ProfileView /> :
          selectedStore ? <StoreDetail /> : (
-            <div className="h-full flex flex-col lg:max-w-7xl lg:mx-auto lg:w-full">
+            <div className="h-full flex flex-col lg:w-full lg:px-8">
                 {StoreList()}
                 <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
                     {BannerCarousel()}

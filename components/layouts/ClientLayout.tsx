@@ -152,7 +152,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
           </header>
 
           <main className="flex-1 overflow-y-auto scrollbar-hide relative pb-safe lg:pb-0">
-            <div className="w-full h-full lg:max-w-6xl lg:mx-auto">
+            <div className="w-full h-full">
                 {children}
             </div>
           </main>

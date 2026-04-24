@@ -90,7 +90,7 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
     }, [orders]);
 
     return (
-        <div className="space-y-6 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+        <div className="space-y-6 px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
             <div className="flex bg-stone-100 p-1 rounded-xl border border-amber-300 dark:bg-stone-800 dark:border-stone-800">
                 <button 
                     onClick={() => setActiveSubTab('MERCHANTS')}
@@ -215,13 +215,21 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
         [OrderStatus.DISPUTED]: 'En Disputa',
     };
 
+    const roleLabels: Record<UserRole, string> = {
+        [UserRole.NONE]: 'Ninguno',
+        [UserRole.CLIENT]: 'Cliente',
+        [UserRole.MERCHANT]: 'Comercio',
+        [UserRole.DRIVER]: 'Repartidor',
+        [UserRole.ADMIN]: 'Admin',
+    };
+
     const filteredOrders = useMemo(() => {
         if (statusFilter === 'ALL') return orders;
         return orders.filter(o => o.status === statusFilter);
     }, [orders, statusFilter]);
 
     return (
-        <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+        <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                 <button 
                     onClick={() => setStatusFilter('ALL')}
@@ -296,7 +304,7 @@ const BannersManagementTab = ({
     };
 
     return (
-        <div className="space-y-6 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+        <div className="space-y-6 px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
             <div className="flex justify-between items-center bg-white dark:bg-stone-900 p-4 rounded-xl border border-amber-200 dark:border-stone-800 shadow-sm transition-colors">
                 <div>
                     <h3 className="text-lg font-black text-stone-900 dark:text-white uppercase tracking-tighter">Promociones Globales</h3>
@@ -556,9 +564,9 @@ export const AdminView: React.FC = () => {
 
   const renderDashboardTab = () => (
     <div className="space-y-6 animate-fade-in pb-20">
-      <div id="admin-stats" className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 pt-2 lg:max-w-7xl lg:mx-auto lg:w-full">
+      <div id="admin-stats" className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 pt-2 lg:w-full lg:px-8">
         <KpiCard 
-          title="Revenue Global" 
+          title="Ingresos Globales" 
           value={formatCurrency(kpis.totalSales)}
           sub={`${kpis.completedOrders} pedidos finalizados`}
           icon={DollarSign}
@@ -588,7 +596,7 @@ export const AdminView: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:max-w-7xl lg:mx-auto lg:w-full">
+      <div className="px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:w-full lg:px-8">
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-stone-900 flex items-center gap-2 dark:text-white">
@@ -663,7 +671,7 @@ export const AdminView: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-4 lg:max-w-7xl lg:mx-auto lg:w-full">
+      <div className="px-4 lg:w-full lg:px-8">
         <h3 className="font-bold text-stone-900 mb-3 flex items-center gap-2 dark:text-white">
           <Activity size={18} className="text-brand-800" /> Actividad en Vivo
         </h3>
@@ -701,7 +709,7 @@ export const AdminView: React.FC = () => {
       );
 
       return (
-          <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+          <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
                <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-start gap-3 lg:mb-6">
                    <AlertTriangle size={20} className="text-amber-600 mt-0.5" />
                    <div>
@@ -866,7 +874,7 @@ export const AdminView: React.FC = () => {
   };
 
   const renderStoresTab = () => (
-    <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+    <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
       <div className="bg-white p-2 rounded-xl border border-amber-300 flex items-center gap-2 lg:max-w-md dark:bg-stone-900 dark:border-stone-800">
          <Search size={18} className="text-stone-400 ml-2" />
          <input 
@@ -939,17 +947,17 @@ export const AdminView: React.FC = () => {
                           <p className="text-xs font-bold text-stone-400 uppercase mb-3">Gestión de Rol</p>
                           <div className="flex flex-wrap justify-center gap-2">
                             {Object.values(UserRole).map(role => (
-                              <button
-                                key={role}
-                                onClick={() => {
-                                  updateAnyUser(userProfile.uid, { role });
-                                  showToast(`Rol actualizado a ${role}`, 'success');
-                                }}
-                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border ${userProfile.role === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-amber-300 hover:border-stone-400'} dark:text-stone-400 dark:border-stone-800`}
-                              >
-                                {role}
-                              </button>
-                            ))}
+                        <button
+                          key={role}
+                          onClick={() => {
+                            updateAnyUser(userProfile.uid, { role });
+                            showToast(`Rol actualizado a ${roleLabels[role]}`, 'success');
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border ${userProfile.role === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-amber-300 hover:border-stone-400'} dark:text-stone-400 dark:border-stone-800`}
+                        >
+                          {roleLabels[role]}
+                        </button>
+                      ))}
                           </div>
                         </div>
                       )}
@@ -1033,7 +1041,7 @@ export const AdminView: React.FC = () => {
   };
 
   const renderUsersTab = () => (
-    <div className="px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+    <div className="px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
        <div className="flex flex-col lg:flex-row gap-4 mb-6">
           <div className="bg-white p-2 rounded-xl border border-amber-300 flex items-center gap-2 flex-1 dark:bg-stone-900 dark:border-stone-800">
             <Search size={18} className="text-stone-400 ml-2" />
@@ -1055,9 +1063,9 @@ export const AdminView: React.FC = () => {
                 <button 
                     key={role}
                     onClick={() => setRoleFilter(role)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${roleFilter === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-amber-300'} dark:text-stone-400`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${roleFilter === role ? 'bg-stone-900 text-white border-stone-900 dark:bg-brand-500 dark:text-brand-950 dark:border-brand-500' : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-amber-300'} dark:text-stone-400 dark:border-white/5`}
                 >
-                    {role}
+                    {roleLabels[role]}
                 </button>
             ))}
           </div>
@@ -1066,14 +1074,14 @@ export const AdminView: React.FC = () => {
        <div className="bg-white rounded-xl shadow-sm border border-amber-200 text-left overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:bg-transparent lg:shadow-none lg:border-0 dark:bg-stone-900 dark:border-stone-800">
            <div className="p-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center lg:hidden">
               <span className="text-xs font-bold text-stone-500 uppercase dark:text-stone-400">Lista de Usuarios ({userList.filter(u => roleFilter === 'ALL' || u.role === roleFilter).length})</span>
-           </div>
-           {userList
+            </div>
+            {userList
             .filter(u => roleFilter === 'ALL' || u.role === roleFilter)
             .map((u, i) => (
                <div 
                     key={u.uid || i} 
                     onClick={() => setSelectedUser(u.uid || u.name)}
-                    className="p-3 flex justify-between items-center border-b border-stone-50 last:border-0 hover:bg-stone-50 dark:hover:bg-stone-800/30 cursor-pointer active:bg-stone-100 transition-colors lg:bg-white lg:rounded-xl lg:border lg:border-amber-200 lg:shadow-sm"
+                    className="p-3 flex justify-between items-center border-b border-stone-50 last:border-0 hover:bg-stone-50 dark:hover:bg-stone-800/30 cursor-pointer active:bg-stone-100 transition-colors dark:border-white/5 lg:bg-white lg:dark:bg-stone-900/50 lg:rounded-xl lg:border lg:border-amber-200 lg:dark:border-white/5 lg:shadow-sm"
                 >
                    <div className="flex items-center gap-3">
                        <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-xs font-bold text-stone-600 dark:bg-stone-800 dark:text-stone-400">
@@ -1082,9 +1090,9 @@ export const AdminView: React.FC = () => {
                        <div>
                            <div className="flex items-center gap-2">
                              <p className="text-sm font-bold text-stone-900 dark:text-white">{u.name || 'Sin nombre'}</p>
-                             <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400">{u.role}</span>
+                             <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400">{roleLabels[u.role] || u.role}</span>
                              {u.role === UserRole.DRIVER && !u.isApprovedDriver && (
-                               <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-600">Pendiente</span>
+                               <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/20">Pendiente</span>
                              )}
                            </div>
                            <p className="text-[10px] text-stone-500 dark:text-stone-400">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>
@@ -1107,7 +1115,7 @@ export const AdminView: React.FC = () => {
     };
 
     return (
-        <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
+        <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
             {disputedOrders.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-2xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
                     <Shield size={40} className="mx-auto text-stone-300 mb-2" />
@@ -1150,7 +1158,7 @@ export const AdminView: React.FC = () => {
         selectedUser ? renderUserDetail() : (
             <>
                 <div className="bg-stone-950 text-white p-6 pt-safe-pt shadow-2xl z-10 sticky top-0 border-b border-white/5">
-                    <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
+                    <div className="lg:w-full lg:px-8">
                         <div className="flex justify-between items-center mb-6">
                             <div>
                                 <h1 className="text-3xl font-black flex items-center gap-3 tracking-tighter uppercase">
@@ -1207,7 +1215,7 @@ export const AdminView: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto pb-24">
-                    <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
+                    <div className="lg:w-full lg:px-8">
                         {adminViewState === 'DASHBOARD' && renderDashboardTab()}
                         {adminViewState === 'FLEET' && renderDispatchTab()}
                         {adminViewState === 'ORDERS' && <OrdersTab orders={orders} />}
@@ -1217,7 +1225,7 @@ export const AdminView: React.FC = () => {
                         {adminViewState === 'USERS' && renderUsersTab()}
                         {adminViewState === 'DISPUTES' && renderDisputesTab()}
                         {adminViewState === 'SETTINGS' && (
-                            <div className="p-6 space-y-8 animate-fade-in lg:max-w-4xl lg:mx-auto">
+                            <div className="p-6 space-y-8 animate-fade-in lg:w-full lg:px-8">
 
                             <div className="bg-white rounded-2xl shadow-sm border border-amber-200 overflow-hidden divide-y divide-stone-50 dark:bg-stone-900 dark:border-stone-800">
                                 <div className="p-4">
@@ -1421,20 +1429,29 @@ export const AdminView: React.FC = () => {
                                             />
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Modo de Pago</p>
-                                                <p className="text-xs text-stone-500 dark:text-stone-400">Centralizado (App) o Descentralizado (Comercio)</p>
+                                            <div className="flex-1 pr-4">
+                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100 flex items-center gap-2 group/tooltip relative cursor-help">
+                                                    Modo de Pago 
+                                                    <HelpCircle size={14} className="text-stone-400" />
+                                                    <div className="absolute bottom-full left-0 mb-2 w-72 bg-white dark:bg-stone-800 text-stone-950 dark:text-white text-[10px] p-4 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 transition-all pointer-events-none z-50 shadow-2xl border border-black/5 dark:border-white/10 translate-y-2 group-hover/tooltip:translate-y-0">
+                                                        <p className="font-black mb-1 border-b border-black/5 dark:border-white/5 pb-1 uppercase tracking-widest text-brand-600">Centralizado:</p>
+                                                        <p className="mb-3 font-medium opacity-80">La App centraliza los fondos. El cliente paga a la plataforma (vía Tarjeta/MercadoPago) y la plataforma liquida posteriormente a los comercios descontando comisiones de forma automática.</p>
+                                                        <p className="font-black mb-1 border-b border-black/5 dark:border-white/5 pb-1 uppercase tracking-widest text-blue-500">Descentralizado:</p>
+                                                        <p className="font-medium opacity-80">El cliente paga directo al comercio o repartidor (Efectivo/Transferencia). La App solo registra la orden. Los comercios deben pagar su comisión a la App manualmente.</p>
+                                                    </div>
+                                                </p>
+                                                <p className="text-xs text-stone-500 dark:text-stone-400">Define el flujo de dinero en la plataforma</p>
                                             </div>
                                             <div className="flex bg-stone-100 p-1 rounded-lg gap-1 dark:bg-stone-800">
                                                 <button 
                                                     onClick={() => setLocalConfig({...localConfig, paymentMode: 'CENTRALIZED'})}
-                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'CENTRALIZED' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700'} dark:text-white`}
+                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'CENTRALIZED' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700 dark:text-stone-400'} `}
                                                 >
                                                     Centralizado
                                                 </button>
                                                 <button 
                                                     onClick={() => setLocalConfig({...localConfig, paymentMode: 'DECENTRALIZED'})}
-                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'DECENTRALIZED' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700'} dark:text-white`}
+                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'DECENTRALIZED' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700 dark:text-stone-400'} `}
                                                 >
                                                     Descentralizado
                                                 </button>
@@ -1465,13 +1482,13 @@ export const AdminView: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-red-50 border border-red-100 p-4 rounded-2xl">
-                                <h4 className="text-red-800 font-bold text-sm mb-1">Zona de Peligro</h4>
-                                <p className="text-red-700 text-xs mb-3">Estas acciones son irreversibles y afectan a toda la plataforma.</p>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-100">Resetear Estadísticas</Button>
-                                    <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-100">Limpiar Caché Global</Button>
-                                </div>
+                            <div className="bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-white/5 p-5 rounded-3xl">
+                                <h4 className="text-red-800 dark:text-red-400 font-black text-sm mb-1 uppercase tracking-wider">Zona de Peligro</h4>
+                                <p className="text-red-700/70 dark:text-red-400/60 text-[10px] font-bold mb-4 uppercase tracking-[0.1em]">Estas acciones son irreversibles y afectan a toda la plataforma.</p>
+                                        <div className="flex gap-3">
+                                            <Button variant="outline" size="sm" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/50 dark:hover:bg-red-900/20 bg-white dark:bg-stone-900 font-black shadow-sm">Resetear Estadísticas</Button>
+                                            <Button variant="outline" size="sm" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/50 dark:hover:bg-red-900/20 bg-white dark:bg-stone-900 font-black shadow-sm">Limpiar Caché Global</Button>
+                                        </div>
                             </div>
                         </div>
                     )}

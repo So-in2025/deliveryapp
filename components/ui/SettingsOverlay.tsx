@@ -596,7 +596,7 @@ export const SettingsOverlay: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white">
-                                    {isDriverPending ? 'Driver en Revisión' : user.isApprovedDriver ? 'Ir a modo Driver' : 'Unirse como Driver'}
+                                    {isDriverPending ? 'Repartidor en Revisión' : user.isApprovedDriver ? 'Ir a modo Repartidor' : 'Unirse como Repartidor'}
                                 </p>
                                 <p className="text-[10px] text-stone-400 dark:text-stone-500">
                                     {isDriverPending 
@@ -625,7 +625,7 @@ export const SettingsOverlay: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white uppercase tracking-tight">
-                                    Acceso Staff / Admin
+                                    Acceso Personal / Admin
                                 </p>
                                 <p className="text-[10px] text-brand-600 dark:text-brand-400 font-bold uppercase tracking-widest">
                                     Gestión de Plataforma
@@ -646,7 +646,7 @@ export const SettingsOverlay: React.FC = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white uppercase tracking-tight">
-                                    Menu Principal (Hub)
+                                    Menú Principal (Inicio)
                                 </p>
                                 <p className="text-[10px] text-stone-400 dark:text-stone-500 italic">
                                     Regresar a Selección de Rol

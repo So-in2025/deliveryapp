@@ -46,14 +46,14 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 <Shield className="text-white" size={20} />
             </div>
             <div className="flex flex-col">
-                <span className="text-white font-bold text-sm tracking-tight">ADMIN CORE</span>
+                <span className="text-white font-bold text-sm tracking-tight">SISTEMA ADMIN</span>
                 <span className="text-stone-600 text-[10px] font-mono uppercase tracking-widest dark:text-stone-400">v1.0.4-stable</span>
             </div>
           </div>
           
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             <div id="dashboard-tab">
-                <DesktopNavItem icon={<Database />} label="Dashboard" active={adminViewState === 'DASHBOARD'} onClick={() => setAdminViewState('DASHBOARD')} />
+                <DesktopNavItem icon={<Database />} label="Tablero" active={adminViewState === 'DASHBOARD'} onClick={() => setAdminViewState('DASHBOARD')} />
             </div>
             <div id="users-tab">
                 <DesktopNavItem icon={<Users />} label="Usuarios" active={adminViewState === 'USERS'} onClick={() => setAdminViewState('USERS')} />
@@ -93,7 +93,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <div id="profile-tab">
                 <DesktopNavItem icon={<User />} label="Perfil" active={false} onClick={toggleSettings} />
             </div>
-            <DesktopNavItem icon={<LogOut />} label="Logout" active={false} onClick={handleSignOut} isDanger />
+            <DesktopNavItem icon={<LogOut />} label="Cerrar Sesión" active={false} onClick={handleSignOut} isDanger />
           </div>
         </aside>
 
