@@ -286,13 +286,13 @@ export const DriverView: React.FC = () => {
                     </p>
                 </div>
             </div>
-            <div id="earnings-card" className="bg-stone-100 dark:bg-stone-700 p-2 rounded-lg flex items-center gap-1 border border-stone-200 dark:border-stone-600">
+            <div id="earnings-card" className="bg-stone-100 dark:bg-stone-700 p-2 rounded-lg flex items-center gap-1 border border-amber-300 dark:border-stone-600">
                 <DollarSign size={16} className="text-brand-950 dark:text-brand-400" />
                 <span className="font-bold text-stone-900 dark:text-white">{formatCurrency(totalEarnings)}</span>
             </div>
         </div>
         
-        <div className="flex p-1 bg-stone-100 dark:bg-stone-700/50 rounded-xl border border-stone-200 dark:border-stone-700 lg:max-w-2xl lg:mx-auto lg:justify-center">
+        <div className="flex p-1 bg-stone-100 dark:bg-stone-700/50 rounded-xl border border-amber-300 dark:border-stone-700 lg:max-w-2xl lg:mx-auto lg:justify-center">
             <button 
                 id="deliveries-tab"
                 onClick={() => setDriverViewState('DELIVERIES')}
@@ -363,7 +363,7 @@ export const DriverView: React.FC = () => {
                             const estTime = Math.floor(parseInt(order.id.slice(-1), 16) % 15 + 20);
 
                             return (
-                                <div key={order.id} className="bg-white dark:bg-stone-800 rounded-2xl p-5 shadow-md border border-stone-200 dark:border-stone-700 relative overflow-hidden group h-full flex flex-col justify-between hover:shadow-lg transition-all duration-300">
+                                <div key={order.id} className="bg-white dark:bg-stone-800 rounded-2xl p-5 shadow-md border border-amber-300 dark:border-stone-700 relative overflow-hidden group h-full flex flex-col justify-between hover:shadow-lg transition-all duration-300">
                                     
                                     <div className="relative z-10 flex-1 flex flex-col">
                                         <div className="flex justify-between items-start mb-4">
@@ -384,7 +384,7 @@ export const DriverView: React.FC = () => {
                                         </div>
 
                                         {/* Quick Stats Grid */}
-                                        <div className="grid grid-cols-3 gap-2 mb-6 p-3 bg-stone-50 dark:bg-stone-900/50 rounded-2xl border border-stone-100 dark:border-stone-700/50">
+                                        <div className="grid grid-cols-3 gap-2 mb-6 p-3 bg-stone-50 dark:bg-stone-900/50 rounded-2xl border border-amber-200 dark:border-stone-700/50">
                                             <div className="text-center">
                                                 <p className="text-[9px] uppercase font-bold text-stone-400 dark:text-stone-500 mb-0.5">Al Local</p>
                                                 <div className="flex items-center justify-center gap-1">
@@ -392,7 +392,7 @@ export const DriverView: React.FC = () => {
                                                     <p className="font-bold text-sm text-stone-900 dark:text-white">{distToStore} km</p>
                                                 </div>
                                             </div>
-                                            <div className="text-center border-x border-stone-200 dark:border-stone-700/50 px-1">
+                                            <div className="text-center border-x border-amber-300 dark:border-stone-700/50 px-1">
                                                 <p className="text-[9px] uppercase font-bold text-stone-400 dark:text-stone-500 mb-0.5">Al Cliente</p>
                                                 <div className="flex items-center justify-center gap-1">
                                                     <Truck size={10} className="text-stone-400" />
@@ -409,7 +409,7 @@ export const DriverView: React.FC = () => {
                                         </div>
                                         
                                         {/* Route Visualization */}
-                                        <div className="relative pl-5 space-y-6 border-l-2 border-dashed border-stone-200 dark:border-stone-700 ml-2.5 mb-6 flex-1">
+                                        <div className="relative pl-5 space-y-6 border-l-2 border-dashed border-amber-300 dark:border-stone-700 ml-2.5 mb-6 flex-1">
                                             {/* Pickup */}
                                             <div className="relative">
                                                 <div className="absolute -left-[27px] top-1 w-4 h-4 rounded-full bg-white dark:bg-stone-800 border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center">
@@ -436,7 +436,7 @@ export const DriverView: React.FC = () => {
                                 <div className="flex gap-3 mt-auto">
                                             <Button 
                                                 variant="secondary" 
-                                                className="flex-1 font-bold bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-600"
+                                                className="flex-1 font-bold bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 border border-amber-300 dark:border-stone-600"
                                                 onClick={() => setSelectedTask(order)}
                                             >
                                                 <Eye size={16} className="mr-2" /> Detalles
@@ -491,7 +491,7 @@ export const DriverView: React.FC = () => {
             )}
 
                 {/* GPS Simulation Section */}
-                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-100 dark:border-stone-700 p-4 shadow-sm">
+                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-amber-200 dark:border-stone-700 p-4 shadow-sm">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-stone-900 dark:text-white flex items-center gap-2">
                             <MapPin size={18} className="text-brand-500" /> GPS en Tiempo Real
@@ -506,14 +506,14 @@ export const DriverView: React.FC = () => {
                         variant={isSimulating ? "secondary" : "primary"} 
                         fullWidth 
                         onClick={() => setIsSimulating(!isSimulating)}
-                        className={isSimulating ? "bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-600 mb-4" : "bg-brand-500 text-brand-950 font-black mb-4"}
+                        className={isSimulating ? "bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 border border-amber-300 dark:border-stone-600 mb-4" : "bg-brand-500 text-brand-950 font-black mb-4"}
                     >
                         {isSimulating ? "Detener Navegación" : "Iniciar Navegación GPS"}
                     </Button>
                 </div>
 
              {myTasks.length === 0 ? (
-                 <div className="text-center py-20 bg-white dark:bg-stone-800 rounded-3xl border border-dashed border-stone-200 dark:border-stone-700">
+                 <div className="text-center py-20 bg-white dark:bg-stone-800 rounded-3xl border border-dashed border-amber-300 dark:border-stone-700">
                      <div className="w-16 h-16 bg-stone-100 dark:bg-stone-700 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Navigation size={32} className="text-stone-300 dark:text-stone-600" />
                      </div>
@@ -542,10 +542,10 @@ export const DriverView: React.FC = () => {
                        }
 
                        return (
-                     <div key={task.id} className="bg-white dark:bg-stone-800 rounded-3xl shadow-xl border border-stone-100 dark:border-stone-700 overflow-hidden h-full flex flex-col group hover:border-brand-500/30 transition-all duration-500">
+                     <div key={task.id} className="bg-white dark:bg-stone-800 rounded-3xl shadow-xl border border-amber-200 dark:border-stone-700 overflow-hidden h-full flex flex-col group hover:border-brand-500/30 transition-all duration-500">
                        
                        {/* Interactive Navigation Interface */}
-                       <div className="h-56 bg-stone-200 dark:bg-stone-700 relative border-b border-stone-100 dark:border-stone-700 shrink-0 overflow-hidden z-0">
+                       <div className="h-56 bg-stone-200 dark:bg-stone-700 relative border-b border-amber-200 dark:border-stone-700 shrink-0 overflow-hidden z-0">
                             <div className="absolute inset-0 z-0">
                                 <DriverTrackingMap 
                                     driverLat={driverLocation.lat}
@@ -633,7 +633,7 @@ export const DriverView: React.FC = () => {
                             </div>
                          </div>
          
-                         <div className="space-y-8 relative pl-6 border-l-2 border-stone-100 dark:border-stone-700 ml-2 mb-8 flex-1">
+                         <div className="space-y-8 relative pl-6 border-l-2 border-amber-200 dark:border-stone-700 ml-2 mb-8 flex-1">
                            {/* Pickup Point */}
                            <div className={`relative z-10 transition-all duration-500 ${task.status !== OrderStatus.DRIVER_ASSIGNED ? 'opacity-30 scale-95' : 'scale-100'}`}>
                              <div className={`absolute -left-[33px] top-1 w-6 h-6 rounded-full border-4 border-white dark:border-stone-800 shadow-sm flex items-center justify-center ${task.status !== OrderStatus.DRIVER_ASSIGNED ? 'bg-stone-300' : 'bg-stone-900 dark:bg-stone-100'}`}>
@@ -644,10 +644,10 @@ export const DriverView: React.FC = () => {
                                <p className="text-base font-black text-stone-900 dark:text-white mt-0.5">{task.storeName}</p>
                                {task.status === OrderStatus.DRIVER_ASSIGNED && (
                                    <div className="flex gap-2 mt-3">
-                                       <Button size="sm" variant="secondary" className="flex-1 h-10 text-[10px] font-black uppercase tracking-wider bg-stone-100 dark:bg-stone-700 border-stone-200 dark:border-stone-600" onClick={() => window.open(`https://waze.com/ul?q=${encodeURIComponent(task.storeName)}`, '_blank')}>
+                                       <Button size="sm" variant="secondary" className="flex-1 h-10 text-[10px] font-black uppercase tracking-wider bg-stone-100 dark:bg-stone-700 border-amber-300 dark:border-stone-600" onClick={() => window.open(`https://waze.com/ul?q=${encodeURIComponent(task.storeName)}`, '_blank')}>
                                            <Navigation size={14} className="mr-2" /> Waze
                                        </Button>
-                                       <Button size="sm" variant="secondary" className="flex-1 h-10 text-[10px] font-black uppercase tracking-wider bg-stone-100 dark:bg-stone-700 border-stone-200 dark:border-stone-600" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.storeName)}`, '_blank')}>
+                                       <Button size="sm" variant="secondary" className="flex-1 h-10 text-[10px] font-black uppercase tracking-wider bg-stone-100 dark:bg-stone-700 border-amber-300 dark:border-stone-600" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.storeName)}`, '_blank')}>
                                            <MapPin size={14} className="mr-2" /> Maps
                                        </Button>
                                    </div>
@@ -665,10 +665,10 @@ export const DriverView: React.FC = () => {
                                <p className="text-base font-black text-stone-900 dark:text-white mt-0.5">{task.address}</p>
                                {task.status === OrderStatus.PICKED_UP && (
                                    <div className="flex gap-2 mt-3">
-                                       <Button size="sm" variant="secondary" className="flex-1 h-10 text-[10px] font-black uppercase tracking-wider bg-stone-100 dark:bg-stone-700 border-stone-200 dark:border-stone-600" onClick={() => window.open(`https://waze.com/ul?q=${encodeURIComponent(task.address)}`, '_blank')}>
+                                       <Button size="sm" variant="secondary" className="flex-1 h-10 text-[10px] font-black uppercase tracking-wider bg-stone-100 dark:bg-stone-700 border-amber-300 dark:border-stone-600" onClick={() => window.open(`https://waze.com/ul?q=${encodeURIComponent(task.address)}`, '_blank')}>
                                            <Navigation size={14} className="mr-2" /> Waze
                                        </Button>
-                                       <Button size="sm" variant="secondary" className="flex-1 h-10 text-[10px] font-black uppercase tracking-wider bg-stone-100 dark:bg-stone-700 border-stone-200 dark:border-stone-600" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.address)}`, '_blank')}>
+                                       <Button size="sm" variant="secondary" className="flex-1 h-10 text-[10px] font-black uppercase tracking-wider bg-stone-100 dark:bg-stone-700 border-amber-300 dark:border-stone-600" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.address)}`, '_blank')}>
                                            <MapPin size={14} className="mr-2" /> Maps
                                        </Button>
                                    </div>
@@ -714,14 +714,14 @@ export const DriverView: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-stone-100 dark:border-stone-700 shadow-sm">
+                    <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-amber-200 dark:border-stone-700 shadow-sm">
                         <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center mb-4">
                             <DollarSign className="text-green-500" size={20} />
                         </div>
                         <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Propinas</p>
                         <p className="text-2xl font-black text-stone-900 dark:text-white">{formatCurrency(tipEarnings)}</p>
                     </div>
-                    <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-stone-100 dark:border-stone-700 shadow-sm">
+                    <div className="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-amber-200 dark:border-stone-700 shadow-sm">
                         <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/200/10 rounded-xl flex items-center justify-center mb-4">
                             <Bike className="text-blue-500" size={20} />
                         </div>
@@ -730,8 +730,8 @@ export const DriverView: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-stone-800 rounded-3xl border border-stone-100 dark:border-stone-700 overflow-hidden shadow-sm">
-                    <div className="p-6 border-b border-stone-100 dark:border-stone-700 flex justify-between items-center">
+                <div className="bg-white dark:bg-stone-800 rounded-3xl border border-amber-200 dark:border-stone-700 overflow-hidden shadow-sm">
+                    <div className="p-6 border-b border-amber-200 dark:border-stone-700 flex justify-between items-center">
                         <h3 className="font-black text-stone-900 dark:text-white uppercase tracking-widest text-sm">Últimos Pagos</h3>
                         <button className="text-brand-600 text-xs font-bold">Ver Todo</button>
                     </div>
@@ -744,7 +744,7 @@ export const DriverView: React.FC = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm font-bold text-stone-900 dark:text-white">{order.storeName}</p>
-                                        <p className="text-[10px] text-stone-500 uppercase font-bold">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                        <p className="text-[10px] text-stone-500 uppercase font-bold dark:text-stone-400">{new Date(order.createdAt).toLocaleDateString()}</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -767,7 +767,7 @@ export const DriverView: React.FC = () => {
                  </div>
              ) : (
                  <div className="space-y-4 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-6 lg:space-y-0">
-                     <div className="bg-white dark:bg-stone-800 p-4 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm flex justify-between items-center lg:col-span-2 xl:col-span-3 lg:mb-4">
+                     <div className="bg-white dark:bg-stone-800 p-4 rounded-xl border border-amber-300 dark:border-stone-700 shadow-sm flex justify-between items-center lg:col-span-2 xl:col-span-3 lg:mb-4">
                          <div>
                              <p className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase">Ganancias Totales</p>
                              <p className="text-2xl font-bold text-brand-950 dark:text-brand-400">{formatCurrency(totalEarnings)}</p>
@@ -778,7 +778,7 @@ export const DriverView: React.FC = () => {
                          </div>
                      </div>
                      {myHistory.map(task => (
-                         <div key={task.id} className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 p-4">
+                         <div key={task.id} className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-amber-300 dark:border-stone-700 p-4">
                              <div className="flex justify-between items-start mb-3">
                                  <div>
                                      <p className="font-bold text-stone-900 dark:text-white">{task.storeName}</p>
@@ -813,14 +813,14 @@ export const DriverView: React.FC = () => {
                     <p className="text-stone-500 dark:text-stone-400 max-w-xs mx-auto">Configura tus opciones de seguridad y revisa tu perfil de repartidor.</p>
                 </div>
 
-                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-100 dark:border-stone-700 p-4 shadow-sm">
+                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-amber-200 dark:border-stone-700 p-4 shadow-sm">
                     <h3 className="font-bold text-stone-900 dark:text-white mb-4">Vehículo de Entrega</h3>
                     <div className="grid grid-cols-3 gap-3">
                         {(['MOTO', 'BICI', 'AUTO'] as const).map(type => (
                             <button 
                                 key={type}
                                 onClick={() => setVehicleType(type)}
-                                className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${vehicleType === type ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 text-brand-900 dark:text-brand-100 ring-2 ring-brand-500/20' : 'border-stone-200 dark:border-stone-700 text-stone-500 dark:text-stone-400 hover:border-brand-300'}`}
+                                className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${vehicleType === type ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 text-brand-900 dark:text-brand-100 ring-2 ring-brand-500/20' : 'border-amber-300 dark:border-stone-700 text-stone-500 dark:text-stone-400 hover:border-brand-300'}`}
                             >
                                 {type === 'MOTO' && <Bike size={24} />}
                                 {type === 'BICI' && <Bike size={24} className="rotate-12" />}
@@ -831,7 +831,7 @@ export const DriverView: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-100 dark:border-stone-700 p-4 shadow-sm">
+                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-amber-200 dark:border-stone-700 p-4 shadow-sm">
                     <h3 className="font-bold text-stone-900 dark:text-white mb-4">Preferencias</h3>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -843,13 +843,13 @@ export const DriverView: React.FC = () => {
                                 onClick={toggleSound}
                                 className={`w-12 h-6 rounded-full transition-colors relative ${soundEnabled ? 'bg-brand-500' : 'bg-stone-200 dark:bg-stone-700'}`}
                             >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${soundEnabled ? 'right-1' : 'left-1'}`} />
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${soundEnabled ? 'right-1' : 'left-1'} dark:bg-stone-900`} />
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-100 dark:border-stone-700 p-4 shadow-sm">
+                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-amber-200 dark:border-stone-700 p-4 shadow-sm">
                     <h3 className="font-bold text-stone-900 dark:text-white mb-4">Seguridad</h3>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -871,7 +871,7 @@ export const DriverView: React.FC = () => {
       {selectedTask && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
             <div className="bg-white dark:bg-stone-900 w-full max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
-                <div className="p-4 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-stone-50 dark:bg-stone-800/50">
+                <div className="p-4 border-b border-amber-200 dark:border-stone-800 flex justify-between items-center bg-stone-50 dark:bg-stone-800/50">
                     <div>
                         <h3 className="font-bold dark:text-white">Detalle de Entrega</h3>
                         <p className="text-[10px] font-mono text-stone-400">#{selectedTask.id.slice(-6)}</p>
@@ -900,7 +900,7 @@ export const DriverView: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="bg-stone-50 dark:bg-stone-800/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700">
+                    <div className="bg-stone-50 dark:bg-stone-800/50 p-4 rounded-xl border border-amber-200 dark:border-stone-700">
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-stone-500 dark:text-stone-400">Método de Pago</span>
                             <span className="text-sm font-bold text-stone-900 dark:text-white">

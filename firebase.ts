@@ -184,4 +184,4 @@ export {
   type User
 };
 
-export { auth, db, messaging };
+export { auth, db, messaging, app };

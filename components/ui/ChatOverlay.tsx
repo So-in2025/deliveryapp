@@ -106,7 +106,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ orderId, isOpen, onClo
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Escribe un mensaje..."
-                  className="flex-1 bg-stone-100 dark:bg-white/5 border-none rounded-2xl px-5 py-4 text-sm font-bold text-stone-950 dark:text-white placeholder-stone-400 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                  className="flex-1 bg-stone-100 dark:bg-white/5 border-none rounded-2xl px-5 py-4 text-sm font-bold text-stone-950 dark:text-white placeholder-stone-400 focus:ring-2 focus:ring-brand-500/20 transition-all dark:bg-stone-800"
                 />
                 <button 
                   onClick={handleSend}

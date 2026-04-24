@@ -21,9 +21,9 @@ export const Button: React.FC<ButtonProps> = ({
   
   const variants = {
     primary: 'bg-brand-500 text-brand-950 hover:bg-brand-600 shadow-md shadow-brand-500/20',
-    // Added border-stone-200 and slightly darker text for better contrast against white backgrounds
-    secondary: 'bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-white border border-stone-200 dark:border-stone-700 hover:bg-stone-200 dark:hover:bg-stone-700',
-    outline: 'border-2 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white hover:bg-stone-50 dark:hover:bg-stone-800', // Darkened text
+    // Added border-amber-300 and slightly darker text for better contrast against white backgrounds
+    secondary: 'bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-white border border-amber-300 dark:border-stone-700 hover:bg-stone-200 dark:hover:bg-stone-700',
+    outline: 'border-2 border-amber-300 dark:border-stone-700 text-stone-900 dark:text-white hover:bg-stone-50 dark:hover:bg-stone-800', // Darkened text
     ghost: 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800', 
     danger: 'bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/20'
   };

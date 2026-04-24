@@ -30,13 +30,13 @@ interface KpiCardProps {
 }
 
 const KpiCard = ({ title, value, sub, icon: Icon, color }: KpiCardProps) => (
-  <div className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex items-start justify-between">
+  <div className="bg-white p-4 rounded-xl shadow-sm border border-amber-200 flex items-start justify-between dark:bg-stone-900 dark:border-stone-800">
     <div>
       <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">{title}</p>
-      <h3 className="text-2xl font-bold text-stone-900">{value}</h3>
+      <h3 className="text-2xl font-bold text-stone-900 dark:text-white">{value}</h3>
       <p className={`text-xs font-bold mt-1 ${color}`}>{sub}</p>
     </div>
-    <div className={`p-2 rounded-lg bg-stone-50 ${color.replace('text-', 'text-opacity-80 text-')}`}>
+    <div className={`p-2 rounded-lg bg-stone-50 ${color.replace('text-', 'text-opacity-80 text-')} dark:bg-stone-900`}>
       <Icon size={20} />
     </div>
   </div>
@@ -91,16 +91,16 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
 
     return (
         <div className="space-y-6 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
-            <div className="flex bg-stone-100 p-1 rounded-xl border border-stone-200">
+            <div className="flex bg-stone-100 p-1 rounded-xl border border-amber-300 dark:bg-stone-800 dark:border-stone-800">
                 <button 
                     onClick={() => setActiveSubTab('MERCHANTS')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'MERCHANTS' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'MERCHANTS' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700'} dark:text-white`}
                 >
                     Comercios
                 </button>
                 <button 
                     onClick={() => setActiveSubTab('DRIVERS')}
-                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'DRIVERS' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSubTab === 'DRIVERS' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700'} dark:text-white`}
                 >
                     Repartidores
                 </button>
@@ -111,13 +111,13 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
                     {merchantSettlements.length === 0 ? (
                         <div className="text-center py-20 opacity-50">
                             <DollarSign size={48} className="mx-auto mb-4 text-stone-300" />
-                            <p className="font-medium text-stone-900">No hay liquidaciones pendientes</p>
+                            <p className="font-medium text-stone-900 dark:text-white">No hay liquidaciones pendientes</p>
                         </div>
                     ) : merchantSettlements.map(s => (
-                        <div key={s.id} className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm space-y-4">
+                        <div key={s.id} className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm space-y-4 dark:bg-stone-900 dark:border-stone-800">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-black text-stone-900 text-lg uppercase tracking-tight">{s.storeName}</h3>
+                                    <h3 className="font-black text-stone-900 text-lg uppercase tracking-tight dark:text-white">{s.storeName}</h3>
                                     <p className="text-[10px] text-stone-400 font-bold uppercase">ID: {s.id}</p>
                                 </div>
                                 <div className="text-right">
@@ -128,11 +128,11 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
                             <div className="grid grid-cols-2 gap-4 py-4 border-y border-stone-50">
                                 <div>
                                     <p className="text-[10px] text-stone-400 font-bold uppercase">Liquidado</p>
-                                    <p className="font-bold text-stone-900">{formatCurrency(s.settled)}</p>
+                                    <p className="font-bold text-stone-900 dark:text-white">{formatCurrency(s.settled)}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] text-stone-400 font-bold uppercase">Total Histórico</p>
-                                    <p className="font-bold text-stone-900">{formatCurrency(s.total)}</p>
+                                    <p className="font-bold text-stone-900 dark:text-white">{formatCurrency(s.total)}</p>
                                 </div>
                             </div>
                             {s.pending > 0 && (
@@ -155,13 +155,13 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
                     {driverSettlements.length === 0 ? (
                         <div className="text-center py-20 opacity-50">
                             <Truck size={48} className="mx-auto mb-4 text-stone-300" />
-                            <p className="font-medium text-stone-900">No hay liquidaciones pendientes</p>
+                            <p className="font-medium text-stone-900 dark:text-white">No hay liquidaciones pendientes</p>
                         </div>
                     ) : driverSettlements.map(s => (
-                        <div key={s.id} className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm space-y-4">
+                        <div key={s.id} className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm space-y-4 dark:bg-stone-900 dark:border-stone-800">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-black text-stone-900 text-lg uppercase tracking-tight">{s.driverName}</h3>
+                                    <h3 className="font-black text-stone-900 text-lg uppercase tracking-tight dark:text-white">{s.driverName}</h3>
                                     <p className="text-[10px] text-stone-400 font-bold uppercase">ID: {s.id}</p>
                                 </div>
                                 <div className="text-right">
@@ -172,11 +172,11 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
                             <div className="grid grid-cols-2 gap-4 py-4 border-y border-stone-50">
                                 <div>
                                     <p className="text-[10px] text-stone-400 font-bold uppercase">Liquidado</p>
-                                    <p className="font-bold text-stone-900">{formatCurrency(s.settled)}</p>
+                                    <p className="font-bold text-stone-900 dark:text-white">{formatCurrency(s.settled)}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] text-stone-400 font-bold uppercase">Total Histórico</p>
-                                    <p className="font-bold text-stone-900">{formatCurrency(s.total)}</p>
+                                    <p className="font-bold text-stone-900 dark:text-white">{formatCurrency(s.total)}</p>
                                 </div>
                             </div>
                             {s.pending > 0 && (
@@ -225,7 +225,7 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                 <button 
                     onClick={() => setStatusFilter('ALL')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${statusFilter === 'ALL' ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${statusFilter === 'ALL' ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-amber-300'} dark:text-stone-400`}
                 >
                     Todos
                 </button>
@@ -233,7 +233,7 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
                     <button 
                         key={status}
                         onClick={() => setStatusFilter(status)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${statusFilter === status ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
+                        className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${statusFilter === status ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-amber-300'} dark:text-stone-400`}
                     >
                         {statusLabels[status]}
                     </button>
@@ -242,18 +242,18 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
 
             <div className="space-y-3">
                 {filteredOrders.map(order => (
-                    <div key={order.id} className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex justify-between items-center">
+                    <div key={order.id} className="bg-white p-4 rounded-xl border border-amber-200 shadow-sm flex justify-between items-center dark:bg-stone-900 dark:border-stone-800">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-stone-50 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-lg bg-stone-50 flex items-center justify-center dark:bg-stone-900">
                                 <Activity size={20} className="text-stone-400" />
                             </div>
                             <div>
-                                <p className="font-bold text-stone-900 text-sm">{order.storeName}</p>
-                                <p className="text-[10px] text-stone-500">#{order.id.slice(-6)} • {order.customerName}</p>
+                                <p className="font-bold text-stone-900 text-sm dark:text-white">{order.storeName}</p>
+                                <p className="text-[10px] text-stone-500 dark:text-stone-400">#{order.id.slice(-6)} • {order.customerName}</p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="font-bold text-stone-900 text-sm">{formatCurrency(order.total)}</p>
+                            <p className="font-bold text-stone-900 text-sm dark:text-white">{formatCurrency(order.total)}</p>
                             <div className="flex flex-col items-end gap-1">
                                 <Badge status={order.status} />
                                 <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
@@ -297,10 +297,10 @@ const BannersManagementTab = ({
 
     return (
         <div className="space-y-6 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
-            <div className="flex justify-between items-center bg-white dark:bg-stone-900 p-4 rounded-xl border border-stone-100 dark:border-stone-800 shadow-sm transition-colors">
+            <div className="flex justify-between items-center bg-white dark:bg-stone-900 p-4 rounded-xl border border-amber-200 dark:border-stone-800 shadow-sm transition-colors">
                 <div>
                     <h3 className="text-lg font-black text-stone-900 dark:text-white uppercase tracking-tighter">Promociones Globales</h3>
-                    <p className="text-xs text-stone-500 font-medium">Gestiona los banners de la pantalla principal</p>
+                    <p className="text-xs text-stone-500 font-medium dark:text-stone-400">Gestiona los banners de la pantalla principal</p>
                 </div>
                 <div className="flex gap-2">
                     <Button onClick={() => setIsAdding(!isAdding)} variant={isAdding ? 'secondary' : 'primary'}>
@@ -355,7 +355,7 @@ const BannersManagementTab = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {banners.map(banner => (
-                    <div key={banner.id} className="group bg-white dark:bg-stone-900 rounded-3xl border border-stone-100 dark:border-stone-800 shadow-lg overflow-hidden transition-all hover:shadow-2xl">
+                    <div key={banner.id} className="group bg-white dark:bg-stone-900 rounded-3xl border border-amber-200 dark:border-stone-800 shadow-lg overflow-hidden transition-all hover:shadow-2xl">
                         <div className="relative h-40 overflow-hidden">
                             <img src={banner.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" referrerPolicy="no-referrer" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
@@ -398,10 +398,10 @@ const BannersManagementTab = ({
                     </div>
                 ))}
                 {banners.length === 0 && (
-                    <div className="col-span-full py-20 text-center bg-stone-50 dark:bg-stone-900/40 rounded-3xl border-2 border-dashed border-stone-200 dark:border-stone-800">
+                    <div className="col-span-full py-20 text-center bg-stone-50 dark:bg-stone-900/40 rounded-3xl border-2 border-dashed border-amber-300 dark:border-stone-800">
                         <Tag size={48} className="mx-auto text-stone-300 mb-4" />
                         <h4 className="text-stone-900 dark:text-white font-black text-xl">Sin Promociones Activas</h4>
-                        <p className="text-stone-500">Haz clic en el botón "+" para crear tu primer banner promocional.</p>
+                        <p className="text-stone-500 dark:text-stone-400">Haz clic en el botón "+" para crear tu primer banner promocional.</p>
                     </div>
                 )}
             </div>
@@ -589,9 +589,9 @@ export const AdminView: React.FC = () => {
 
       {/* Charts Section */}
       <div className="px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:max-w-7xl lg:mx-auto lg:w-full">
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-stone-900 flex items-center gap-2">
+            <h3 className="font-bold text-stone-900 flex items-center gap-2 dark:text-white">
               <BarChart3 size={18} className="text-brand-800" /> Ventas (Últimos 7 días)
             </h3>
             <div className="flex items-center gap-2 text-[10px] font-bold text-stone-400">
@@ -627,8 +627,8 @@ export const AdminView: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
-          <h3 className="font-bold text-stone-900 mb-6 flex items-center gap-2">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
+          <h3 className="font-bold text-stone-900 mb-6 flex items-center gap-2 dark:text-white">
             <PieChartIcon size={18} className="text-brand-800" /> Estado de Pedidos
           </h3>
           <div className="h-64 w-full flex flex-col items-center justify-center">
@@ -654,8 +654,8 @@ export const AdminView: React.FC = () => {
               {statusData.map((entry, index) => (
                 <div key={entry.name} className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
-                  <span className="text-[10px] font-bold text-stone-500 truncate">{entry.name}</span>
-                  <span className="text-[10px] font-bold text-stone-900 ml-auto">{entry.value}</span>
+                  <span className="text-[10px] font-bold text-stone-500 truncate dark:text-stone-400">{entry.name}</span>
+                  <span className="text-[10px] font-bold text-stone-900 ml-auto dark:text-white">{entry.value}</span>
                 </div>
               ))}
             </div>
@@ -664,18 +664,18 @@ export const AdminView: React.FC = () => {
       </div>
 
       <div className="px-4 lg:max-w-7xl lg:mx-auto lg:w-full">
-        <h3 className="font-bold text-stone-900 mb-3 flex items-center gap-2">
+        <h3 className="font-bold text-stone-900 mb-3 flex items-center gap-2 dark:text-white">
           <Activity size={18} className="text-brand-800" /> Actividad en Vivo
         </h3>
-        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 divide-y divide-stone-50 overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0 lg:gap-4 lg:p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-amber-200 divide-y divide-stone-50 overflow-hidden lg:grid lg:grid-cols-2 lg:divide-y-0 lg:gap-4 lg:p-4 dark:bg-stone-900 dark:border-stone-800">
           {recentActivity.map(order => (
-            <div key={order.id} className="p-3 flex items-center justify-between hover:bg-stone-50 transition-colors lg:rounded-xl lg:border lg:border-stone-100">
+            <div key={order.id} className="p-3 flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors lg:rounded-xl lg:border lg:border-amber-200">
               <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center font-bold text-xs text-stone-500">
+                 <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center font-bold text-xs text-stone-500 dark:bg-stone-800 dark:text-stone-400">
                     {order.customerName.charAt(0)}
                  </div>
                  <div>
-                    <p className="text-sm font-bold text-stone-900 leading-none mb-1">
+                    <p className="text-sm font-bold text-stone-900 leading-none mb-1 dark:text-white">
                       {order.storeName}
                       <span className="text-stone-400 font-normal"> vendió </span> 
                       {formatCurrency(order.total)}
@@ -713,17 +713,17 @@ export const AdminView: React.FC = () => {
                </div>
 
                {dispatchableOrders.length === 0 ? (
-                   <div className="text-center py-12 bg-white rounded-2xl border border-stone-100">
+                   <div className="text-center py-12 bg-white rounded-2xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
                        <Truck size={40} className="mx-auto text-stone-300 mb-2" />
-                       <p className="text-stone-500 font-bold">Sin pedidos para despachar</p>
+                       <p className="text-stone-500 font-bold dark:text-stone-400">Sin pedidos para despachar</p>
                    </div>
                ) : (
                    <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
                    {dispatchableOrders.map(order => (
-                       <div key={order.id} className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden h-full flex flex-col">
-                           <div className="p-3 bg-stone-50 border-b border-stone-100 flex justify-between items-center">
+                       <div key={order.id} className="bg-white rounded-xl border border-amber-300 shadow-sm overflow-hidden h-full flex flex-col dark:bg-stone-900 dark:border-stone-800">
+                           <div className="p-3 bg-stone-50 border-b border-amber-200 flex justify-between items-center dark:bg-stone-900 dark:border-stone-800">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-mono font-bold text-stone-500">{order.id.slice(-6)}</span>
+                                    <span className="text-xs font-mono font-bold text-stone-500 dark:text-stone-400">{order.id.slice(-6)}</span>
                                     <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
                                 </div>
                                 <Badge status={order.status} />
@@ -731,12 +731,12 @@ export const AdminView: React.FC = () => {
                            <div className="p-4">
                                <div className="flex justify-between items-start mb-4">
                                    <div>
-                                       <h4 className="font-bold text-stone-900">{order.storeName}</h4>
-                                       <div className="flex items-center gap-1 text-xs text-stone-500 mt-1">
+                                       <h4 className="font-bold text-stone-900 dark:text-white">{order.storeName}</h4>
+                                       <div className="flex items-center gap-1 text-xs text-stone-500 mt-1 dark:text-stone-400">
                                            <MapPin size={12} /> {order.address}
                                        </div>
                                    </div>
-                                   <span className="font-bold text-stone-900">{formatCurrency(order.total)}</span>
+                                   <span className="font-bold text-stone-900 dark:text-white">{formatCurrency(order.total)}</span>
                                </div>
 
                                <div className="space-y-2">
@@ -749,7 +749,7 @@ export const AdminView: React.FC = () => {
                                                     assignDriver(order.id, driver.id);
                                                     showToast(`Asignado a ${driver.name}`, 'success');
                                                 }}
-                                                className={`p-2 rounded-lg text-xs font-bold border transition-all ${order.driverId === driver.id ? 'bg-brand-500 text-brand-950 border-brand-500' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-300'}`}
+                                                className={`p-2 rounded-lg text-xs font-bold border transition-all ${order.driverId === driver.id ? 'bg-brand-500 dark:bg-brand-600 text-brand-950 dark:text-stone-900 border-brand-500' : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-amber-300 hover:border-stone-300'} dark:text-stone-400 dark:border-stone-800`}
                                            >
                                                {driver.name}
                                            </button>
@@ -771,37 +771,37 @@ export const AdminView: React.FC = () => {
       const totalRevenue = storeStats.reduce((sum, o) => sum + o.total, 0);
 
       return (
-          <div className="bg-stone-50 h-full animate-slide-in-right flex flex-col">
-              <div className="bg-white p-4 border-b border-stone-100 flex gap-3 items-center sticky top-0 z-10">
-                  <button onClick={() => setSelectedStore(null)} className="p-2 -ml-2 hover:bg-stone-50 rounded-full"><ArrowLeft size={20} /></button>
+          <div className="bg-stone-50 h-full animate-slide-in-right flex flex-col dark:bg-stone-900">
+              <div className="bg-white p-4 border-b border-amber-200 flex gap-3 items-center sticky top-0 z-10 dark:bg-stone-900 dark:border-stone-800">
+                  <button onClick={() => setSelectedStore(null)} className="p-2 -ml-2 hover:bg-stone-50 dark:hover:bg-stone-800/30 rounded-full"><ArrowLeft size={20} /></button>
                   <h2 className="font-bold text-lg">{selectedStore.name}</h2>
               </div>
               <div className="p-4 space-y-6 overflow-y-auto">
-                  <div className="flex gap-4 items-center bg-white p-4 rounded-xl border border-stone-100">
-                      <div className="w-16 h-16 bg-stone-100 rounded-lg overflow-hidden">
+                  <div className="flex gap-4 items-center bg-white p-4 rounded-xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
+                      <div className="w-16 h-16 bg-stone-100 rounded-lg overflow-hidden dark:bg-stone-800">
                           <LazyImage src={selectedStore.image} alt={selectedStore.name} className="w-full h-full" />
                       </div>
                       <div>
-                          <p className="text-stone-500 text-sm">{selectedStore.category}</p>
-                          <div className="flex items-center gap-2 text-sm font-bold text-stone-900">
+                          <p className="text-stone-500 text-sm dark:text-stone-400">{selectedStore.category}</p>
+                          <div className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-white">
                               <StoreIcon size={14} /> ID: {selectedStore.id}
                           </div>
                       </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white p-4 rounded-xl border border-stone-100 text-center">
+                      <div className="bg-white p-4 rounded-xl border border-amber-200 text-center dark:bg-stone-900 dark:border-stone-800">
                           <p className="text-xs font-bold text-stone-400 uppercase">Ventas Totales</p>
-                          <p className="text-xl font-bold text-stone-900">{formatCurrency(totalRevenue)}</p>
+                          <p className="text-xl font-bold text-stone-900 dark:text-white">{formatCurrency(totalRevenue)}</p>
                       </div>
-                      <div className="bg-white p-4 rounded-xl border border-stone-100 text-center">
+                      <div className="bg-white p-4 rounded-xl border border-amber-200 text-center dark:bg-stone-900 dark:border-stone-800">
                           <p className="text-xs font-bold text-stone-400 uppercase">Pedidos</p>
-                          <p className="text-xl font-bold text-stone-900">{storeStats.length}</p>
+                          <p className="text-xl font-bold text-stone-900 dark:text-white">{storeStats.length}</p>
                       </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-stone-100 space-y-3">
-                      <h3 className="font-bold text-stone-900 text-sm">Configuración de Comisiones</h3>
+                  <div className="bg-white p-4 rounded-xl border border-amber-200 space-y-3 dark:bg-stone-900 dark:border-stone-800">
+                      <h3 className="font-bold text-stone-900 text-sm dark:text-white">Configuración de Comisiones</h3>
                       <div className="space-y-4">
                           <div>
                               <p className="text-xs font-bold text-stone-400 uppercase mb-1">Comisión Personalizada (%)</p>
@@ -813,17 +813,17 @@ export const AdminView: React.FC = () => {
                                         const val = parseFloat(e.target.value) / 100;
                                         updateStore(selectedStore.id, { commissionPct: val });
                                     }}
-                                    className="flex-1 p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm"
+                                    className="flex-1 p-2 bg-stone-50 border border-amber-300 rounded-lg text-sm dark:bg-stone-900 dark:border-stone-800"
                                   />
-                                  <div className="bg-stone-100 px-3 flex items-center rounded-lg font-bold text-stone-500">%</div>
+                                  <div className="bg-stone-100 px-3 flex items-center rounded-lg font-bold text-stone-500 dark:bg-stone-800 dark:text-stone-400">%</div>
                               </div>
                               <p className="text-[10px] text-stone-400 mt-1 italic">* Sobrescribe la comisión global del {(config.platformCommissionPct * 100).toFixed(0)}%</p>
                           </div>
                       </div>
                   </div>
 
-                  <div className="bg-white p-4 rounded-xl border border-stone-100 space-y-3">
-                      <h3 className="font-bold text-stone-900 text-sm">Estado del Comercio</h3>
+                  <div className="bg-white p-4 rounded-xl border border-amber-200 space-y-3 dark:bg-stone-900 dark:border-stone-800">
+                      <h3 className="font-bold text-stone-900 text-sm dark:text-white">Estado del Comercio</h3>
                       <div className="flex gap-2">
                           <Button 
                             variant="secondary" 
@@ -850,12 +850,12 @@ export const AdminView: React.FC = () => {
                   </div>
 
                   <div>
-                      <h3 className="font-bold text-stone-900 mb-2">Productos ({selectedStore.products.length})</h3>
-                      <div className="bg-white rounded-xl border border-stone-100 divide-y divide-stone-50">
+                      <h3 className="font-bold text-stone-900 mb-2 dark:text-white">Productos ({selectedStore.products.length})</h3>
+                      <div className="bg-white rounded-xl border border-amber-200 divide-y divide-stone-50 dark:bg-stone-900 dark:border-stone-800">
                           {selectedStore.products.map(p => (
                               <div key={p.id} className="p-3 flex justify-between items-center">
                                   <span className="text-sm font-medium">{p.name}</span>
-                                  <span className="text-sm text-stone-500">{formatCurrency(p.price)}</span>
+                                  <span className="text-sm text-stone-500 dark:text-stone-400">{formatCurrency(p.price)}</span>
                               </div>
                           ))}
                       </div>
@@ -867,7 +867,7 @@ export const AdminView: React.FC = () => {
 
   const renderStoresTab = () => (
     <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
-      <div className="bg-white p-2 rounded-xl border border-stone-200 flex items-center gap-2 lg:max-w-md">
+      <div className="bg-white p-2 rounded-xl border border-amber-300 flex items-center gap-2 lg:max-w-md dark:bg-stone-900 dark:border-stone-800">
          <Search size={18} className="text-stone-400 ml-2" />
          <input 
             placeholder="Buscar comercio..." 
@@ -882,14 +882,14 @@ export const AdminView: React.FC = () => {
         <div 
             key={store.id} 
             onClick={() => setSelectedStore(store)}
-            className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 flex gap-4 items-center active:scale-[0.99] transition-transform cursor-pointer h-full"
+            className="bg-white p-4 rounded-xl shadow-sm border border-amber-200 flex gap-4 items-center active:scale-[0.99] transition-transform cursor-pointer h-full dark:bg-stone-900 dark:border-stone-800"
         >
-           <div className="w-12 h-12 bg-stone-100 rounded-lg overflow-hidden shrink-0">
+           <div className="w-12 h-12 bg-stone-100 rounded-lg overflow-hidden shrink-0 dark:bg-stone-800">
               <LazyImage src={store.image} alt={store.name} className="w-full h-full" />
            </div>
            <div className="flex-1">
-              <h4 className="font-bold text-stone-900">{store.name}</h4>
-              <p className="text-xs text-stone-500">{store.category} • {store.createdAt ? 'Nuevo' : 'Veterano'}</p>
+              <h4 className="font-bold text-stone-900 dark:text-white">{store.name}</h4>
+              <p className="text-xs text-stone-500 dark:text-stone-400">{store.category} • {store.createdAt ? 'Nuevo' : 'Veterano'}</p>
               <div className="flex items-center gap-3 mt-1">
                  <StoreBadge isActive={store.isActive} />
                  <span className="text-[10px] text-stone-400">ID: {store.id}</span>
@@ -909,33 +909,33 @@ export const AdminView: React.FC = () => {
       const totalSpent = userOrders.reduce((acc, o) => acc + o.total, 0);
 
       return (
-          <div className="bg-stone-50 h-full animate-slide-in-right flex flex-col">
-               <div className="bg-white p-4 border-b border-stone-100 flex gap-3 items-center sticky top-0 z-10">
-                  <button onClick={() => setSelectedUser(null)} className="p-2 -ml-2 hover:bg-stone-50 rounded-full"><ArrowLeft size={20} /></button>
+          <div className="bg-stone-50 h-full animate-slide-in-right flex flex-col dark:bg-stone-900">
+               <div className="bg-white p-4 border-b border-amber-200 flex gap-3 items-center sticky top-0 z-10 dark:bg-stone-900 dark:border-stone-800">
+                  <button onClick={() => setSelectedUser(null)} className="p-2 -ml-2 hover:bg-stone-50 dark:hover:bg-stone-800/30 rounded-full"><ArrowLeft size={20} /></button>
                   <h2 className="font-bold text-lg">Perfil de Usuario</h2>
               </div>
               <div className="p-4 space-y-6 overflow-y-auto">
-                  <div className="text-center py-6 bg-white rounded-2xl border border-stone-100">
-                      <div className="w-20 h-20 bg-stone-200 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-stone-500">
+                  <div className="text-center py-6 bg-white rounded-2xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
+                      <div className="w-20 h-20 bg-stone-200 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-stone-500 dark:bg-stone-800 dark:text-stone-400">
                           {userProfile?.name?.charAt(0) || selectedUser.charAt(0)}
                       </div>
-                      <h2 className="text-xl font-bold text-stone-900">{userProfile?.name || selectedUser}</h2>
-                      <div className="flex items-center justify-center gap-2 mt-2 text-sm text-stone-500">
+                      <h2 className="text-xl font-bold text-stone-900 dark:text-white">{userProfile?.name || selectedUser}</h2>
+                      <div className="flex items-center justify-center gap-2 mt-2 text-sm text-stone-500 dark:text-stone-400">
                           <Mail size={14} /> <span>{userProfile?.email || 'usuario@demo.com'}</span>
                       </div>
                       <div className="flex items-center justify-center gap-4 mt-4">
                           <div className="text-center">
-                              <p className="text-xl font-bold text-stone-900">{userOrders.length}</p>
+                              <p className="text-xl font-bold text-stone-900 dark:text-white">{userOrders.length}</p>
                               <p className="text-[10px] uppercase font-bold text-stone-400">Pedidos</p>
                           </div>
                            <div className="text-center">
-                              <p className="text-xl font-bold text-stone-900">{formatCurrency(totalSpent)}</p>
+                              <p className="text-xl font-bold text-stone-900 dark:text-white">{formatCurrency(totalSpent)}</p>
                               <p className="text-[10px] uppercase font-bold text-stone-400">Total Gastado</p>
                           </div>
                       </div>
                       
                       {userProfile && (
-                        <div className="mt-6 pt-6 border-t border-stone-100">
+                        <div className="mt-6 pt-6 border-t border-amber-200 dark:border-stone-800">
                           <p className="text-xs font-bold text-stone-400 uppercase mb-3">Gestión de Rol</p>
                           <div className="flex flex-wrap justify-center gap-2">
                             {Object.values(UserRole).map(role => (
@@ -945,7 +945,7 @@ export const AdminView: React.FC = () => {
                                   updateAnyUser(userProfile.uid, { role });
                                   showToast(`Rol actualizado a ${role}`, 'success');
                                 }}
-                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border ${userProfile.role === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-500 border-stone-200 hover:border-stone-400'}`}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border ${userProfile.role === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-amber-300 hover:border-stone-400'} dark:text-stone-400 dark:border-stone-800`}
                               >
                                 {role}
                               </button>
@@ -955,13 +955,13 @@ export const AdminView: React.FC = () => {
                       )}
 
                       {userProfile?.role === UserRole.DRIVER && (
-                        <div className="mt-4 pt-4 border-t border-stone-100">
+                        <div className="mt-4 pt-4 border-t border-amber-200 dark:border-stone-800">
                           <p className="text-xs font-bold text-stone-400 uppercase mb-3">Seguridad Repartidor</p>
                           <div className="flex flex-col gap-3 text-left">
-                             <div className="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-100">
+                             <div className="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
                                 <div>
-                                   <p className="text-xs font-bold text-stone-700">Estado de Aprobación</p>
-                                   <p className="text-[10px] text-stone-500">{userProfile.isApprovedDriver ? 'Aprobado para trabajar' : 'Pendiente de revisión'}</p>
+                                   <p className="text-xs font-bold text-stone-700 dark:text-stone-300">Estado de Aprobación</p>
+                                   <p className="text-[10px] text-stone-500 dark:text-stone-400">{userProfile.isApprovedDriver ? 'Aprobado para trabajar' : 'Pendiente de revisión'}</p>
                                 </div>
                                 <Button 
                                   size="sm"
@@ -976,21 +976,21 @@ export const AdminView: React.FC = () => {
                              </div>
                              
                              <div className="grid grid-cols-2 gap-2">
-                                <div className="p-2 bg-stone-50 rounded-lg">
+                                <div className="p-2 bg-stone-50 rounded-lg dark:bg-stone-900">
                                    <p className="text-[8px] uppercase font-bold text-stone-400">Dirección M.</p>
-                                   <p className="text-xs font-bold text-stone-800">{userProfile.driverAddress || 'N/A'}</p>
+                                   <p className="text-xs font-bold text-stone-800 dark:text-stone-100">{userProfile.driverAddress || 'N/A'}</p>
                                 </div>
-                                <div className="p-2 bg-stone-50 rounded-lg">
+                                <div className="p-2 bg-stone-50 rounded-lg dark:bg-stone-900">
                                    <p className="text-[8px] uppercase font-bold text-stone-400">Referencia Per.</p>
-                                   <p className="text-xs font-bold text-stone-800">{userProfile.driverPersonalReference || 'N/A'}</p>
+                                   <p className="text-xs font-bold text-stone-800 dark:text-stone-100">{userProfile.driverPersonalReference || 'N/A'}</p>
                                 </div>
-                                <div className="p-2 bg-stone-50 rounded-lg">
+                                <div className="p-2 bg-stone-50 rounded-lg dark:bg-stone-900">
                                    <p className="text-[8px] uppercase font-bold text-stone-400">T. Vehículo</p>
-                                   <p className="text-xs font-bold text-stone-800">{userProfile.vehicleType || 'N/A'}</p>
+                                   <p className="text-xs font-bold text-stone-800 dark:text-stone-100">{userProfile.vehicleType || 'N/A'}</p>
                                 </div>
-                                <div className="p-2 bg-stone-50 rounded-lg">
+                                <div className="p-2 bg-stone-50 rounded-lg dark:bg-stone-900">
                                    <p className="text-[8px] uppercase font-bold text-stone-400">Teléfono</p>
-                                   <p className="text-xs font-bold text-stone-800">{userProfile.phone || 'N/A'}</p>
+                                   <p className="text-xs font-bold text-stone-800 dark:text-stone-100">{userProfile.phone || 'N/A'}</p>
                                 </div>
                              </div>
 
@@ -998,13 +998,13 @@ export const AdminView: React.FC = () => {
                                 {userProfile.driverIneUrl && (
                                     <div className="relative group cursor-pointer" onClick={() => window.open(userProfile.driverIneUrl, '_blank')}>
                                         <p className="text-[10px] uppercase font-bold text-stone-400 mb-1">INE</p>
-                                        <img src={userProfile.driverIneUrl} alt="INE" className="w-full h-24 object-cover rounded-xl border border-stone-200" />
+                                        <img src={userProfile.driverIneUrl} alt="INE" className="w-full h-24 object-cover rounded-xl border border-amber-300 dark:border-stone-800" />
                                     </div>
                                 )}
                                 {userProfile.driverSelfieUrl && (
                                     <div className="relative group cursor-pointer" onClick={() => window.open(userProfile.driverSelfieUrl, '_blank')}>
                                         <p className="text-[10px] uppercase font-bold text-stone-400 mb-1">Selfie</p>
-                                        <img src={userProfile.driverSelfieUrl} alt="Selfie" className="w-full h-24 object-cover rounded-xl border border-stone-200" />
+                                        <img src={userProfile.driverSelfieUrl} alt="Selfie" className="w-full h-24 object-cover rounded-xl border border-amber-300 dark:border-stone-800" />
                                     </div>
                                 )}
                              </div>
@@ -1014,13 +1014,13 @@ export const AdminView: React.FC = () => {
                   </div>
 
                   <div>
-                      <h3 className="font-bold text-stone-900 mb-3 ml-1">Historial de Pedidos</h3>
+                      <h3 className="font-bold text-stone-900 mb-3 ml-1 dark:text-white">Historial de Pedidos</h3>
                       <div className="space-y-3">
                           {userOrders.map(order => (
-                              <div key={order.id} className="bg-white p-3 rounded-xl border border-stone-100 flex justify-between items-center">
+                              <div key={order.id} className="bg-white p-3 rounded-xl border border-amber-200 flex justify-between items-center dark:bg-stone-900 dark:border-stone-800">
                                   <div>
-                                      <p className="font-bold text-sm text-stone-900">{order.storeName}</p>
-                                      <p className="text-xs text-stone-500">{new Date(order.createdAt).toLocaleDateString()} • {formatCurrency(order.total)}</p>
+                                      <p className="font-bold text-sm text-stone-900 dark:text-white">{order.storeName}</p>
+                                      <p className="text-xs text-stone-500 dark:text-stone-400">{new Date(order.createdAt).toLocaleDateString()} • {formatCurrency(order.total)}</p>
                                   </div>
                                   <Badge status={order.status} />
                               </div>
@@ -1035,7 +1035,7 @@ export const AdminView: React.FC = () => {
   const renderUsersTab = () => (
     <div className="px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="bg-white p-2 rounded-xl border border-stone-200 flex items-center gap-2 flex-1">
+          <div className="bg-white p-2 rounded-xl border border-amber-300 flex items-center gap-2 flex-1 dark:bg-stone-900 dark:border-stone-800">
             <Search size={18} className="text-stone-400 ml-2" />
             <input 
                 placeholder="Buscar usuario..." 
@@ -1047,7 +1047,7 @@ export const AdminView: React.FC = () => {
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
             <button 
                 onClick={() => setRoleFilter('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap flex items-center gap-2 ${roleFilter === 'ALL' ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap flex items-center gap-2 ${roleFilter === 'ALL' ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-amber-300'} dark:text-stone-400`}
             >
                 <Filter size={14} /> Todos
             </button>
@@ -1055,7 +1055,7 @@ export const AdminView: React.FC = () => {
                 <button 
                     key={role}
                     onClick={() => setRoleFilter(role)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${roleFilter === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-600 border-stone-200'}`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all whitespace-nowrap ${roleFilter === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-300 border-amber-300'} dark:text-stone-400`}
                 >
                     {role}
                 </button>
@@ -1063,9 +1063,9 @@ export const AdminView: React.FC = () => {
           </div>
        </div>
        
-       <div className="bg-white rounded-xl shadow-sm border border-stone-100 text-left overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:bg-transparent lg:shadow-none lg:border-0">
+       <div className="bg-white rounded-xl shadow-sm border border-amber-200 text-left overflow-hidden lg:grid lg:grid-cols-2 lg:gap-4 lg:bg-transparent lg:shadow-none lg:border-0 dark:bg-stone-900 dark:border-stone-800">
            <div className="p-3 border-b border-stone-50 bg-stone-50/50 flex justify-between items-center lg:hidden">
-              <span className="text-xs font-bold text-stone-500 uppercase">Lista de Usuarios ({userList.filter(u => roleFilter === 'ALL' || u.role === roleFilter).length})</span>
+              <span className="text-xs font-bold text-stone-500 uppercase dark:text-stone-400">Lista de Usuarios ({userList.filter(u => roleFilter === 'ALL' || u.role === roleFilter).length})</span>
            </div>
            {userList
             .filter(u => roleFilter === 'ALL' || u.role === roleFilter)
@@ -1073,21 +1073,21 @@ export const AdminView: React.FC = () => {
                <div 
                     key={u.uid || i} 
                     onClick={() => setSelectedUser(u.uid || u.name)}
-                    className="p-3 flex justify-between items-center border-b border-stone-50 last:border-0 hover:bg-stone-50 cursor-pointer active:bg-stone-100 transition-colors lg:bg-white lg:rounded-xl lg:border lg:border-stone-100 lg:shadow-sm"
+                    className="p-3 flex justify-between items-center border-b border-stone-50 last:border-0 hover:bg-stone-50 dark:hover:bg-stone-800/30 cursor-pointer active:bg-stone-100 transition-colors lg:bg-white lg:rounded-xl lg:border lg:border-amber-200 lg:shadow-sm"
                 >
                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-xs font-bold text-stone-600">
+                       <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-xs font-bold text-stone-600 dark:bg-stone-800 dark:text-stone-400">
                            {u.name?.charAt(0) || '?'}
                        </div>
                        <div>
                            <div className="flex items-center gap-2">
-                             <p className="text-sm font-bold text-stone-900">{u.name || 'Sin nombre'}</p>
-                             <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{u.role}</span>
+                             <p className="text-sm font-bold text-stone-900 dark:text-white">{u.name || 'Sin nombre'}</p>
+                             <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400">{u.role}</span>
                              {u.role === UserRole.DRIVER && !u.isApprovedDriver && (
                                <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-600">Pendiente</span>
                              )}
                            </div>
-                           <p className="text-[10px] text-stone-500">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>
+                           <p className="text-[10px] text-stone-500 dark:text-stone-400">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>
                        </div>
                    </div>
                    <ChevronRight size={16} className="text-stone-300" />
@@ -1109,9 +1109,9 @@ export const AdminView: React.FC = () => {
     return (
         <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:max-w-7xl lg:mx-auto lg:w-full">
             {disputedOrders.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-2xl border border-stone-100">
+                <div className="text-center py-12 bg-white rounded-2xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
                     <Shield size={40} className="mx-auto text-stone-300 mb-2" />
-                    <p className="text-stone-500 font-bold">No hay reclamos activos</p>
+                    <p className="text-stone-500 font-bold dark:text-stone-400">No hay reclamos activos</p>
                 </div>
             ) : (
                 <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
@@ -1124,11 +1124,11 @@ export const AdminView: React.FC = () => {
                             </div>
                             <span className="bg-amber-200 text-amber-800 text-[10px] font-bold px-2 py-1 rounded uppercase">En Revisión</span>
                         </div>
-                        <div className="bg-white p-3 rounded-lg border border-amber-100 mb-4">
-                            <p className="text-sm font-medium text-stone-800">"{order.claimReason}"</p>
+                        <div className="bg-white p-3 rounded-lg border border-amber-100 mb-4 dark:bg-stone-900">
+                            <p className="text-sm font-medium text-stone-800 dark:text-stone-100">"{order.claimReason}"</p>
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="secondary" fullWidth className="bg-white text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleResolveDispute(order.id, 'REJECTED')}>
+                            <Button variant="secondary" fullWidth className="bg-white text-red-600 border-red-200 hover:bg-red-50 dark:bg-stone-900" onClick={() => handleResolveDispute(order.id, 'REJECTED')}>
                                 Rechazar
                             </Button>
                             <Button fullWidth className="bg-brand-500 text-brand-950 hover:bg-brand-600" onClick={() => handleResolveDispute(order.id, 'RESOLVED')}>
@@ -1144,7 +1144,7 @@ export const AdminView: React.FC = () => {
   };
 
   return (
-    <div className="h-full bg-stone-50 flex flex-col">
+    <div className="h-full bg-stone-50 flex flex-col dark:bg-stone-900">
        {/* Drill-down Views */}
        {selectedStore ? renderStoreDetail() :
         selectedUser ? renderUserDetail() : (
@@ -1159,11 +1159,11 @@ export const AdminView: React.FC = () => {
                                     </div>
                                     Panel de Control
                                 </h1>
-                                <p className="text-[10px] font-black text-stone-500 uppercase tracking-[0.2em] ml-1 mt-1">Administración Centralizada</p>
+                                <p className="text-[10px] font-black text-stone-500 uppercase tracking-[0.2em] ml-1 mt-1 dark:text-stone-400">Administración Centralizada</p>
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="text-right hidden sm:block">
-                                    <p className="text-[10px] font-black text-stone-500 uppercase tracking-widest">Estado del Sistema</p>
+                                    <p className="text-[10px] font-black text-stone-500 uppercase tracking-widest dark:text-stone-400">Estado del Sistema</p>
                                     <div className="flex items-center gap-2 justify-end mt-1">
                                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                                         <span className="text-xs font-black text-white uppercase tracking-widest">Operativo</span>
@@ -1190,7 +1190,7 @@ export const AdminView: React.FC = () => {
                                 <button
                                     key={tab.id}
                                     onClick={() => setAdminViewState(tab.id as any)}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap relative ${adminViewState === tab.id ? 'bg-white text-stone-950 shadow-xl' : 'text-stone-500 hover:text-white'}`}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap relative ${adminViewState === tab.id ? 'bg-white dark:bg-stone-900 text-stone-950 dark:text-white shadow-xl' : 'text-stone-500 hover:text-white'}`}
                                 >
                                     {tab.icon}
                                     <span className="hidden md:inline">{tab.label}</span>
@@ -1219,16 +1219,16 @@ export const AdminView: React.FC = () => {
                         {adminViewState === 'SETTINGS' && (
                             <div className="p-6 space-y-8 animate-fade-in lg:max-w-4xl lg:mx-auto">
 
-                            <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden divide-y divide-stone-50">
+                            <div className="bg-white rounded-2xl shadow-sm border border-amber-200 overflow-hidden divide-y divide-stone-50 dark:bg-stone-900 dark:border-stone-800">
                                 <div className="p-4">
-                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
+                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 dark:text-white">
                                         <DollarSign size={18} className="text-brand-800" /> Parámetros Financieros
                                     </h3>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <p className="text-sm font-bold text-stone-800">Comisión de Plataforma</p>
-                                                <p className="text-xs text-stone-500">Porcentaje cobrado a los comercios (0.15 = 15%)</p>
+                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Comisión de Plataforma</p>
+                                                <p className="text-xs text-stone-500 dark:text-stone-400">Porcentaje cobrado a los comercios (0.15 = 15%)</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <input 
@@ -1236,14 +1236,14 @@ export const AdminView: React.FC = () => {
                                                     step="0.01"
                                                     value={localConfig.platformCommissionPct} 
                                                     onChange={(e) => setLocalConfig({...localConfig, platformCommissionPct: Number(e.target.value)})}
-                                                    className="w-16 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
+                                                    className="w-16 p-2 bg-stone-50 border border-amber-300 rounded-lg text-center font-bold dark:bg-stone-900 dark:border-stone-800" 
                                                 />
                                             </div>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <p className="text-sm font-bold text-stone-800">Comisión de Driver</p>
-                                                <p className="text-xs text-stone-500">Porcentaje del envío para el driver (0.80 = 80%)</p>
+                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Comisión de Driver</p>
+                                                <p className="text-xs text-stone-500 dark:text-stone-400">Porcentaje del envío para el driver (0.80 = 80%)</p>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <input 
@@ -1251,7 +1251,7 @@ export const AdminView: React.FC = () => {
                                                     step="0.01"
                                                     value={localConfig.driverCommissionPct} 
                                                     onChange={(e) => setLocalConfig({...localConfig, driverCommissionPct: Number(e.target.value)})}
-                                                    className="w-16 p-2 bg-stone-50 border border-stone-200 rounded-lg text-center font-bold" 
+                                                    className="w-16 p-2 bg-stone-50 border border-amber-300 rounded-lg text-center font-bold dark:bg-stone-900 dark:border-stone-800" 
                                                 />
                                             </div>
                                         </div>
@@ -1260,31 +1260,31 @@ export const AdminView: React.FC = () => {
 
                                 {/* MOTOR DINÁMICO DE TARIFAS */}
                                 {localConfig.deliveryRates && (
-                                <div className="p-4 border-b border-stone-100">
-                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
+                                <div className="p-4 border-b border-amber-200 dark:border-stone-800">
+                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 dark:text-white">
                                         <MapPin size={18} className="text-brand-800" /> Motor Dinámico de Tarifas
                                     </h3>
                                     
                                     <div className="space-y-6">
-                                        <div className="bg-stone-50 p-4 rounded-xl space-y-4 border border-stone-200">
-                                            <h4 className="font-bold text-xs text-stone-500 uppercase tracking-widest border-b pb-2">Zonificación</h4>
+                                        <div className="bg-stone-50 p-4 rounded-xl space-y-4 border border-amber-300 dark:bg-stone-900 dark:border-stone-800">
+                                            <h4 className="font-bold text-xs text-stone-500 uppercase tracking-widest border-b pb-2 dark:text-stone-400">Zonificación</h4>
                                             
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-stone-700">Radio Local (km)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.localRadiusKm} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localRadiusKm: Number(e.target.value)}})} className="w-full p-2 bg-white border border-stone-200 rounded-lg text-sm font-bold" />
+                                                    <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300">Radio Local (km)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.localRadiusKm} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localRadiusKm: Number(e.target.value)}})} className="w-full p-2 bg-white border border-amber-300 rounded-lg text-sm font-bold dark:bg-stone-900 dark:border-stone-800" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-stone-700">KM Base (Sin Extra)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.baseDistanceKm} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, baseDistanceKm: Number(e.target.value)}})} className="w-full p-2 bg-white border border-stone-200 rounded-lg text-sm font-bold" />
+                                                    <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300">KM Base (Sin Extra)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.baseDistanceKm} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, baseDistanceKm: Number(e.target.value)}})} className="w-full p-2 bg-white border border-amber-300 rounded-lg text-sm font-bold dark:bg-stone-900 dark:border-stone-800" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-stone-700">Plataforma Com. Local ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.platformFeeLocal} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, platformFeeLocal: Number(e.target.value)}})} className="w-full p-2 bg-white border border-stone-200 rounded-lg text-sm font-bold" />
+                                                    <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300">Plataforma Com. Local ($)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.platformFeeLocal} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, platformFeeLocal: Number(e.target.value)}})} className="w-full p-2 bg-white border border-amber-300 rounded-lg text-sm font-bold dark:bg-stone-900 dark:border-stone-800" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-stone-700">Com. Foránea ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.platformFeeForaneo} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, platformFeeForaneo: Number(e.target.value)}})} className="w-full p-2 bg-white border border-stone-200 rounded-lg text-sm font-bold" />
+                                                    <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300">Com. Foránea ($)</p>
+                                                    <input type="number" value={localConfig.deliveryRates.platformFeeForaneo} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, platformFeeForaneo: Number(e.target.value)}})} className="w-full p-2 bg-white border border-amber-300 rounded-lg text-sm font-bold dark:bg-stone-900 dark:border-stone-800" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1295,19 +1295,19 @@ export const AdminView: React.FC = () => {
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
                                                     <p className="text-[10px] font-bold text-blue-700">Base Local ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.localBaseDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localBaseDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold" />
+                                                    <input type="number" value={localConfig.deliveryRates.localBaseDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localBaseDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold dark:bg-stone-900" />
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-bold text-blue-700">Base Foráneo ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.foraneoBaseDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoBaseDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold" />
+                                                    <input type="number" value={localConfig.deliveryRates.foraneoBaseDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoBaseDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold dark:bg-stone-900" />
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-bold text-blue-700">+ Extra / 100m Local</p>
-                                                    <input type="number" value={localConfig.deliveryRates.localExtraPer100mDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localExtraPer100mDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold" />
+                                                    <input type="number" value={localConfig.deliveryRates.localExtraPer100mDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localExtraPer100mDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold dark:bg-stone-900" />
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-bold text-blue-700">+ Extra / 1km Foráneo</p>
-                                                    <input type="number" value={localConfig.deliveryRates.foraneoExtraPerKmDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoExtraPerKmDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold" />
+                                                    <input type="number" value={localConfig.deliveryRates.foraneoExtraPerKmDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoExtraPerKmDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold dark:bg-stone-900" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1349,15 +1349,15 @@ export const AdminView: React.FC = () => {
                                 </div>
                                 )}
 
-                                <div className="p-4 border-b border-stone-100">
-                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
+                                <div className="p-4 border-b border-amber-200 dark:border-stone-800">
+                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 dark:text-white">
                                         <Tag size={18} className="text-brand-800" /> Gestión de Categorías
                                     </h3>
                                     <div className="space-y-3">
                                         <div className="flex flex-wrap gap-2">
                                             {localConfig.categories.map((cat, idx) => (
-                                                <div key={idx} className="flex items-center gap-2 bg-stone-100 px-3 py-1.5 rounded-lg border border-stone-200">
-                                                    <span className="text-xs font-bold text-stone-700">{cat}</span>
+                                                <div key={idx} className="flex items-center gap-2 bg-stone-100 px-3 py-1.5 rounded-lg border border-amber-300 dark:bg-stone-800 dark:border-stone-800">
+                                                    <span className="text-xs font-bold text-stone-700 dark:text-stone-300">{cat}</span>
                                                     <button 
                                                         onClick={() => {
                                                             const newCats = localConfig.categories.filter((_, i) => i !== idx);
@@ -1375,7 +1375,7 @@ export const AdminView: React.FC = () => {
                                                 type="text" 
                                                 id="new-category-input"
                                                 placeholder="Nueva categoría..."
-                                                className="flex-1 p-2 bg-stone-50 border border-stone-200 rounded-lg text-sm outline-none focus:border-brand-500"
+                                                className="flex-1 p-2 bg-stone-50 border border-amber-300 rounded-lg text-sm outline-none focus:border-brand-500 dark:bg-stone-900 dark:border-stone-800"
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         const val = e.currentTarget.value.trim();
@@ -1404,37 +1404,37 @@ export const AdminView: React.FC = () => {
                                 </div>
 
                                 <div className="p-4">
-                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2">
+                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 dark:text-white">
                                         <Shield size={18} className="text-brand-800" /> Seguridad y Soporte
                                     </h3>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <p className="text-sm font-bold text-stone-800">Email de Soporte</p>
-                                                <p className="text-xs text-stone-500">Para reclamos y ayuda</p>
+                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Email de Soporte</p>
+                                                <p className="text-xs text-stone-500 dark:text-stone-400">Para reclamos y ayuda</p>
                                             </div>
                                             <input 
                                                 type="email" 
                                                 value={localConfig.supportEmail} 
                                                 onChange={(e) => setLocalConfig({...localConfig, supportEmail: e.target.value})}
-                                                className="w-48 p-2 bg-stone-50 border border-stone-200 rounded-lg text-right text-sm" 
+                                                className="w-48 p-2 bg-stone-50 border border-amber-300 rounded-lg text-right text-sm dark:bg-stone-900 dark:border-stone-800" 
                                             />
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <p className="text-sm font-bold text-stone-800">Modo de Pago</p>
-                                                <p className="text-xs text-stone-500">Centralizado (App) o Descentralizado (Comercio)</p>
+                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Modo de Pago</p>
+                                                <p className="text-xs text-stone-500 dark:text-stone-400">Centralizado (App) o Descentralizado (Comercio)</p>
                                             </div>
-                                            <div className="flex bg-stone-100 p-1 rounded-lg gap-1">
+                                            <div className="flex bg-stone-100 p-1 rounded-lg gap-1 dark:bg-stone-800">
                                                 <button 
                                                     onClick={() => setLocalConfig({...localConfig, paymentMode: 'CENTRALIZED'})}
-                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'CENTRALIZED' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'CENTRALIZED' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700'} dark:text-white`}
                                                 >
                                                     Centralizado
                                                 </button>
                                                 <button 
                                                     onClick={() => setLocalConfig({...localConfig, paymentMode: 'DECENTRALIZED'})}
-                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'DECENTRALIZED' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
+                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'DECENTRALIZED' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700'} dark:text-white`}
                                                 >
                                                     Descentralizado
                                                 </button>
@@ -1442,20 +1442,20 @@ export const AdminView: React.FC = () => {
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <p className="text-sm font-bold text-stone-800">Modo Mantenimiento</p>
-                                                <p className="text-xs text-stone-500">Desactiva pedidos temporalmente</p>
+                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Modo Mantenimiento</p>
+                                                <p className="text-xs text-stone-500 dark:text-stone-400">Desactiva pedidos temporalmente</p>
                                             </div>
                                             <div 
                                                 onClick={() => setLocalConfig({...localConfig, maintenanceMode: !localConfig.maintenanceMode})}
                                                 className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localConfig.maintenanceMode ? 'bg-red-50 dark:bg-red-900/200' : 'bg-stone-200'}`}
                                             >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${localConfig.maintenanceMode ? 'left-7' : 'left-1'}`}></div>
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${localConfig.maintenanceMode ? 'left-7' : 'left-1'} dark:bg-stone-900`}></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-stone-50">
+                                <div className="p-4 bg-stone-50 dark:bg-stone-900">
                                     <Button fullWidth onClick={() => {
                                         updateConfig(localConfig);
                                         showToast('Configuración guardada', 'success');

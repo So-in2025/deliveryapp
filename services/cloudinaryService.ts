@@ -1,35 +1,29 @@
 
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { app } from '../firebase'; // Initialize app properly from firebase.ts
+
 /**
- * Cloudinary Service for handling image uploads
+ * Uploads an image to Firebase Storage (Replacing Cloudinary due to preset errors)
  */
-
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dfrb7fkni';
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default'; // Fallback to a default if not set
-
 export const uploadImageToCloudinary = async (file: File | Blob): Promise<string> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', UPLOAD_PRESET);
-
   try {
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Error uploading image to Cloudinary');
-    }
-
-    const data = await response.json();
-    return data.secure_url;
-  } catch (error) {
-    console.error('Cloudinary Upload Error:', error);
-    throw error;
+    const storage = getStorage(app);
+    // Create a unique file name
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 10);
+    const fileName = `uploads/${timestamp}-${randomString}`;
+    
+    const storageRef = ref(storage, fileName);
+    
+    // Upload the file
+    await uploadBytes(storageRef, file);
+    
+    // Get the download URL
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  } catch (error: any) {
+    console.error('Firebase Storage Upload Error:', error);
+    throw new Error(error.message || 'Error uploading image to storage');
   }
 };
 
@@ -40,6 +34,5 @@ export const handleImageUpload = async (
   file: File,
   onProgress?: (progress: number) => void
 ): Promise<string> => {
-  // You could implement progress tracking if needed using XMLHttpRequest instead of fetch
-  return await uploadImage(file);
+  return await uploadImageToCloudinary(file);
 };

@@ -34,7 +34,7 @@ export const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-zinc-900 shadow-2xl z-[70] flex flex-col"
+                        className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-zinc-900 shadow-2xl z-[70] flex flex-col dark:bg-stone-900"
                     >
                         {/* Header */}
                         <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
@@ -42,7 +42,7 @@ export const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen
                                 <div className="relative">
                                     <Bell className="w-6 h-6 text-zinc-900 dark:text-white" />
                                     {unreadCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white dark:border-zinc-900">
+                                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white dark:border-zinc-900 dark:border-stone-800">
                                             {unreadCount}
                                         </span>
                                     )}

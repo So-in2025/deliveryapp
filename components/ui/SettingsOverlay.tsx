@@ -253,7 +253,7 @@ export const SettingsOverlay: React.FC = () => {
 
     const renderMerchantRegistration = () => (
         <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right">
-            <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800">
+            <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-800">
                 <div className="w-16 h-16 bg-brand-500/10 text-brand-600 rounded-2xl flex items-center justify-center mb-4">
                     <StoreIcon size={32} />
                 </div>
@@ -369,7 +369,7 @@ export const SettingsOverlay: React.FC = () => {
 
     const renderDriverRegistration = () => (
         <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right">
-            <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800">
+            <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-800">
                 <div className="w-16 h-16 bg-amber-50 dark:bg-amber-900/200/10 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
                     <Bike size={32} />
                 </div>
@@ -422,11 +422,11 @@ export const SettingsOverlay: React.FC = () => {
                     <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Foto de tu INE (Frente) *</label>
                     {driverReg.ineUrl ? (
                          <div className="relative">
-                            <img src={driverReg.ineUrl} alt="INE" className="w-full h-32 object-cover rounded-xl border border-stone-200" />
+                            <img src={driverReg.ineUrl} alt="INE" className="w-full h-32 object-cover rounded-xl border border-amber-300 dark:border-stone-800" />
                             <button onClick={() => setDriverReg({...driverReg, ineUrl: ''})} className="absolute top-2 right-2 bg-red-50 dark:bg-red-900/200 text-white p-1.5 rounded-full shadow-md"><X size={14}/></button>
                          </div>
                     ) : (
-                        <div className="border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-xl p-6 flex flex-col items-center justify-center bg-white dark:bg-stone-900 relative">
+                        <div className="border-2 border-dashed border-amber-300 dark:border-stone-800 rounded-xl p-6 flex flex-col items-center justify-center bg-white dark:bg-stone-900 relative">
                             <input 
                                 type="file" 
                                 accept="image/*"
@@ -453,11 +453,11 @@ export const SettingsOverlay: React.FC = () => {
                     <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Foto Selfie (Tu rostro claro) *</label>
                     {driverReg.selfieUrl ? (
                          <div className="relative">
-                            <img src={driverReg.selfieUrl} alt="Selfie" className="w-full h-32 object-cover rounded-xl border border-stone-200" />
+                            <img src={driverReg.selfieUrl} alt="Selfie" className="w-full h-32 object-cover rounded-xl border border-amber-300 dark:border-stone-800" />
                             <button onClick={() => setDriverReg({...driverReg, selfieUrl: ''})} className="absolute top-2 right-2 bg-red-50 dark:bg-red-900/200 text-white p-1.5 rounded-full shadow-md"><X size={14}/></button>
                          </div>
                     ) : (
-                        <div className="border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-xl p-6 flex flex-col items-center justify-center bg-white dark:bg-stone-900 relative">
+                        <div className="border-2 border-dashed border-amber-300 dark:border-stone-800 rounded-xl p-6 flex flex-col items-center justify-center bg-white dark:bg-stone-900 relative">
                             <input 
                                 type="file" 
                                 accept="image/*"
@@ -487,7 +487,7 @@ export const SettingsOverlay: React.FC = () => {
                             <button 
                                 key={v}
                                 onClick={() => setDriverReg({...driverReg, vehicleType: v})}
-                                className={`p-3 rounded-lg border text-[10px] font-bold uppercase transition-all ${driverReg.vehicleType === v ? 'bg-amber-50 dark:bg-amber-900/200 text-white border-amber-600' : 'bg-white dark:bg-stone-900 text-stone-500 border-stone-100 dark:border-stone-800'}`}
+                                className={`p-3 rounded-lg border text-[10px] font-bold uppercase transition-all ${driverReg.vehicleType === v ? 'bg-amber-50 dark:bg-amber-900/200 text-white border-amber-600' : 'bg-white dark:bg-stone-900 text-stone-500 border-amber-200 dark:border-stone-800'} dark:text-stone-400`}
                             >
                                 {v}
                             </button>
@@ -517,7 +517,7 @@ export const SettingsOverlay: React.FC = () => {
             {/* Partners Hub */}
             <div>
                 <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">Cambiar de Rol</h3>
-                <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden transition-colors duration-300">
+                <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-800 overflow-hidden transition-colors duration-300">
                     
                     {/* Client Option */}
                     <div 
@@ -661,7 +661,7 @@ export const SettingsOverlay: React.FC = () => {
             {/* General Settings */}
             <div>
                 <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 ml-1">General</h3>
-                <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden transition-colors duration-300">
+                <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-800 overflow-hidden transition-colors duration-300">
                     <div onClick={() => { setEditName(user.name); setEditEmail(user.email); setCurrentView('EDIT_PROFILE'); }}>
                         <SettingItem icon={<User size={18} />} label="Editar Perfil" />
                     </div>
@@ -683,7 +683,7 @@ export const SettingsOverlay: React.FC = () => {
             </div>
 
              {/* Debug Actions */}
-             <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden transition-colors duration-300">
+             <div className="bg-white dark:bg-stone-900 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-800 overflow-hidden transition-colors duration-300">
                 <div 
                     onClick={handleReset}
                     className="flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer text-red-600 dark:text-red-400 transition-colors"
@@ -711,7 +711,7 @@ export const SettingsOverlay: React.FC = () => {
 
   const renderEditProfileView = () => (
       <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-stone-50 dark:bg-stone-950 animate-slide-in-right transition-colors duration-300">
-          <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 text-center transition-colors duration-300">
+          <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-800 text-center transition-colors duration-300">
               <div className="w-24 h-24 mx-auto bg-stone-200 dark:bg-stone-800 rounded-full mb-4 relative overflow-hidden group">
                   {user.avatar ? (
                       <img src={user.avatar} className="w-full h-full object-cover" />
@@ -722,7 +722,7 @@ export const SettingsOverlay: React.FC = () => {
                   )}
                   <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                       {isUploadingAvatar ? (
-                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin dark:border-stone-800" />
                       ) : (
                           <Camera size={20} className="text-white" />
                       )}
@@ -739,13 +739,13 @@ export const SettingsOverlay: React.FC = () => {
               <p className="text-xs text-stone-500 dark:text-stone-400">Toca para cambiar</p>
           </div>
 
-          <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-800 space-y-4 transition-colors duration-300">
+          <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-800 space-y-4 transition-colors duration-300">
               <div>
                   <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Nombre Completo</label>
                   <input 
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
+                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-amber-300 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
                   />
               </div>
               <div>
@@ -753,7 +753,7 @@ export const SettingsOverlay: React.FC = () => {
                   <input 
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
-                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
+                    className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-amber-300 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
                   />
               </div>
           </div>
@@ -813,15 +813,15 @@ export const SettingsOverlay: React.FC = () => {
               <HelpCircle size={16} className="text-brand-500" /> Preguntas Frecuentes (FAQ)
             </h4>
             <div className="space-y-4">
-                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800">
+                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-amber-200 dark:border-stone-800">
                     <p className="font-bold text-xs text-brand-600 dark:text-brand-400 uppercase mb-1">¿Cuál es la zona de cobertura?</p>
                     <p className="text-xs">Cubrimos todo el casco urbano y barrios periféricos hasta 8km del centro. Si tu dirección no aparece, contáctanos.</p>
                 </div>
-                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800">
+                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-amber-200 dark:border-stone-800">
                     <p className="font-bold text-xs text-brand-600 dark:text-brand-400 uppercase mb-1">¿Qué hago si mi pedido llegó mal?</p>
                     <p className="text-xs">Ve a "Mis Pedidos", selecciona el pedido y toca "Iniciar Reclamo". Adjunta una foto y el comercio te dará una solución inmediata.</p>
                 </div>
-                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800">
+                <div className="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-amber-200 dark:border-stone-800">
                     <p className="font-bold text-xs text-brand-600 dark:text-brand-400 uppercase mb-1">¿Cuáles son los horarios?</p>
                     <p className="text-xs">La app funciona 24/7, pero la disponibilidad depende de los horarios de cada comercio (generalmente de 11:00 a 23:00).</p>
                 </div>
@@ -905,7 +905,7 @@ export const SettingsOverlay: React.FC = () => {
           {helpContent[role as UserRole] || helpContent[UserRole.CLIENT]}
         </div>
 
-        <div className="mt-8 p-4 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800">
+        <div className="mt-8 p-4 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-amber-200 dark:border-stone-800">
           <p className="text-xs font-bold text-stone-400 uppercase mb-2">¿Necesitas más ayuda?</p>
           <p className="text-sm text-stone-600 dark:text-stone-400 mb-4">Consulta el manual completo en formato PDF o contacta a soporte técnico.</p>
           <button className="w-full py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
@@ -1003,7 +1003,7 @@ const SettingItem: React.FC<{ icon: React.ReactNode; label: string; hasSwitch?: 
         </div>
         {hasSwitch ? (
             <div className={`w-10 h-6 rounded-full relative transition-colors ${active ? 'bg-brand-500' : 'bg-stone-200 dark:bg-stone-600'}`}>
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${active ? 'left-5' : 'left-1'}`}></div>
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${active ? 'left-5' : 'left-1'} dark:bg-stone-900`}></div>
             </div>
         ) : (
             <ChevronRight size={16} className="text-stone-300 dark:text-stone-500" />

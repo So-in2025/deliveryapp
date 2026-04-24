@@ -165,7 +165,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
                             {currentStep > 0 && (
                                 <button 
                                     onClick={handlePrev}
-                                    className="p-2 rounded-xl bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-stone-400 hover:text-brand-500 transition-colors"
+                                    className="p-2 rounded-xl bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-stone-400 hover:text-brand-500 transition-colors dark:bg-stone-800"
                                 >
                                     <ChevronLeft size={20} />
                                 </button>

@@ -184,7 +184,7 @@ export const AuthView: React.FC = () => {
         </div>
         <div className="flex flex-col items-center gap-2">
             <div className="w-12 h-1 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest">Iniciando plataforma...</p>
+            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest dark:text-stone-400">Iniciando plataforma...</p>
         </div>
       </div>
     );
@@ -286,7 +286,7 @@ export const AuthView: React.FC = () => {
 
   const handleRegisterDriver = () => {
       const phoneRegex = /^[0-9]{7,15}$/;
-      if (!phoneNumber || !phoneRegex.test(phoneNumber) || !driverLicense || !vehiclePlate) {
+      if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
           showToast('Por favor completa todos los campos obligatorios correctamente', 'error');
           return;
       }
@@ -416,11 +416,11 @@ export const AuthView: React.FC = () => {
                 >
                     <div className="space-y-2">
                         <div className="text-3xl font-black text-white tracking-tighter">Negocios</div>
-                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Locales</div>
+                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest dark:text-stone-400">Locales</div>
                     </div>
                     <div className="space-y-2">
                         <div className="text-3xl font-black text-white tracking-tighter">Trato</div>
-                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest">Cercano</div>
+                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest dark:text-stone-400">Cercano</div>
                     </div>
                 </motion.div>
             </div>
@@ -438,7 +438,7 @@ export const AuthView: React.FC = () => {
                         </div>
                     ))}
                 </div>
-                <p className="text-stone-500 text-[11px] font-bold uppercase tracking-wider">
+                <p className="text-stone-500 text-[11px] font-bold uppercase tracking-wider dark:text-stone-400">
                     Únete a nuestra <span className="text-white">comunidad local</span>
                 </p>
             </motion.div>
@@ -507,7 +507,7 @@ export const AuthView: React.FC = () => {
                                 
                                 <button
                                     onClick={() => setAuthMode('EMAIL_LOGIN')}
-                                    className="w-full bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-white font-bold py-4 px-6 rounded-2xl hover:bg-stone-200 dark:hover:bg-stone-700 transition-all flex items-center justify-center gap-3 text-base border border-stone-200 dark:border-stone-700"
+                                    className="w-full bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-white font-bold py-4 px-6 rounded-2xl hover:bg-stone-200 dark:hover:bg-stone-700 transition-all flex items-center justify-center gap-3 text-base border border-amber-300 dark:border-stone-700"
                                 >
                                     <Mail size={20} className="text-brand-500" />
                                     Ingresar con Correo
@@ -524,7 +524,7 @@ export const AuthView: React.FC = () => {
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
                                             required
-                                            className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                            className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                                         />
                                     </div>
                                 )}
@@ -537,7 +537,7 @@ export const AuthView: React.FC = () => {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
-                                        className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                        className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                                     />
                                 </div>
 
@@ -551,7 +551,7 @@ export const AuthView: React.FC = () => {
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
-                                                className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                                className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                                             />
                                         </div>
                                         {authMode === 'EMAIL_REGISTER' && (
@@ -563,7 +563,7 @@ export const AuthView: React.FC = () => {
                                                     value={confirmPassword}
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                                     required
-                                                    className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
+                                                    className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl py-3.5 pl-11 pr-4 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all"
                                                 />
                                             </div>
                                         )}
@@ -612,7 +612,7 @@ export const AuthView: React.FC = () => {
                         )}
                     </div>
                 ) : (
-                    <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-stone-200 dark:border-stone-800 flex items-center justify-between shadow-sm">
+                    <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl border border-amber-300 dark:border-stone-800 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-brand-500 p-0.5 shadow-md">
                                 <div className="w-full h-full rounded-[10px] overflow-hidden bg-stone-800">
@@ -683,15 +683,15 @@ export const AuthView: React.FC = () => {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
-                        className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 shadow-xl"
+                        className="bg-white dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-3xl p-6 shadow-xl"
                     >
                         <div className="flex items-center gap-3 mb-6">
                             <button onClick={() => setOnboardingStep('NONE')} className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors">
-                                <ArrowLeft size={20} className="text-stone-500" />
+                                <ArrowLeft size={20} className="text-stone-500 dark:text-stone-400" />
                             </button>
                             <div>
                                 <h4 className="text-xl font-black text-stone-900 dark:text-white">Crea tu Tienda</h4>
-                                <p className="text-sm text-stone-500">Completa tu perfil comercial</p>
+                                <p className="text-sm text-stone-500 dark:text-stone-400">Completa tu perfil comercial</p>
                             </div>
                         </div>
 
@@ -703,18 +703,18 @@ export const AuthView: React.FC = () => {
                                     value={storeName}
                                     onChange={(e) => setStoreName(e.target.value)}
                                     placeholder="Ej. Tacos El Gordo"
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
                             <div>
-                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">RFC (13 caracteres) *</label>
+                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 dark:text-stone-400">RFC (13 caracteres) *</label>
                                  <input 
                                      type="text" 
                                      value={storeTaxId}
                                      onChange={(e) => setStoreTaxId(e.target.value)}
                                      placeholder="Ej. ABCD900101XYZ"
                                      maxLength={13}
-                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />
                              </div>
                              <div>
@@ -722,7 +722,7 @@ export const AuthView: React.FC = () => {
                                  <select 
                                      value={storeBankName}
                                      onChange={(e) => setStoreBankName(e.target.value)}
-                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
                                  >
                                      <option value="">Selecciona un banco</option>
                                      {MEXICAN_BANKS.map(bank => (
@@ -741,7 +741,7 @@ export const AuthView: React.FC = () => {
                                      placeholder="18 dígitos numéricos"
                                      maxLength={18}
                                      autoComplete="off"
-                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />
                              </div>
                              <div>
@@ -751,7 +751,7 @@ export const AuthView: React.FC = () => {
                                      value={storeBankAccount}
                                      onChange={(e) => setStoreBankAccount(e.target.value)}
                                      placeholder="Número de cuenta"
-                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />
                              </div>
                              <div>
@@ -761,7 +761,7 @@ export const AuthView: React.FC = () => {
                                      value={storeAddress}
                                      onChange={(e) => setStoreAddress(e.target.value)}
                                      placeholder="Ej. Av. Principal 123"
-                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />
                              </div>
                              <div>
@@ -771,7 +771,7 @@ export const AuthView: React.FC = () => {
                                      value={storePhone}
                                      onChange={(e) => setStorePhone(e.target.value)}
                                      placeholder="Ej. 33 1234 5678"
-                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                     className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />
                              </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -780,7 +780,7 @@ export const AuthView: React.FC = () => {
                                     <select 
                                         value={storeCategory}
                                         onChange={(e) => setStoreCategory(e.target.value)}
-                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
+                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
                                     >
                                         {config.categories.map(cat => (
                                             <option key={cat} value={cat}>{cat}</option>
@@ -792,7 +792,7 @@ export const AuthView: React.FC = () => {
                                     <select 
                                         value={storeTime}
                                         onChange={(e) => setStoreTime(e.target.value)}
-                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
+                                        className="w-full bg-stone-50 dark:bg-stone-950 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
                                     >
                                         <option value="15">15 min</option>
                                         <option value="30">30 min</option>
@@ -823,15 +823,15 @@ export const AuthView: React.FC = () => {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
-                        className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-6 shadow-xl"
+                        className="bg-white dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-3xl p-6 shadow-xl"
                     >
                         <div className="flex items-center gap-3 mb-6">
                             <button onClick={() => setOnboardingStep('NONE')} className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors">
-                                <ArrowLeft size={20} className="text-stone-500" />
+                                <ArrowLeft size={20} className="text-stone-500 dark:text-stone-400" />
                             </button>
                             <div>
                                 <h4 className="text-xl font-black text-stone-900 dark:text-white">Sé Repartidor</h4>
-                                <p className="text-sm text-stone-500">Configura tu vehículo</p>
+                                <p className="text-sm text-stone-500 dark:text-stone-400">Configura tu vehículo</p>
                             </div>
                         </div>
 
@@ -841,7 +841,7 @@ export const AuthView: React.FC = () => {
                                 <select 
                                     value={vehicleType}
                                     onChange={(e) => setVehicleType(e.target.value)}
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none"
                                 >
                                     <option value="Moto">Motocicleta</option>
                                     <option value="Auto">Automóvil</option>
@@ -855,27 +855,27 @@ export const AuthView: React.FC = () => {
                                     value={phoneNumber}
                                     onChange={(e) => setPhoneNumber(e.target.value)}
                                     placeholder="Ej. 33 1234 5678"
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Licencia de Conducir *</label>
+                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Licencia de Conducir (Opcional)</label>
                                 <input 
                                     type="text" 
                                     value={driverLicense}
                                     onChange={(e) => setDriverLicense(e.target.value)}
-                                    placeholder="Número de licencia"
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="Dejar en blanco si no aplica"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Placa del Vehículo *</label>
+                                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Placa del Vehículo (Opcional)</label>
                                 <input 
                                     type="text" 
                                     value={vehiclePlate}
                                     onChange={(e) => setVehiclePlate(e.target.value)}
-                                    placeholder="Placa"
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="Dejar en blanco si no aplica"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
                             <div>
@@ -885,12 +885,12 @@ export const AuthView: React.FC = () => {
                                     value={vehicleInsurance}
                                     onChange={(e) => setVehicleInsurance(e.target.value)}
                                     placeholder="Número de póliza (Opcional)"
-                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                    className="w-full bg-stone-50 dark:bg-stone-950 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 />
                             </div>
                             <button 
                                 onClick={handleRegisterDriver}
-                                disabled={!phoneNumber || !driverLicense || !vehiclePlate}
+                                disabled={!phoneNumber}
                                 className="w-full mt-4 bg-stone-900 dark:bg-white disabled:opacity-50 text-white dark:text-stone-900 font-black py-4 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
                             >
                                 <Bike size={20} />
@@ -919,7 +919,7 @@ export const AuthView: React.FC = () => {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => handleRoleSelection(UserRole.ADMIN, false)}
-                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-stone-500 hover:text-brand-600 transition-all group"
+                            className="flex items-center gap-2 px-4 py-2 rounded-full bg-stone-100 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 text-stone-500 hover:text-brand-600 transition-all group dark:text-stone-400"
                         >
                             <Shield size={14} className="group-hover:rotate-12 transition-transform" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Portal Administrativo</span>
@@ -927,7 +927,7 @@ export const AuthView: React.FC = () => {
                     ) : (
                         <button 
                             onClick={() => setShowAdminAccess(true)}
-                            className="text-[10px] font-bold text-stone-500 uppercase tracking-widest hover:text-stone-400 transition-colors"
+                            className="text-[10px] font-bold text-stone-500 uppercase tracking-widest hover:text-stone-400 transition-colors dark:text-stone-400"
                         >
                             Acceso Staff
                         </button>
@@ -948,7 +948,7 @@ export const AuthView: React.FC = () => {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-3xl p-8 w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]"
+                            className="bg-white dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-3xl p-8 w-full max-w-sm shadow-2xl overflow-y-auto max-h-[90vh]"
                         >
                             <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
@@ -1024,7 +1024,7 @@ const RoleButton: React.FC<RoleButtonProps> = ({ icon, title, subtitle, variant,
             </div>
             <div className="w-full flex justify-between items-end">
                 <div className="text-left">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-1 dark:text-stone-400">
                         {subtitle}
                     </p>
                     <h4 className="font-black text-lg tracking-tight leading-none text-white">{title}</h4>

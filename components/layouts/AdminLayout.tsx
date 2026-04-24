@@ -47,7 +47,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             </div>
             <div className="flex flex-col">
                 <span className="text-white font-bold text-sm tracking-tight">ADMIN CORE</span>
-                <span className="text-stone-600 text-[10px] font-mono uppercase tracking-widest">v1.0.4-stable</span>
+                <span className="text-stone-600 text-[10px] font-mono uppercase tracking-widest dark:text-stone-400">v1.0.4-stable</span>
             </div>
           </div>
           
@@ -75,7 +75,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             </div>
             
             <div className="pt-4 pb-2 px-4">
-                <span className="text-[10px] font-black text-stone-600 uppercase tracking-[0.2em]">Vistas de Usuario</span>
+                <span className="text-[10px] font-black text-stone-600 uppercase tracking-[0.2em] dark:text-stone-400">Vistas de Usuario</span>
             </div>
             <DesktopNavItem icon={<ShoppingBag />} label="Vista Cliente" active={false} onClick={() => setRole(UserRole.CLIENT)} />
             <DesktopNavItem icon={<Store />} label="Vista Comercio" active={false} onClick={() => setRole(UserRole.MERCHANT)} />

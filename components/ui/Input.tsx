@@ -16,7 +16,7 @@ export const Input: React.FC<InputProps> = ({
         <Search size={18} />
       </div>
       <input
-        className={`bg-stone-100 border-none text-stone-900 text-sm rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white block pl-10 p-3 outline-none transition-all placeholder:text-stone-400 ${fullWidth ? 'w-full' : ''} ${className}`}
+        className={`bg-stone-100 border-none text-stone-900 text-sm rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white block pl-10 p-3 outline-none transition-all placeholder:text-stone-400 ${fullWidth ? 'w-full' : ''} ${className} dark:bg-stone-800 dark:text-white`}
         {...props}
       />
     </div>

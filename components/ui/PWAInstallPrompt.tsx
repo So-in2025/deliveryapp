@@ -71,7 +71,7 @@ export const PWAInstallPrompt: React.FC = () => {
           {/* Backdrop Blur for the whole bottom area */}
           <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
 
-          <div className="relative bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-800 p-5 pointer-events-auto max-w-md mx-auto overflow-hidden">
+          <div className="relative bg-white dark:bg-stone-900 rounded-3xl shadow-2xl border border-amber-300 dark:border-stone-800 p-5 pointer-events-auto max-w-md mx-auto overflow-hidden">
             {/* Close Button */}
             <button 
               onClick={() => setShowPrompt(false)}
@@ -107,7 +107,7 @@ export const PWAInstallPrompt: React.FC = () => {
                   <span>2. Selecciona <b>Agregar a Inicio</b>.</span>
                 </div>
                 {/* Pointer for Safari Share Button */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-stone-50 dark:bg-stone-800/50 rotate-45 border-b border-r border-stone-200 dark:border-stone-800 hidden sm:block" />
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-stone-50 dark:bg-stone-800/50 rotate-45 border-b border-r border-amber-300 dark:border-stone-800 hidden sm:block" />
               </div>
             ) : (
               <div className="mt-6">

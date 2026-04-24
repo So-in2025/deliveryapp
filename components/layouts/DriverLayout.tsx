@@ -66,7 +66,7 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
             </div>
             <div className="flex flex-col">
                 <span className="text-white font-bold text-sm">Repartidor</span>
-                <span className="text-stone-500 text-[10px] uppercase tracking-widest">Driver App</span>
+                <span className="text-stone-500 text-[10px] uppercase tracking-widest dark:text-stone-400">Driver App</span>
             </div>
           </div>
           

@@ -7,13 +7,14 @@ import { Store, OrderStatus, Product, Modifier, PaymentMethod, OrderType, Order,
 import { Button } from '../components/ui/Button';
 import { LazyImage } from '../components/ui/LazyImage';
 import { ChatOverlay } from '../components/ui/ChatOverlay';
-import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings, Trash2, FileText, DollarSign, Camera, Share, Mail, HelpCircle } from 'lucide-react';
+import { Clock, Star, Plus, ShoppingBag, ArrowLeft, Bike, CheckCircle2, ChefHat, Package, MapPin, X, Minus, ChevronDown, CreditCard, Banknote, WifiOff, Store as StoreIcon, Heart, Ticket, Tag, Flame, Utensils, Search, Sparkles, Zap, History, ChevronRight, Download, AlertTriangle, User, Phone, MessageSquare, Settings, Trash2, FileText, DollarSign, Camera, Share, Mail, HelpCircle, Check, AlertCircle, Calendar } from 'lucide-react';
 import { formatCurrency, APP_CONFIG } from '../constants';
 import { useToast } from '../context/ToastContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import confetti from 'canvas-confetti';
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
+import { motion, AnimatePresence } from 'motion/react';
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -145,7 +146,7 @@ const isNewStore = (dateString: string): boolean => {
             <div className="px-3 flex-1 flex flex-col pb-2">
                 <div className="flex justify-between items-start gap-3">
                     <h3 className={`font-black text-stone-900 dark:text-white leading-tight tracking-tight group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors ${compact ? 'text-lg' : 'text-2xl'}`}>{store.name}</h3>
-                    <div className="flex items-center gap-1.5 text-stone-900 dark:text-white bg-stone-100 dark:bg-white/5 px-3 py-1.5 rounded-xl shrink-0 border border-black/5 dark:border-white/5">
+                    <div className="flex items-center gap-1.5 text-stone-900 dark:text-white bg-stone-100 dark:bg-white/5 px-3 py-1.5 rounded-xl shrink-0 border border-black/5 dark:border-white/5 dark:bg-stone-800">
                         <Star size={14} fill="currentColor" className="text-brand-500" />
                         <span className="text-sm font-black">{displayRating.toFixed(1)}</span>
                     </div>
@@ -442,7 +443,7 @@ export const ClientView: React.FC = () => {
 
                 <textarea 
                     placeholder="Describe el problema (ej: pedido incompleto, comida fría...)"
-                    className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 mb-4 outline-none focus:border-brand-500 text-sm h-32 resize-none text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500"
+                    className="w-full bg-stone-50 dark:bg-stone-800 border border-amber-300 dark:border-stone-700 rounded-xl p-3 mb-4 outline-none focus:border-brand-500 text-sm h-32 resize-none text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     autoFocus
@@ -503,7 +504,7 @@ export const ClientView: React.FC = () => {
 
                 <textarea 
                     placeholder="¿Qué te pareció la comida?"
-                    className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 mb-4 outline-none focus:border-brand-500 text-sm h-24 resize-none text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500"
+                    className="w-full bg-stone-50 dark:bg-stone-800 border border-amber-300 dark:border-stone-700 rounded-xl p-3 mb-4 outline-none focus:border-brand-500 text-sm h-24 resize-none text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                 />
@@ -564,7 +565,7 @@ export const ClientView: React.FC = () => {
 
                     {productToCustomize.modifierGroups?.map(group => (
                         <div key={group.id} className="space-y-6">
-                            <div className="flex justify-between items-center bg-stone-100 dark:bg-white/5 p-4 rounded-2xl border border-black/[0.03] dark:border-white/[0.03]">
+                            <div className="flex justify-between items-center bg-stone-100 dark:bg-white/5 p-4 rounded-2xl border border-black/[0.03] dark:border-white/[0.03] dark:bg-stone-800">
                                 <h4 className="font-black text-xl text-stone-950 dark:text-white tracking-tight">{group.name}</h4>
                                 <span className="text-[10px] font-black text-stone-500 dark:text-stone-400 bg-white dark:bg-stone-800 px-3 py-1.5 rounded-xl border border-black/[0.03] dark:border-white/[0.03] uppercase tracking-widest">
                                     {group.min > 0 ? 'Obligatorio' : 'Opcional'} • {group.max > 1 ? `Máx ${group.max}` : 'Elige 1'}
@@ -577,7 +578,7 @@ export const ClientView: React.FC = () => {
                                         <button 
                                             key={option.id}
                                             onClick={() => handleModifierChange(group.id, option, group.max > 1)}
-                                            className={`flex justify-between items-center p-5 rounded-2xl border-2 transition-all duration-300 ${isSelected ? 'border-brand-500 bg-brand-500/5 shadow-lg shadow-brand-500/5' : 'border-black/[0.03] dark:border-white/[0.03] bg-stone-50 dark:bg-white/5 hover:bg-white dark:hover:bg-stone-800'}`}
+                                            className={`flex justify-between items-center p-5 rounded-2xl border-2 transition-all duration-300 ${isSelected ? 'border-brand-500 bg-brand-500/5 shadow-lg shadow-brand-500/5' : 'border-black/[0.03] dark:border-white/[0.03] bg-stone-50 dark:bg-white/5 hover:bg-white dark:hover:bg-stone-800'} dark:bg-stone-900`}
                                         >
                                             <div className="flex items-center gap-4">
                                                 <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-brand-500 border-brand-500 text-brand-950' : 'border-stone-300 dark:border-stone-600'}`}>
@@ -595,7 +596,7 @@ export const ClientView: React.FC = () => {
                         </div>
                     ))}
        </div>
-                    <div className="flex items-center justify-between bg-stone-100 dark:bg-white/5 p-6 rounded-[2rem] border border-black/[0.03] dark:border-white/[0.03]">
+                    <div className="flex items-center justify-between bg-stone-100 dark:bg-white/5 p-6 rounded-[2rem] border border-black/[0.03] dark:border-white/[0.03] dark:bg-stone-800">
                         <span className="font-black text-stone-950 dark:text-white tracking-tight">Cantidad</span>
                         <div className="flex items-center gap-6">
                             <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-12 h-12 bg-white dark:bg-stone-800 rounded-xl flex items-center justify-center text-stone-950 dark:text-white shadow-xl hover:scale-110 active:scale-95 transition-all border border-black/[0.03] dark:border-white/[0.03]"><Minus size={20} strokeWidth={3} /></button>
@@ -655,7 +656,7 @@ export const ClientView: React.FC = () => {
                   <div className="w-16 h-2 bg-stone-200 dark:bg-stone-800 rounded-full mx-auto mb-8 sm:hidden"></div>
                   <div className="flex justify-between items-center mb-8">
                     <h3 className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter">¿A dónde enviamos?</h3>
-                    <button onClick={() => setShowLocationSelector(false)} className="w-12 h-12 bg-stone-100 dark:bg-stone-800 rounded-2xl text-stone-500 hover:text-stone-950 dark:hover:text-white transition-all flex items-center justify-center border border-black/[0.03] dark:border-white/[0.03]">
+                    <button onClick={() => setShowLocationSelector(false)} className="w-12 h-12 bg-stone-100 dark:bg-stone-800 rounded-2xl text-stone-500 hover:text-stone-950 dark:hover:text-white transition-all flex items-center justify-center border border-black/[0.03] dark:border-white/[0.03] dark:text-stone-400">
                         <X size={24} />
                     </button>
                   </div>
@@ -665,11 +666,7 @@ export const ClientView: React.FC = () => {
                           <button 
                               key={idx}
                               onClick={() => handleSelectAddress(addr)}
-                              className={`w-full flex items-center gap-5 p-6 rounded-[2.5rem] transition-all text-left border-2 ${
-                                  idx === 0 
-                                  ? 'border-brand-500 bg-brand-500/5 shadow-2xl shadow-brand-500/5' 
-                                  : 'border-black/[0.03] dark:border-white/[0.03] bg-stone-50 dark:bg-white/5 hover:bg-white dark:hover:bg-stone-800'
-                              }`}
+                              className={`w-full flex items-center gap-5 p-6 rounded-[2.5rem] transition-all text-left border-2 ${ idx === 0 ? 'border-brand-500 bg-brand-500/5 shadow-2xl shadow-brand-500/5' : 'border-black/[0.03] dark:border-white/[0.03] bg-stone-50 dark:bg-white/5 hover:bg-white dark:hover:bg-stone-800' } dark:bg-stone-900`}
                           >
                               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
                                   idx === 0 ? 'bg-brand-500 text-brand-950' : 'bg-white dark:bg-stone-700 text-stone-400'
@@ -690,7 +687,7 @@ export const ClientView: React.FC = () => {
                       
                       <button 
                           onClick={() => setShowMapSelector(true)}
-                          className="w-full flex items-center justify-center gap-4 p-6 rounded-[2.5rem] border-2 border-dashed border-stone-200 dark:border-stone-700 text-stone-400 dark:text-stone-500 font-black text-sm mt-6 hover:bg-stone-50 dark:hover:bg-stone-800/30 hover:border-brand-500 transition-all group"
+                          className="w-full flex items-center justify-center gap-4 p-6 rounded-[2.5rem] border-2 border-dashed border-amber-300 dark:border-stone-700 text-stone-400 dark:text-stone-500 font-black text-sm mt-6 hover:bg-stone-50 dark:hover:bg-stone-800/30 hover:border-brand-500 transition-all group"
                       >
                           <div className="w-12 h-12 bg-stone-100 dark:bg-stone-800 rounded-2xl flex items-center justify-center group-hover:bg-brand-500 group-hover:text-brand-950 transition-colors">
                             <Plus size={24} />
@@ -820,7 +817,7 @@ export const ClientView: React.FC = () => {
                         window.dispatchEvent(new CustomEvent('open-help'));
                         toggleSettings();
                     }}
-                    className="w-12 h-12 bg-stone-100 dark:bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center hover:bg-brand-500/10 hover:text-brand-600 transition-all border border-transparent hover:border-brand-500/20"
+                    className="w-12 h-12 bg-stone-100 dark:bg-white/5 backdrop-blur-md rounded-2xl flex items-center justify-center hover:bg-brand-500/10 hover:text-brand-600 transition-all border border-transparent hover:border-brand-500/20 dark:bg-stone-800"
                     title="Ayuda"
                   >
                       <HelpCircle size={20} className="text-stone-900 dark:text-white" />
@@ -828,7 +825,7 @@ export const ClientView: React.FC = () => {
                   <button 
                     id="history-button"
                     onClick={() => setClientViewState('HISTORY')}
-                    className="flex items-center gap-2 bg-stone-100 dark:bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl hover:bg-brand-500/10 hover:text-brand-600 transition-all border border-transparent hover:border-brand-500/20"
+                    className="flex items-center gap-2 bg-stone-100 dark:bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl hover:bg-brand-500/10 hover:text-brand-600 transition-all border border-transparent hover:border-brand-500/20 dark:bg-stone-800"
                   >
                       <History size={18} className="text-stone-900 dark:text-white" />
                       <span className="font-black text-xs text-stone-900 dark:text-white hidden sm:block uppercase tracking-widest">Pedidos</span>
@@ -846,7 +843,7 @@ export const ClientView: React.FC = () => {
           </div>
 
           <div className="w-full">
-             <div id="search-bar" className="bg-stone-100 dark:bg-white/5 backdrop-blur-xl p-1.5 rounded-[2rem] flex items-center gap-3 transition-all focus-within:bg-white dark:focus-within:bg-stone-900 focus-within:ring-4 focus-within:ring-brand-500/10 border border-transparent focus-within:border-brand-500/20 shadow-inner group/search">
+             <div id="search-bar" className="bg-stone-100 dark:bg-white/5 backdrop-blur-xl p-1.5 rounded-[2rem] flex items-center gap-3 transition-all focus-within:bg-white dark:focus-within:bg-stone-900 focus-within:ring-4 focus-within:ring-brand-500/10 border border-transparent focus-within:border-brand-500/20 shadow-inner group/search dark:bg-stone-800">
                  <div className="p-3.5 bg-white dark:bg-stone-800 rounded-[1.5rem] shadow-xl shadow-black/5 group-focus-within/search:bg-brand-500 group-focus-within/search:text-brand-950 transition-colors">
                      <Search size={20} className="text-stone-900 dark:text-white group-focus-within/search:text-inherit" />
                  </div>
@@ -889,7 +886,7 @@ export const ClientView: React.FC = () => {
         if (!displayOrder) {
         return (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-50 dark:bg-stone-950 animate-fade-in">
-                <div className="w-24 h-24 bg-stone-100 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-inner">
+                <div className="w-24 h-24 bg-stone-100 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-inner dark:bg-stone-800">
                     <ShoppingBag size={48} strokeWidth={1.5} className="text-stone-300 dark:text-stone-700" />
                 </div>
                 <h2 className="text-3xl font-black text-stone-950 dark:text-white mb-3 tracking-tight">No hay pedido activo</h2>
@@ -912,7 +909,7 @@ export const ClientView: React.FC = () => {
     if (displayOrder.status === OrderStatus.CANCELLED) {
          return (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-stone-50 dark:bg-stone-950 animate-fade-in">
-                <div className="w-24 h-24 bg-red-50 dark:bg-red-900/200/10 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-inner border border-red-500/20">
+                <div className="w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-inner border border-red-500/20">
                     <X size={48} strokeWidth={1.5} className="text-red-500" />
                 </div>
                 <h2 className="text-3xl font-black text-stone-950 dark:text-white mb-3 tracking-tight">Pedido Cancelado</h2>
@@ -955,7 +952,7 @@ export const ClientView: React.FC = () => {
                             })()}
                         </div>
                         {displayOrder.isOfflinePending && (
-                            <div className="absolute -top-2 -right-2 bg-red-50 dark:bg-red-900/200 rounded-2xl p-2 border-4 border-white dark:border-stone-900 shadow-xl">
+                            <div className="absolute -top-2 -right-2 bg-red-50 dark:bg-red-900/20 rounded-2xl p-2 border-4 border-white dark:border-stone-900 shadow-xl">
                                 <WifiOff size={16} className="text-white" />
                             </div>
                         )}
@@ -994,20 +991,20 @@ export const ClientView: React.FC = () => {
                      )}
                      
                      {displayOrder.type === OrderType.PICKUP && (
-                         <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-stone-100 dark:bg-white/5 rounded-2xl text-[10px] font-black text-stone-600 dark:text-stone-400 uppercase tracking-widest border border-black/[0.03] dark:border-white/[0.03]">
+                         <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-stone-100 dark:bg-white/5 rounded-2xl text-[10px] font-black text-stone-600 dark:text-stone-400 uppercase tracking-widest border border-black/[0.03] dark:border-white/[0.03] dark:bg-stone-800">
                              <StoreIcon size={14} /> Retiro en Local
                          </div>
                      )}
                 </div>
 
-                <div className="relative h-3 bg-stone-100 dark:bg-white/5 rounded-full overflow-hidden mb-2 border border-black/[0.03] dark:border-white/[0.03]">
+                <div className="relative h-3 bg-stone-100 dark:bg-white/5 rounded-full overflow-hidden mb-2 border border-black/[0.03] dark:border-white/[0.03] dark:bg-stone-800">
                     <div className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-out rounded-full ${displayOrder.status === OrderStatus.DELIVERED ? 'bg-brand-500 shadow-[0_0_20px_rgba(250,204,21,0.5)]' : displayOrder.isOfflinePending ? 'bg-stone-300 dark:bg-stone-700' : 'bg-brand-500 shadow-[0_0_20px_rgba(250,204,21,0.3)]'}`} style={{ width: getProgressWidth() }}></div>
                 </div>
             </div>
 
             {displayOrder.type === OrderType.DELIVERY && (displayOrder.status === OrderStatus.DRIVER_ASSIGNED || displayOrder.status === OrderStatus.PICKED_UP) && (
                 <div className="px-6 mt-6 mb-2">
-                    <div className="h-64 rounded-[2.5rem] bg-stone-200 dark:bg-stone-800 overflow-hidden relative shadow-inner border border-stone-200 dark:border-stone-700">
+                    <div className="h-64 rounded-[2.5rem] bg-stone-200 dark:bg-stone-800 overflow-hidden relative shadow-inner border border-amber-300 dark:border-stone-700">
                         {(() => {
                             const driver = users.find(u => u.uid === displayOrder.driverId);
                             const store = stores.find(s => s.id === displayOrder.storeId);
@@ -1031,7 +1028,7 @@ export const ClientView: React.FC = () => {
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white dark:bg-stone-800 p-4 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 flex items-center justify-between"
+                        className="bg-white dark:bg-stone-800 p-4 rounded-3xl shadow-sm border border-amber-200 dark:border-stone-700 flex items-center justify-between"
                     >
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-stone-100 dark:bg-stone-700 rounded-2xl flex items-center justify-center">
@@ -1066,10 +1063,10 @@ export const ClientView: React.FC = () => {
                     title={`Chat con ${displayOrder.storeName}`} 
                 />
 
-                 <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
+                 <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-amber-200 dark:border-stone-700">
                     <h3 className="font-bold text-sm text-stone-900 dark:text-white mb-3 uppercase tracking-wider">Detalle del Pedido</h3>
                     {displayOrder.items?.map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-sm py-2 border-b border-stone-100 dark:border-stone-700 last:border-0">
+                        <div key={idx} className="flex justify-between text-sm py-2 border-b border-amber-200 dark:border-stone-700 last:border-0">
                             <div>
                                 <div className="flex gap-2">
                                     <span className="font-bold text-stone-900 dark:text-white">{item.quantity}x</span> 
@@ -1079,7 +1076,7 @@ export const ClientView: React.FC = () => {
                             <span className="text-stone-600 dark:text-stone-400 font-medium">{formatCurrency(item.totalPrice * item.quantity)}</span>
                         </div>
                     ))}
-                    <div className="flex justify-between text-sm py-2 border-b border-stone-100 dark:border-stone-700">
+                    <div className="flex justify-between text-sm py-2 border-b border-amber-200 dark:border-stone-700">
                         <span className="text-stone-600 dark:text-stone-400">Envío</span>
                         <span className="text-stone-900 dark:text-white font-medium">
                             {(displayOrder.type === OrderType.DELIVERY ? (displayOrder.deliveryFee ?? 45) : 0) > 0 
@@ -1087,7 +1084,7 @@ export const ClientView: React.FC = () => {
                                 : 'Gratis'}
                         </span>
                     </div>
-                    <div className="border-t border-stone-100 dark:border-stone-700 mt-3 pt-3 flex justify-between font-bold text-stone-900 dark:text-white">
+                    <div className="border-t border-amber-200 dark:border-stone-700 mt-3 pt-3 flex justify-between font-bold text-stone-900 dark:text-white">
                         <span>Total</span>
                         <span>{formatCurrency(displayOrder.total)}</span>
                     </div>
@@ -1253,7 +1250,7 @@ export const ClientView: React.FC = () => {
                         Cambiar
                     </button>
                 </div>
-                <div className="p-5 bg-stone-100 dark:bg-white/5 rounded-[1.5rem] border border-black/[0.03] dark:border-white/[0.03]">
+                <div className="p-5 bg-stone-100 dark:bg-white/5 rounded-[1.5rem] border border-black/[0.03] dark:border-white/[0.03] dark:bg-stone-800">
                     <p className="text-base font-black text-stone-950 dark:text-white tracking-tight">{deliveryAddr}</p>
                     <div className="flex items-center gap-2 mt-2">
                         <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>
@@ -1289,7 +1286,7 @@ export const ClientView: React.FC = () => {
           <div className="bg-white dark:bg-stone-900/40 p-6 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm">
               <h3 className="font-black text-stone-950 dark:text-white mb-5 tracking-tight">Opciones Adicionales</h3>
               <div className="space-y-6">
-                  <div className="flex items-center justify-between p-4 bg-stone-100 dark:bg-white/5 rounded-2xl">
+                  <div className="flex items-center justify-between p-4 bg-stone-100 dark:bg-white/5 rounded-2xl dark:bg-stone-800">
                       <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-white dark:bg-stone-800 rounded-xl flex items-center justify-center shadow-sm">
                             <Utensils size={20} className="text-stone-400" />
@@ -1300,7 +1297,7 @@ export const ClientView: React.FC = () => {
                         onClick={() => setRequestCutlery(!requestCutlery)}
                         className={`w-14 h-8 rounded-full transition-all relative p-1 ${requestCutlery ? 'bg-brand-500' : 'bg-stone-300 dark:bg-stone-700'}`}
                       >
-                          <div className={`w-6 h-6 bg-white rounded-full shadow-lg transition-all transform ${requestCutlery ? 'translate-x-6' : 'translate-x-0'}`} />
+                          <div className={`w-6 h-6 bg-white rounded-full shadow-lg transition-all transform ${requestCutlery ? 'translate-x-6' : 'translate-x-0'} dark:bg-stone-900`} />
                       </button>
                   </div>
                   
@@ -1349,7 +1346,7 @@ export const ClientView: React.FC = () => {
                     value={couponCode} 
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())} 
                     disabled={isProcessing} 
-                    className="flex-1 bg-stone-100 dark:bg-white/5 border border-transparent focus:border-brand-500/30 rounded-2xl px-5 py-4 text-sm outline-none focus:ring-4 focus:ring-brand-500/10 text-stone-950 dark:text-white font-black tracking-tight transition-all" 
+                    className="flex-1 bg-stone-100 dark:bg-white/5 border border-transparent focus:border-brand-500/30 rounded-2xl px-5 py-4 text-sm outline-none focus:ring-4 focus:ring-brand-500/10 text-stone-950 dark:text-white font-black tracking-tight transition-all dark:bg-stone-800" 
                   />
                   <Button size="lg" onClick={handleApplyCoupon} disabled={!couponCode || isProcessing} className="px-8 !rounded-2xl">APLICAR</Button>
                 </div>
@@ -1359,7 +1356,7 @@ export const ClientView: React.FC = () => {
           {!user.referredBy && (
             <div className="bg-white dark:bg-stone-900/40 p-6 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm">
                 <h3 className="font-black text-stone-950 dark:text-white mb-4 flex items-center gap-3 tracking-tight">
-                  <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/200/10 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/10 rounded-xl flex items-center justify-center">
                       <User size={20} className="text-blue-500" />
                   </div>
                   Código de Referido
@@ -1371,7 +1368,7 @@ export const ClientView: React.FC = () => {
                     value={referralInput} 
                     onChange={(e) => setReferralInput(e.target.value.toUpperCase())} 
                     disabled={isProcessing || isApplyingReferral} 
-                    className="flex-1 bg-stone-100 dark:bg-white/5 border border-transparent focus:border-brand-500/30 rounded-2xl px-5 py-4 text-sm outline-none focus:ring-4 focus:ring-brand-500/10 text-stone-950 dark:text-white font-black tracking-tight transition-all" 
+                    className="flex-1 bg-stone-100 dark:bg-white/5 border border-transparent focus:border-brand-500/30 rounded-2xl px-5 py-4 text-sm outline-none focus:ring-4 focus:ring-brand-500/10 text-stone-950 dark:text-white font-black tracking-tight transition-all dark:bg-stone-800" 
                   />
                   <Button 
                     size="lg" 
@@ -1433,7 +1430,7 @@ export const ClientView: React.FC = () => {
                ))}
              </div>
              
-             <div className="space-y-3 pt-6 border-t border-white/10 dark:border-stone-200">
+             <div className="space-y-3 pt-6 border-t border-white/10 dark:border-amber-300">
                 {orderType === OrderType.DELIVERY && (
                     <div className="flex justify-between text-sm">
                         <span className="text-white/60 dark:text-stone-500 font-bold">Costo de Envío</span>
@@ -1476,7 +1473,7 @@ export const ClientView: React.FC = () => {
                  </div>
              )}
 
-             <div className="mt-8 pt-8 border-t-4 border-white/10 dark:border-stone-100 flex justify-between items-center">
+             <div className="mt-8 pt-8 border-t-4 border-white/10 dark:border-amber-200 flex justify-between items-center">
                <span className="font-black text-2xl tracking-tighter uppercase">Total</span>
                <div className="text-right">
                     <span className="font-black text-4xl text-brand-500 tracking-tighter">{formatCurrency(total)}</span>
@@ -1514,7 +1511,7 @@ export const ClientView: React.FC = () => {
           <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-4xl lg:mx-auto lg:w-full">
               {pastOrders.length === 0 ? (
                   <div className="text-center py-20">
-                      <div className="w-24 h-24 bg-stone-100 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <div className="w-24 h-24 bg-stone-100 dark:bg-white/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-inner dark:bg-stone-800">
                         <History size={48} className="text-stone-300 dark:text-stone-700" />
                       </div>
                       <h3 className="text-xl font-black text-stone-950 dark:text-white tracking-tight">Sin historial aún</h3>
@@ -1565,12 +1562,12 @@ export const ClientView: React.FC = () => {
                           </div>
                           
                           {order.status === OrderStatus.CANCELLED && order.cancelledReason && (
-                              <div className="mb-6 bg-red-50 dark:bg-red-900/200/10 p-4 rounded-2xl border border-red-500/20">
+                              <div className="mb-6 bg-red-50 dark:bg-red-900/10 p-4 rounded-2xl border border-red-500/20">
                                 <p className="text-xs text-red-600 dark:text-red-400 font-bold"><span className="uppercase tracking-widest mr-2">Motivo:</span> {order.cancelledReason}</p>
                               </div>
                           )}
                           {order.status === OrderStatus.DISPUTED && order.claimReason && (
-                              <div className="mb-6 bg-amber-50 dark:bg-amber-900/200/10 p-4 rounded-2xl border border-amber-500/20">
+                              <div className="mb-6 bg-amber-50 dark:bg-amber-900/10 p-4 rounded-2xl border border-amber-500/20">
                                   <p className="text-xs text-amber-600 dark:text-amber-400 font-black uppercase tracking-widest mb-1">Reclamo ({order.claimStatus})</p>
                                   <p className="text-xs text-stone-600 dark:text-stone-300 font-medium">{order.claimReason}</p>
                               </div>
@@ -1586,7 +1583,7 @@ export const ClientView: React.FC = () => {
                                   {order.status === OrderStatus.DELIVERED && !order.isReviewed && (
                                       <button
                                           onClick={() => setReviewOrder(order)}
-                                          className="p-3 bg-amber-50 dark:bg-amber-900/200/10 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center gap-2 hover:bg-amber-50 dark:bg-amber-900/200/20 transition-all border border-amber-500/20"
+                                          className="p-3 bg-amber-50 dark:bg-amber-900/10 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center gap-2 hover:bg-amber-50 dark:bg-amber-900/20 transition-all border border-amber-500/20"
                                       >
                                           <Star size={18} fill="currentColor" />
                                           <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Calificar</span>
@@ -1595,7 +1592,7 @@ export const ClientView: React.FC = () => {
                                   {order.status === OrderStatus.DELIVERED && (
                                       <button
                                           onClick={() => setClaimOrder(order)}
-                                          className="p-3 bg-red-50 dark:bg-red-900/200/10 text-red-600 dark:text-red-400 rounded-2xl flex items-center gap-2 hover:bg-red-50 dark:bg-red-900/200/20 transition-all border border-red-500/20"
+                                          className="p-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-2xl flex items-center gap-2 hover:bg-red-50 dark:bg-red-900/20 transition-all border border-red-500/20"
                                       >
                                           <AlertCircle size={18} />
                                           <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Reclamar</span>
@@ -1630,7 +1627,7 @@ export const ClientView: React.FC = () => {
           <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-5xl lg:mx-auto lg:w-full">
               {favoriteStores.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-                      <div className="w-24 h-24 bg-red-50 dark:bg-red-900/200/10 rounded-[2.5rem] flex items-center justify-center text-red-500 shadow-inner">
+                      <div className="w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-[2.5rem] flex items-center justify-center text-red-500 shadow-inner">
                           <Heart size={48} strokeWidth={1.5} />
                       </div>
                       <div>
@@ -1661,14 +1658,23 @@ export const ClientView: React.FC = () => {
 
   const ProfileView = () => {
     const [isEditing, setIsEditing] = useState(false);
-    const [name, setName] = useState(user.name);
-    const [email, setEmail] = useState(user.email);
+    const [name, setName] = useState(user?.name || '');
+    const [email, setEmail] = useState(user?.email || '');
+
+    useEffect(() => {
+        if (user) {
+            setName(user.name);
+            setEmail(user.email);
+        }
+    }, [user]);
 
     const handleSave = () => {
         updateUser({ name, email });
         setIsEditing(false);
         showToast('Perfil actualizado', 'success');
     };
+
+    if (!user) return null;
 
     return (
       <div className="h-full bg-stone-50 dark:bg-stone-950 animate-fade-in flex flex-col">
@@ -1682,7 +1688,7 @@ export const ClientView: React.FC = () => {
               <div className="flex flex-col items-center py-8">
                   <div className="relative group">
                     <div className="w-32 h-32 bg-brand-500 rounded-[3rem] flex items-center justify-center text-brand-950 text-4xl font-black shadow-2xl shadow-brand-500/20 border-4 border-white dark:border-stone-900 group-hover:scale-105 transition-transform duration-500">
-                        {user.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
+                        {(user.name || '').split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()}
                     </div>
                     <button className="absolute -bottom-2 -right-2 bg-stone-950 dark:bg-white p-3.5 rounded-2xl shadow-2xl text-white dark:text-stone-950 hover:scale-110 active:scale-95 transition-all border-2 border-white dark:border-stone-900">
                         <Camera size={20} strokeWidth={3} />
@@ -1779,7 +1785,7 @@ export const ClientView: React.FC = () => {
                                 value={name} 
                                 onChange={(e) => setName(e.target.value)}
                                 disabled={!isEditing}
-                                className={`w-full bg-stone-100 dark:bg-white/5 border rounded-2xl pl-12 pr-4 py-4 text-base outline-none transition-all font-black tracking-tight ${isEditing ? 'border-brand-500 ring-4 ring-brand-500/10' : 'border-transparent'} text-stone-950 dark:text-white`}
+                                className={`w-full bg-stone-100 dark:bg-white/5 border rounded-2xl pl-12 pr-4 py-4 text-base outline-none transition-all font-black tracking-tight ${isEditing ? 'border-brand-500 ring-4 ring-brand-500/10' : 'border-transparent'} text-stone-950 dark:text-white dark:bg-stone-800`}
                             />
                           </div>
                       </div>
@@ -1794,7 +1800,7 @@ export const ClientView: React.FC = () => {
                                 value={email} 
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={!isEditing}
-                                className={`w-full bg-stone-100 dark:bg-white/5 border rounded-2xl pl-12 pr-4 py-4 text-base outline-none transition-all font-black tracking-tight ${isEditing ? 'border-brand-500 ring-4 ring-brand-500/10' : 'border-transparent'} text-stone-950 dark:text-white`}
+                                className={`w-full bg-stone-100 dark:bg-white/5 border rounded-2xl pl-12 pr-4 py-4 text-base outline-none transition-all font-black tracking-tight ${isEditing ? 'border-brand-500 ring-4 ring-brand-500/10' : 'border-transparent'} text-stone-950 dark:text-white dark:bg-stone-800`}
                             />
                           </div>
                       </div>
@@ -1819,7 +1825,7 @@ export const ClientView: React.FC = () => {
                   
                   <div className="space-y-4">
                       {user.addresses?.map((addr, idx) => (
-                          <div key={idx} className="bg-stone-100 dark:bg-white/5 p-5 rounded-[1.5rem] border border-black/[0.03] dark:border-white/[0.03] flex justify-between items-center group/addr hover:bg-white dark:hover:bg-stone-800 transition-all duration-300">
+                          <div key={idx} className="bg-stone-100 dark:bg-white/5 p-5 rounded-[1.5rem] border border-black/[0.03] dark:border-white/[0.03] flex justify-between items-center group/addr hover:bg-white dark:hover:bg-stone-800 transition-all duration-300 dark:bg-stone-800">
                               <div className="flex items-center gap-4 min-w-0">
                                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${idx === 0 ? 'bg-brand-500 text-brand-950' : 'bg-white dark:bg-stone-700 text-stone-400'}`}>
                                       <MapPin size={20} />
@@ -1866,7 +1872,7 @@ export const ClientView: React.FC = () => {
               <div className="space-y-4">
                   <button onClick={() => setClientViewState('HISTORY')} className="w-full flex items-center justify-between p-6 bg-white dark:bg-stone-900/40 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm hover:scale-[1.02] transition-all duration-300 group">
                       <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 bg-stone-100 dark:bg-white/5 rounded-2xl flex items-center justify-center text-stone-950 dark:text-white shadow-inner group-hover:bg-brand-500 group-hover:text-brand-950 transition-colors">
+                          <div className="w-14 h-14 bg-stone-100 dark:bg-white/5 rounded-2xl flex items-center justify-center text-stone-950 dark:text-white shadow-inner group-hover:bg-brand-500 group-hover:text-brand-950 transition-colors dark:bg-stone-800">
                               <History size={24} />
                           </div>
                           <div className="text-left">
@@ -1878,7 +1884,7 @@ export const ClientView: React.FC = () => {
                   </button>
                   <button onClick={() => setClientViewState('FAVORITES')} className="w-full flex items-center justify-between p-6 bg-white dark:bg-stone-900/40 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm hover:scale-[1.02] transition-all duration-300 group">
                       <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 bg-red-50 dark:bg-red-900/200/10 rounded-2xl flex items-center justify-center text-red-500 shadow-inner group-hover:bg-red-50 dark:bg-red-900/200 group-hover:text-white transition-colors">
+                  <div className="w-14 h-14 bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-center text-red-500 shadow-inner group-hover:bg-red-50 dark:bg-red-900/40 group-hover:text-white transition-colors">
                               <Heart size={24} />
                           </div>
                           <div className="text-left">
@@ -1890,7 +1896,7 @@ export const ClientView: React.FC = () => {
                   </button>
                   <button onClick={toggleSettings} className="w-full flex items-center justify-between p-6 bg-white dark:bg-stone-900/40 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm hover:scale-[1.02] transition-all duration-300 group">
                       <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 bg-stone-100 dark:bg-white/5 rounded-2xl flex items-center justify-center text-stone-400 shadow-inner group-hover:bg-stone-950 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-stone-950 transition-colors">
+                          <div className="w-14 h-14 bg-stone-100 dark:bg-white/5 rounded-2xl flex items-center justify-center text-stone-400 shadow-inner group-hover:bg-stone-950 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-stone-950 transition-colors dark:bg-stone-800">
                               <Settings size={24} />
                           </div>
                           <div className="text-left">
@@ -1903,7 +1909,7 @@ export const ClientView: React.FC = () => {
               </div>
 
               <div className="pt-6">
-                  <Button fullWidth variant="outline" className="!rounded-[2rem] py-6 text-red-500 border-red-500/20 hover:bg-red-50 dark:bg-red-900/200/10 font-black tracking-widest" onClick={() => signOut()}>CERRAR SESIÓN</Button>
+                  <Button fullWidth variant="outline" className="!rounded-[2rem] py-6 text-red-500 border-red-500/20 hover:bg-red-50 dark:bg-red-900/10 font-black tracking-widest" onClick={() => signOut()}>CERRAR SESIÓN</Button>
               </div>
           </div>
       </div>
@@ -1974,7 +1980,7 @@ export const ClientView: React.FC = () => {
                           ))}
                       </div>
 
-                      <div className="border-t-2 border-dashed border-stone-100 dark:border-stone-800 py-6 space-y-3">
+                      <div className="border-t-2 border-dashed border-amber-200 dark:border-stone-800 py-6 space-y-3">
                           <div className="flex justify-between text-sm text-stone-500 dark:text-stone-400 font-bold">
                               <span>Subtotal</span>
                               <span>{formatCurrency(order.total - (order.type === OrderType.DELIVERY ? (order.deliveryFee ?? 45) : 0))}</span>
@@ -1989,7 +1995,7 @@ export const ClientView: React.FC = () => {
                           </div>
                       </div>
                       
-                      <div className="mt-8 p-4 bg-stone-100 dark:bg-white/5 rounded-2xl text-[10px] text-stone-400 dark:text-stone-500 font-mono break-all text-center border border-black/[0.03] dark:border-white/[0.03]">
+                      <div className="mt-8 p-4 bg-stone-100 dark:bg-white/5 rounded-2xl text-[10px] text-stone-400 dark:text-stone-500 font-mono break-all text-center border border-black/[0.03] dark:border-white/[0.03] dark:bg-stone-800">
                           TRANSACCIÓN ID: {order.id.toUpperCase()}
                       </div>
                   </div>
@@ -2033,7 +2039,7 @@ export const ClientView: React.FC = () => {
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-3">
                         <span className="bg-brand-500 text-brand-950 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">{selectedStore?.category}</span>
-                        {selectedStore?.isOpen === false && <span className="bg-red-50 dark:bg-red-900/200 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">Cerrado</span>}
+                        {selectedStore?.isOpen === false && <span className="bg-red-50 dark:bg-red-900/10 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">Cerrado</span>}
                     </div>
                     <h2 className="font-black text-4xl text-white lg:text-7xl tracking-tighter drop-shadow-2xl">{selectedStore?.name}</h2>
                 </div>
@@ -2114,7 +2120,7 @@ export const ClientView: React.FC = () => {
             {selectedStore && reviews.filter(r => r.storeId === selectedStore.id).length > 0 && (
                 <div className="animate-slide-up">
                     <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-stone-100 dark:bg-white/5 rounded-2xl flex items-center justify-center shadow-inner">
+                        <div className="w-12 h-12 bg-stone-100 dark:bg-white/5 rounded-2xl flex items-center justify-center shadow-inner dark:bg-stone-800">
                             <Star size={24} className="text-brand-500" />
                         </div>
                         <h3 className="font-black text-3xl text-stone-950 dark:text-white tracking-tighter">Reseñas de Clientes</h3>
@@ -2124,7 +2130,7 @@ export const ClientView: React.FC = () => {
                             <div key={review.id} className="bg-white dark:bg-stone-900/40 p-6 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/[0.03] dark:border-white/[0.03] backdrop-blur-sm">
                                 <div className="flex justify-between items-center mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-stone-100 dark:bg-stone-800 rounded-xl flex items-center justify-center font-black text-stone-500">
+                                        <div className="w-10 h-10 bg-stone-100 dark:bg-stone-800 rounded-xl flex items-center justify-center font-black text-stone-500 dark:text-stone-400">
                                             {review.userName[0].toUpperCase()}
                                         </div>
                                         <span className="font-black text-stone-950 dark:text-white tracking-tight">{review.userName}</span>
@@ -2168,7 +2174,7 @@ export const ClientView: React.FC = () => {
   };
 
   return (
-      <div className="bg-white dark:bg-[#050505] h-full transition-colors duration-300 flex flex-col">
+      <div className="bg-white dark:bg-[#050505] h-full transition-colors duration-300 flex flex-col dark:bg-stone-900">
         {showLocationSelector && LocationModal()}
         {productToCustomize && ProductModal()}
         {reviewOrder && ReviewModal()}
@@ -2201,13 +2207,13 @@ export const ClientView: React.FC = () => {
         )}
 
         <div className="flex-1 overflow-hidden relative">
-        {clientViewState === 'RECEIPT' ? ReceiptView() :
-         clientViewState === 'TRACKING' ? TrackingView() : 
-         clientViewState === 'CHECKOUT' ? CheckoutView() : 
-         clientViewState === 'HISTORY' ? HistoryView() :
-         clientViewState === 'FAVORITES' ? FavoritesView() :
-         clientViewState === 'PROFILE' ? ProfileView() :
-         selectedStore ? StoreDetail() : (
+        {clientViewState === 'RECEIPT' ? <ReceiptView /> :
+         clientViewState === 'TRACKING' ? <TrackingView /> : 
+         clientViewState === 'CHECKOUT' ? <CheckoutView /> : 
+         clientViewState === 'HISTORY' ? <HistoryView /> :
+         clientViewState === 'FAVORITES' ? <FavoritesView /> :
+         clientViewState === 'PROFILE' ? <ProfileView /> :
+         selectedStore ? <StoreDetail /> : (
             <div className="h-full flex flex-col lg:max-w-7xl lg:mx-auto lg:w-full">
                 {StoreList()}
                 <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
@@ -2227,7 +2233,7 @@ export const ClientView: React.FC = () => {
                         </div>
 
                         {filteredStores.length === 0 ? (
-                            <div className="text-center py-12 bg-white dark:bg-stone-800 rounded-2xl border border-dashed border-stone-200 dark:border-stone-700 mx-4 lg:mx-0">
+                            <div className="text-center py-12 bg-white dark:bg-stone-800 rounded-2xl border border-dashed border-amber-300 dark:border-stone-700 mx-4 lg:mx-0">
                                 <div className="mx-auto w-12 h-12 bg-stone-50 dark:bg-stone-700/50 rounded-full flex items-center justify-center mb-3">
                                     <Search size={20} className="text-stone-300 dark:text-stone-500" />
                                 </div>

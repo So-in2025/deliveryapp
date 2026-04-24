@@ -54,7 +54,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col items-center overflow-hidden bg-stone-50 dark:bg-[#050505] transition-colors duration-300">
+    <div className="h-[100dvh] w-full flex flex-col items-center overflow-hidden bg-stone-50 dark:bg-[#050505] transition-colors duration-300 dark:bg-stone-900">
       <SettingsOverlay />
 
       <div className="w-full h-full relative flex flex-col lg:flex-row overflow-hidden bg-white dark:bg-stone-900 transition-colors duration-300">
@@ -67,7 +67,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
         )}
 
         {/* DESKTOP SIDEBAR */}
-        <aside className="hidden lg:flex flex-col w-72 shrink-0 bg-white dark:bg-stone-900 border-r border-stone-100 dark:border-white/[0.03] z-40 transition-colors duration-300">
+        <aside className="hidden lg:flex flex-col w-72 shrink-0 bg-white dark:bg-stone-900 border-r border-amber-200 dark:border-white/[0.03] z-40 transition-colors duration-300 dark:border-stone-800">
           <div className="p-10 flex flex-col items-center">
             <div className="relative group cursor-pointer" onClick={handleHomeClick}>
                 <div className="absolute -inset-6 bg-brand-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -98,7 +98,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
                 <DesktopNavItem icon={<User />} label="Mi Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
             </div>
             {user?.role === UserRole.ADMIN && (
-                <div className="pt-6 mt-6 border-t border-stone-100 dark:border-white/[0.03]">
+                <div className="pt-6 mt-6 border-t border-amber-200 dark:border-white/[0.03] dark:border-stone-800">
                     <div className="px-4 mb-4">
                         <span className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Administración</span>
                     </div>
@@ -107,7 +107,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
             )}
           </nav>
 
-          <div className="p-6 border-t border-stone-100 dark:border-white/[0.03] space-y-2">
+          <div className="p-6 border-t border-amber-200 dark:border-white/[0.03] space-y-2 dark:border-stone-800">
             <div id="settings-tab">
                 <DesktopNavItem icon={<User />} label="Perfil" active={false} onClick={toggleSettings} />
             </div>
@@ -159,7 +159,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
 
 
           {/* Mobile Bottom Navigation */}
-          <nav className="lg:hidden shrink-0 w-full bg-white dark:bg-stone-900 border-t border-stone-100 dark:border-stone-800 pb-safe pt-2 px-6 flex justify-between items-center z-40 relative transition-colors duration-300">
+          <nav className="lg:hidden shrink-0 w-full bg-white dark:bg-stone-900 border-t border-amber-200 dark:border-stone-800 pb-safe pt-2 px-6 flex justify-between items-center z-40 relative transition-colors duration-300">
              <div id="browse-tab-mobile" className="flex-1 flex justify-center">
                  <NavItem icon={<ShoppingBag />} label="Inicio" active={clientViewState === 'BROWSE'} onClick={handleHomeClick} />
              </div>

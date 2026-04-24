@@ -143,10 +143,10 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
         className="bg-white dark:bg-stone-900 w-full max-w-2xl h-[80vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-white/10"
       >
         {/* Header */}
-        <div className="p-4 border-b border-stone-100 dark:border-stone-800 flex items-center justify-between bg-stone-50/50 dark:bg-stone-900/50">
+        <div className="p-4 border-b border-amber-200 dark:border-stone-800 flex items-center justify-between bg-stone-50/50 dark:bg-stone-900/50">
           <h3 className="font-black text-stone-900 dark:text-white uppercase tracking-tight">Seleccionar Ubicación</h3>
           <button onClick={onClose} className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors">
-            <X size={20} className="text-stone-500" />
+            <X size={20} className="text-stone-500 dark:text-stone-400" />
           </button>
         </div>
 
@@ -175,7 +175,7 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute left-4 right-4 top-full mt-1 bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 rounded-2xl shadow-xl z-[120] max-h-60 overflow-y-auto"
+                className="absolute left-4 right-4 top-full mt-1 bg-white dark:bg-stone-800 border border-amber-200 dark:border-stone-700 rounded-2xl shadow-xl z-[120] max-h-60 overflow-y-auto"
               >
                 {searchResults.map((result, idx) => (
                   <button
@@ -212,7 +212,7 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
           <div className="absolute bottom-4 right-4 flex flex-col gap-2 z-[1000]">
             <button 
               onClick={getCurrentLocation}
-              className="p-3 bg-white dark:bg-stone-800 rounded-2xl shadow-lg border border-stone-100 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:scale-105 transition-transform active:scale-95"
+              className="p-3 bg-white dark:bg-stone-800 rounded-2xl shadow-lg border border-amber-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:scale-105 transition-transform active:scale-95"
             >
               <Navigation size={20} />
             </button>
@@ -220,7 +220,7 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
         </div>
 
         {/* Footer Info & Confirm */}
-        <div className="p-4 bg-stone-50 dark:bg-stone-900 border-t border-stone-100 dark:border-stone-800">
+        <div className="p-4 bg-stone-50 dark:bg-stone-900 border-t border-amber-200 dark:border-stone-800">
           <div className="flex items-start gap-3 mb-4">
             <div className="p-2 bg-brand-500/10 rounded-xl">
               <MapPin size={20} className="text-brand-500" />

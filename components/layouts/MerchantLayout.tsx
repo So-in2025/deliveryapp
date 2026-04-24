@@ -66,7 +66,7 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
             </div>
             <div className="flex flex-col">
                 <span className="text-white font-bold text-sm">Panel Aliado</span>
-                <span className="text-stone-500 text-[10px] uppercase tracking-widest">Merchant App</span>
+                <span className="text-stone-500 text-[10px] uppercase tracking-widest dark:text-stone-400">Merchant App</span>
             </div>
           </div>
           

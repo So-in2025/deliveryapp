@@ -28,16 +28,16 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-6 text-center dark:bg-stone-900">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
             <AlertTriangle size={32} className="text-red-500" />
           </div>
-          <h1 className="text-2xl font-bold text-stone-900 mb-2">Algo salió mal</h1>
-          <p className="text-stone-500 mb-6 max-w-xs mx-auto">
+          <h1 className="text-2xl font-bold text-stone-900 mb-2 dark:text-white">Algo salió mal</h1>
+          <p className="text-stone-500 mb-6 max-w-xs mx-auto dark:text-stone-400">
             La aplicación ha encontrado un error inesperado. Hemos registrado el incidente.
           </p>
           
-          <div className="bg-stone-100 p-3 rounded-lg text-xs font-mono text-stone-600 mb-6 text-left w-full max-w-sm overflow-auto max-h-32">
+          <div className="bg-stone-100 p-3 rounded-lg text-xs font-mono text-stone-600 mb-6 text-left w-full max-w-sm overflow-auto max-h-32 dark:bg-stone-800 dark:text-stone-400">
             {this.state.error?.message}
           </div>
 
