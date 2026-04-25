@@ -8,7 +8,7 @@ import { Badge, PaymentBadge, StoreBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
 import { Button } from '../components/ui/Button';
 import { 
-  TrendingUp, Users, Store as StoreIcon, Activity, 
+  TrendingUp, Users, Store as StoreIcon, Activity, HelpCircle,
   DollarSign, Shield, Search, 
   AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail,
   BarChart3, PieChart as PieChartIcon, Filter, Tag, X, Plus
@@ -21,6 +21,14 @@ import { format, subDays, startOfDay, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
+
+const roleLabels: Record<UserRole, string> = {
+  [UserRole.NONE]: 'Ninguno',
+  [UserRole.CLIENT]: 'Cliente',
+  [UserRole.MERCHANT]: 'Comercio',
+  [UserRole.DRIVER]: 'Repartidor',
+  [UserRole.ADMIN]: 'Admin',
+};
 
 interface KpiCardProps {
   title: string;
@@ -203,7 +211,6 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
 const OrdersTab = ({ orders }: { orders: Order[] }) => {
     const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
     
-    // Diccionario de traducción para los estados del pedido
     const statusLabels: Record<OrderStatus, string> = {
         [OrderStatus.PENDING]: 'Pendiente',
         [OrderStatus.ACCEPTED]: 'Aceptado',
@@ -214,14 +221,6 @@ const OrdersTab = ({ orders }: { orders: Order[] }) => {
         [OrderStatus.DELIVERED]: 'Entregado',
         [OrderStatus.CANCELLED]: 'Cancelado',
         [OrderStatus.DISPUTED]: 'En Disputa',
-    };
-
-    const roleLabels: Record<UserRole, string> = {
-        [UserRole.NONE]: 'Ninguno',
-        [UserRole.CLIENT]: 'Cliente',
-        [UserRole.MERCHANT]: 'Comercio',
-        [UserRole.DRIVER]: 'Repartidor',
-        [UserRole.ADMIN]: 'Admin',
     };
 
     const filteredOrders = useMemo(() => {
