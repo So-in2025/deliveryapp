@@ -320,8 +320,7 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
   const { bulkAddProducts } = useApp();
   const { showToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
+  const smartInputRef = useRef<HTMLInputElement>(null);
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([
@@ -333,117 +332,131 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
     XLSX.writeFile(wb, "plantilla_productos.xlsx");
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSmartFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: 'binary' });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws) as Record<string, unknown>[];
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    
+    if (['xlsx', 'xls', 'csv'].includes(extension || '')) {
+      // Excel Path
+      setIsUploading(true);
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const bstr = evt.target?.result;
+          const wb = XLSX.read(bstr, { type: 'binary' });
+          const wsname = wb.SheetNames[0];
+          const ws = wb.Sheets[wsname];
+          const data = XLSX.utils.sheet_to_json(ws) as Record<string, unknown>[];
 
-        const newProducts: Product[] = [];
-        data.forEach(item => {
-          if (item.Nombre && item.Precio) {
-            newProducts.push({
-              id: `prod-bulk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              name: String(item.Nombre),
-              description: String(item.Descripcion || ''),
-              price: Number(item.Precio),
-              image: String(item.ImagenURL || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'),
-              modifierGroups: []
-            });
+          const newProducts: Product[] = [];
+          data.forEach(item => {
+            if (item.Nombre && item.Precio) {
+              newProducts.push({
+                id: `prod-bulk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                name: String(item.Nombre),
+                description: String(item.Descripcion || ''),
+                price: Number(item.Precio),
+                image: String(item.ImagenURL || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'),
+                modifierGroups: []
+              });
+            }
+          });
+
+          if (newProducts.length > 0) {
+            await bulkAddProducts(storeId, newProducts);
+            showToast(`${newProducts.length} productos cargados con éxito`, 'success');
           }
+        } catch (err) {
+          showToast('Error al procesar el Excel', 'error');
+        } finally {
+          setIsUploading(false);
+          if (smartInputRef.current) smartInputRef.current.value = '';
+        }
+      };
+      reader.readAsBinaryString(file);
+    } else if (['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(extension || '')) {
+      // AI Scan Path
+      setIsUploading(true);
+      showToast('Analizando con IA...', 'info');
+      try {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
         });
 
-        if (newProducts.length > 0) {
-          bulkAddProducts(storeId, newProducts);
-          showToast(`${newProducts.length} productos cargados con éxito`, 'success');
+        const base64Data = await base64Promise;
+        const products = await extractProductsFromMenu(base64Data);
+
+        if (products && products.length > 0) {
+          await bulkAddProducts(storeId, products);
+          showToast(`${products.length} productos extraídos con IA`, 'success');
         }
       } catch (err) {
-        console.error(err);
-        showToast('Error al procesar el archivo', 'error');
+        showToast('Error al escanear archivo', 'error');
       } finally {
         setIsUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (smartInputRef.current) smartInputRef.current.value = '';
       }
-    };
-    reader.readAsBinaryString(file);
-  };
-
-  const handleAIScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    showToast('Iniciando escaneo con IA...', 'info');
-
-    try {
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-
-      const base64Data = await base64Promise;
-      
-      showToast('Analizando estructura del menú...', 'info');
-      const products = await extractProductsFromMenu(base64Data);
-
-      if (products && products.length > 0) {
-        showToast('Integrando productos al catálogo...', 'info');
-        bulkAddProducts(storeId, products);
-        showToast(`${products.length} productos extraídos con IA con éxito`, 'success');
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Error al escanear el archivo. Verifica el formato.', 'error');
-    } finally {
-      setIsUploading(false);
-      if (imageInputRef.current) imageInputRef.current.value = '';
+    } else {
+      showToast('Formato no soportado', 'error');
     }
   };
 
   return (
-    <div id="bulk-upload-section" className="bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 p-4 rounded-xl mb-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="font-bold text-brand-900 dark:text-brand-100 flex items-center gap-2">
-            <Upload size={18} /> Carga Automática
-          </h3>
-          <p className="text-xs text-brand-900 dark:text-brand-300 mt-1">Sube tu catálogo desde Excel o escanea un PDF/Foto del menú</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button id="btn-excel-template" size="sm" variant="outline" onClick={downloadTemplate} className="bg-white dark:bg-stone-800">
-            <Download size={14} className="mr-1" /> Plantilla
-          </Button>
+    <div className="bg-stone-900 dark:bg-stone-900 border border-white/5 p-6 rounded-[2rem] mb-8 shadow-2xl relative overflow-hidden group">
+      <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+        <UtensilsCrossed size={80} className="text-white" />
+      </div>
+      
+      <div className="relative z-10">
+        <h3 className="text-white font-black text-xl mb-1 flex items-center gap-3">
+          <Upload className="text-brand-500" /> Carga Inteligente
+        </h3>
+        <p className="text-stone-400 text-xs font-medium mb-6">Sube tu menú (Excel, Foto o PDF) y nuestra IA hará el resto.</p>
+        
+        <div className="flex flex-wrap gap-3">
+          <input 
+            type="file" 
+            ref={smartInputRef} 
+            onChange={handleSmartFile} 
+            accept=".xlsx, .xls, .csv, image/*, application/pdf" 
+            className="hidden" 
+          />
+          <button 
+            id="btn-smart-upload"
+            onClick={() => smartInputRef.current?.click()}
+            disabled={isUploading}
+            className="flex-1 min-w-[200px] h-20 bg-white dark:bg-stone-800 rounded-3xl flex items-center justify-center gap-4 font-black text-stone-900 dark:text-white shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale border-2 border-black/5 dark:border-white/10"
+          >
+            {isUploading ? (
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                <span className="uppercase tracking-widest text-sm text-stone-400">Procesando...</span>
+              </div>
+            ) : (
+              <>
+                <div className="w-12 h-12 bg-brand-500/10 rounded-2xl flex items-center justify-center">
+                    <LayoutDashboard className="text-brand-500" />
+                </div>
+                <div className="text-left">
+                    <span className="block text-lg leading-tight">Carga Inteligente</span>
+                    <span className="block text-[10px] text-stone-400 uppercase tracking-widest leading-none mt-1">Excel, PDF o Fotos</span>
+                </div>
+              </>
+            )}
+          </button>
           
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            accept=".xlsx, .xls, .csv" 
-            className="hidden" 
-          />
-          <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} isLoading={isUploading}>
-            <FileText size={14} className="mr-1" /> Excel
-          </Button>
-
-          <input 
-            type="file" 
-            ref={imageInputRef} 
-            onChange={handleAIScan} 
-            accept="image/*, application/pdf" 
-            className="hidden" 
-          />
-          <Button id="btn-ai-scan" size="sm" onClick={() => imageInputRef.current?.click()} isLoading={isUploading}>
-            <ImageIcon size={14} className="mr-1" /> Escanear PDF/Foto
-          </Button>
+          <button 
+            id="btn-download-template"
+            onClick={downloadTemplate}
+            className="px-6 h-14 bg-stone-800 dark:bg-stone-700 rounded-2xl flex items-center justify-center gap-3 font-bold text-stone-400 hover:text-white transition-colors"
+          >
+            <Download size={18} />
+            <span className="hidden sm:inline text-xs uppercase tracking-widest">Plantilla</span>
+          </button>
         </div>
       </div>
     </div>
@@ -454,18 +467,41 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
   const { addProduct, updateProduct, deleteProduct } = useApp();
   const { showToast } = useToast();
   const [editingProduct, setEditingProduct] = useState<Product | 'NEW' | null>(null);
-  const [formData, setFormData] = useState<Partial<Product>>({
-    name: '', description: '', price: 0, image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c', modifierGroups: []
+  
+  // Use string states for numbers to allow clearing the input
+  const [formData, setFormData] = useState({
+    name: '', 
+    description: '', 
+    price: '', 
+    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c', 
+    modifierGroups: [] as ModifierGroup[],
+    isAvailable: true
   });
+  
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenEdit = (product?: Product) => {
     if (product) {
       setEditingProduct(product);
-      setFormData({ ...product });
+      setFormData({ 
+        name: product.name,
+        description: product.description || '',
+        price: String(product.price),
+        image: product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
+        modifierGroups: JSON.parse(JSON.stringify(product.modifierGroups || [])),
+        isAvailable: product.isAvailable !== false
+      });
     } else {
       setEditingProduct('NEW');
-      setFormData({ name: '', description: '', price: 0, image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c', modifierGroups: [] });
+      setFormData({ 
+        name: '', 
+        description: '', 
+        price: '', 
+        image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c', 
+        modifierGroups: [],
+        isAvailable: true
+      });
     }
   };
 
@@ -492,17 +528,18 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
 
 
   const handleSave = () => {
-    if (!formData.name || formData.price === undefined) {
+    if (!formData.name || formData.price === '') {
       showToast('Nombre y precio son obligatorios', 'error');
       return;
     }
     const productData: Product = {
         id: editingProduct === 'NEW' ? `prod-${Date.now()}` : (editingProduct as Product).id,
-        name: formData.name!,
-        description: formData.description || '',
+        name: formData.name,
+        description: formData.description,
         price: Number(formData.price),
-        image: formData.image || '',
-        modifierGroups: formData.modifierGroups || []
+        image: formData.image,
+        modifierGroups: formData.modifierGroups,
+        isAvailable: formData.isAvailable
     };
 
     if (editingProduct === 'NEW') {
@@ -562,76 +599,216 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
       </div>
 
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-           <div className="bg-white dark:bg-stone-900 w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
-               <div className="p-4 border-b border-amber-200 dark:border-stone-800 flex justify-between items-center bg-stone-50 dark:bg-stone-800/50">
-                  <h3 className="font-bold dark:text-white">Editar Producto</h3>
-                  <button onClick={() => setEditingProduct(null)} className="dark:text-white"><X size={20}/></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
+           <div className="bg-white dark:bg-stone-900 w-full max-w-lg max-h-[90vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-slide-up border border-white/10">
+               <div className="p-6 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-white dark:bg-stone-900">
+                  <h3 className="text-xl font-black text-stone-950 dark:text-white uppercase tracking-tight">Editar Producto</h3>
+                  <button 
+                    onClick={() => setEditingProduct(null)} 
+                    className="w-10 h-10 flex border dark:border-stone-800 items-center justify-center rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                  >
+                    <X size={20} className="dark:text-white" />
+                  </button>
                </div>
-               <div className="p-4 overflow-y-auto space-y-4 flex-1">
-                   <input className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Nombre" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                   <input className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Precio" type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
-                   <textarea className="w-full border dark:border-stone-700 p-2 rounded dark:bg-stone-800 dark:text-white" placeholder="Descripción" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
-                   
-                   <div className="flex items-center gap-2 py-2">
+               
+               <div className="p-8 overflow-y-auto space-y-8 flex-1 scrollbar-hide">
+                   <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Información General</label>
                         <input 
-                            type="checkbox" 
-                            id="isAvailable" 
-                            checked={formData.isAvailable !== false} 
-                            onChange={e => setFormData({...formData, isAvailable: e.target.checked})} 
-                            className="w-4 h-4 rounded border-stone-300 text-brand-600 focus:ring-brand-500 dark:border-stone-800"
+                            className="w-full bg-stone-50 dark:bg-stone-800 border-none p-4 rounded-2xl dark:text-white font-bold ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none" 
+                            placeholder="Nombre del producto" 
+                            value={formData.name} 
+                            onChange={e => setFormData({...formData, name: e.target.value})} 
                         />
-                        <label htmlFor="isAvailable" className="text-sm font-bold dark:text-white">Producto Disponible (en stock)</label>
+                        <div className="relative group/price">
+                            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-2xl group-focus-within/price:text-brand-500 transition-colors">$</span>
+                            <input 
+                                className="w-full bg-stone-100 dark:bg-stone-800 border-none p-6 pl-12 rounded-[2rem] dark:text-white font-black text-4xl ring-4 ring-transparent focus:ring-brand-500/20 transition-all outline-none placeholder:text-stone-300" 
+                                placeholder="0" 
+                                type="text"
+                                inputMode="decimal"
+                                value={formData.price} 
+                                onFocus={(e) => e.target.select()}
+                                onChange={e => {
+                                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                                    // Allow empty for deleting, but save handles it
+                                    setFormData({...formData, price: val});
+                                }} 
+                            />
+                        </div>
+                        <textarea 
+                            className="w-full bg-stone-50 dark:bg-stone-800 border-none p-4 rounded-2xl dark:text-white font-medium min-h-[100px] ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none" 
+                            placeholder="Descripción detallada..." 
+                            value={formData.description} 
+                            onChange={e => setFormData({...formData, description: e.target.value})} 
+                        />
+                           <div className="space-y-4">
+                        <div className="flex justify-between items-center px-2">
+                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">Imagen Premium</label>
+                             {isUploadingImage && <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />}
+                        </div>
+                        
+                        <div 
+                            onClick={() => !isUploadingImage && fileInputRef.current?.click()}
+                            className="relative aspect-video rounded-[3rem] bg-stone-100 dark:bg-stone-800 overflow-hidden cursor-pointer group border-4 border-dashed border-stone-200 dark:border-stone-700 hover:border-brand-500 transition-all shadow-inner"
+                        >
+                            {formData.image ? (
+                                <>
+                                    <LazyImage src={formData.image} alt="Preview" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                                    <div className="absolute inset-0 bg-stone-950/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-md">
+                                        <div className="bg-brand-500 p-5 rounded-[1.5rem] shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                                            <Upload className="text-brand-950" size={32} />
+                                        </div>
+                                        <p className="text-white font-black uppercase tracking-[0.2em] text-xs mt-6">Cambiar Foto</p>
+                                    </div>
+                                    {/* Edit Badge */}
+                                    <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-xl px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase tracking-widest border border-white/20">
+                                        Editar
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-stone-50 dark:bg-stone-900/50">
+                                    <div className="w-20 h-20 bg-white dark:bg-stone-800 rounded-[2rem] shadow-xl flex items-center justify-center">
+                                        <ImageIcon size={40} className="text-brand-500" />
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-sm font-black text-stone-900 dark:text-white uppercase tracking-[0.1em]">Subir Imagen</p>
+                                        <p className="text-[10px] text-stone-400 font-bold mt-1">Formatos: JPG, PNG, WEBP</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>              </div>
+                        
+                        <input 
+                            type="file" 
+                            ref={fileInputRef}
+                            accept="image/*" 
+                            className="hidden"
+                            onChange={async (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                    try {
+                                        setIsUploadingImage(true);
+                                        const url = await uploadImageToCloudinary(e.target.files[0]);
+                                        setFormData({...formData, image: url});
+                                        showToast('Imagen actualizada', 'success');
+                                    } catch {
+                                        showToast('Error al subir imagen', 'error');
+                                    } finally {
+                                        setIsUploadingImage(false);
+                                    }
+                                }
+                            }} 
+                            disabled={isUploadingImage} 
+                        />
+                   </div>
+                   
+                   <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${formData.isAvailable ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                <CheckCircle size={18} />
+                            </div>
+                            <span className="text-sm font-bold dark:text-white uppercase tracking-tight">Venta habilitada</span>
+                        </div>
+                        <button 
+                            onClick={() => setFormData({...formData, isAvailable: !formData.isAvailable})}
+                            className={`w-12 h-6 rounded-full relative transition-colors ${formData.isAvailable ? 'bg-brand-500' : 'bg-stone-300 dark:bg-stone-600'}`}
+                        >
+                            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${formData.isAvailable ? 'right-1' : 'left-1'}`} />
+                        </button>
                     </div>
 
-                   <div className="flex flex-col gap-2">
-                       <label className="text-sm font-bold dark:text-white">Imagen del Producto</label>
-                       {formData.image && <img src={formData.image} alt="Preview" className="w-24 h-24 object-cover rounded-lg" />}
-                       <input type="file" accept="image/*" onChange={async (e) => {
-                           if (e.target.files && e.target.files[0]) {
-                               try {
-                                   setIsUploadingImage(true);
-                                   showToast('Subiendo imagen...', 'info');
-                                   const url = await uploadImageToCloudinary(e.target.files[0]);
-                                   setFormData({...formData, image: url});
-                                   showToast('Imagen subida', 'success');
-                               } catch {
-                                   showToast('Error al subir imagen', 'error');
-                               } finally {
-                                   setIsUploadingImage(false);
-                               }
-                           }
-                       }} className="text-sm dark:text-white" disabled={isUploadingImage} />
-                   </div>
-                   
-                   <div className="border-t dark:border-stone-700 pt-4">
-                       <div className="flex justify-between mb-2">
-                           <h4 className="font-bold text-sm dark:text-white">Opciones (Modifiers)</h4>
-                           <button onClick={_addModifierGroup} className="text-xs text-brand-800 dark:text-brand-400 font-bold">+ Grupo</button>
+                   <div className="space-y-4">
+                       <div className="flex justify-between items-center">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-stone-400">Personalización (Modificadores)</label>
+                           <button 
+                                onClick={_addModifierGroup} 
+                                className="w-10 h-10 flex items-center justify-center bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-xl"
+                            >
+                                <Plus size={20} />
+                            </button>
                        </div>
-                       {formData.modifierGroups?.map(g => (
-                           <div key={g.id} className="bg-stone-50 dark:bg-stone-800/50 p-2 mb-2 rounded border dark:border-stone-700">
-                               <div className="flex justify-between mb-2">
-                                   <input value={g.name} onChange={e => _updateGroup(g.id, 'name', e.target.value)} className="text-xs font-bold bg-transparent dark:text-white" />
-                                   <button onClick={() => _removeModifierGroup(g.id)} className="dark:text-white"><Trash2 size={12} /></button>
-                               </div>
-                               <div className="pl-2 border-l-2 dark:border-stone-600">
-                                   {g.options?.map(o => (
-                                       <div key={o.id} className="flex gap-2 mb-1">
-                                           <input value={o.name} onChange={e => _updateOption(g.id, o.id, 'name', e.target.value)} className="text-xs border dark:border-stone-600 rounded p-1 flex-1 dark:bg-stone-700 dark:text-white" />
-                                           <input type="number" value={o.price} onChange={e => _updateOption(g.id, o.id, 'price', Number(e.target.value))} className="text-xs border dark:border-stone-600 rounded p-1 w-12 dark:bg-stone-700 dark:text-white" />
-                                           <button onClick={() => _removeOption(g.id, o.id)} className="dark:text-white"><X size={12}/></button>
-                                       </div>
-                                   ))}
-                                   <button onClick={() => _addOptionToGroup(g.id)} className="text-[10px] text-brand-800 dark:text-brand-400 font-bold">+ Opción</button>
-                               </div>
-                           </div>
-                       ))}
+                       
+                       <div className="space-y-4">
+                            {formData.modifierGroups?.map(g => (
+                                <div key={g.id} className="bg-stone-50 dark:bg-stone-800 p-6 rounded-[2rem] border border-black/5 dark:border-white/5 relative group/group">
+                                    <button 
+                                        onClick={() => _removeModifierGroup(g.id)} 
+                                        className="absolute -top-2 -right-2 w-8 h-8 flex items-center justify-center bg-white dark:bg-stone-900 rounded-full shadow-xl border border-black/5 dark:border-white/5 text-red-500 opacity-0 group-hover/group:opacity-100 transition-opacity"
+                                    >
+                                        <X size={14}/>
+                                    </button>
+
+                                    <div className="flex gap-4 mb-6">
+                                        <div className="flex-1">
+                                            <p className="text-[8px] font-black uppercase text-stone-400 mb-1 ml-1">Título del Grupo</p>
+                                            <input 
+                                                value={g.name} 
+                                                onChange={e => _updateGroup(g.id, 'name', e.target.value)} 
+                                                className="w-full bg-white dark:bg-stone-900 p-3 rounded-xl border-none font-bold text-sm dark:text-white outline-none ring-2 ring-transparent focus:ring-brand-500" 
+                                            />
+                                        </div>
+                                        <div className="w-20">
+                                            <p className="text-[8px] font-black uppercase text-stone-400 mb-1 ml-1">Máx.</p>
+                                            <input 
+                                                type="number" 
+                                                value={g.max} 
+                                                onChange={e => _updateGroup(g.id, 'max', Number(e.target.value))} 
+                                                className="w-full bg-white dark:bg-stone-900 p-3 rounded-xl border-none font-bold text-sm dark:text-white text-center outline-none ring-2 ring-transparent focus:ring-brand-500" 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {g.options?.map(o => (
+                                            <div key={o.id} className="flex gap-2 items-center bg-white dark:bg-stone-900 p-2 rounded-xl border border-black/5 dark:border-white/5 shadow-sm group/opt">
+                                                <input 
+                                                    value={o.name} 
+                                                    onChange={e => _updateOption(g.id, o.id, 'name', e.target.value)} 
+                                                    className="flex-1 bg-transparent border-none p-1 font-bold text-xs dark:text-white outline-none" 
+                                                    placeholder="Nombre opción"
+                                                />
+                                                <div className="flex items-center gap-1 bg-stone-50 dark:bg-stone-800 px-3 py-1 rounded-lg">
+                                                    <span className="text-[10px] text-stone-400 font-bold">$</span>
+                                                    <input 
+                                                        type="number" 
+                                                        value={o.price} 
+                                                        onChange={e => _updateOption(g.id, o.id, 'price', Number(e.target.value))} 
+                                                        className="w-12 bg-transparent border-none font-bold text-xs dark:text-white text-right outline-none" 
+                                                    />
+                                                </div>
+                                                <button 
+                                                    onClick={() => _removeOption(g.id, o.id)} 
+                                                    className="p-2 text-stone-300 hover:text-red-500 transition-colors opacity-0 group-hover/opt:opacity-100"
+                                                >
+                                                    <X size={14}/>
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button 
+                                            onClick={() => _addOptionToGroup(g.id)} 
+                                            className="w-full h-10 border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl text-[10px] font-black uppercase text-stone-400 hover:text-brand-500 hover:border-brand-500 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Plus size={12} /> Añadir Opción
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                       </div>
                    </div>
                </div>
-               <div className="p-4 border-t dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 flex gap-2">
-                   {editingProduct !== 'NEW' && <Button variant="danger" onClick={() => handleDelete((editingProduct as Product).id)}>Eliminar</Button>}
-                   <Button fullWidth onClick={handleSave}>Guardar</Button>
+
+               <div className="p-8 border-t dark:border-stone-800 bg-white dark:bg-stone-900 flex gap-4">
+                   {editingProduct !== 'NEW' && (
+                        <button 
+                            onClick={() => handleDelete((editingProduct as Product).id)}
+                            className="px-6 h-14 border border-red-200 text-red-500 rounded-2xl hover:bg-red-50 transition-colors flex items-center justify-center"
+                        >
+                            <Trash2 size={20} />
+                        </button>
+                   )}
+                   <Button fullWidth size="lg" onClick={handleSave} className="h-14 !rounded-2xl text-lg font-black uppercase tracking-widest shadow-2xl shadow-brand-500/20">
+                        {editingProduct === 'NEW' ? 'Crear Producto' : 'Actualizar Cambios'}
+                   </Button>
                </div>
            </div>
         </div>
@@ -643,129 +820,270 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
 const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
     const { updateStore, config } = useApp();
     const { showToast } = useToast();
+    const [name, setName] = useState(store.name);
     const [font, setFont] = useState(store.customFont || 'Inter');
     const [color, setColor] = useState(store.customColor || '#FACC15'); // Default brand yellow
     const [mpToken, setMpToken] = useState(store.mpAccessToken || '');
     const [storeImage, setStoreImage] = useState(store.image || '');
     const [category, setCategory] = useState(store.category || '');
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [autoSchedule, setAutoSchedule] = useState(store.autoSchedule || false);
+    const [schedules, setSchedules] = useState(store.schedules || {
+        0: { open: '09:00', close: '22:00', active: false },
+        1: { open: '09:00', close: '22:00', active: true },
+        2: { open: '09:00', close: '22:00', active: true },
+        3: { open: '09:00', close: '22:00', active: true },
+        4: { open: '09:00', close: '22:00', active: true },
+        5: { open: '09:00', close: '22:00', active: true },
+        6: { open: '09:00', close: '22:00', active: true },
+    });
+    const logoInputRef = useRef<HTMLInputElement>(null);
 
     const fonts = ['Inter', 'Roboto', 'Montserrat', 'Playfair Display', 'Courier New', 'Georgia'];
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
     const handleSave = () => {
-        updateStore(store.id, { 
+        const updates: any = { 
             customFont: font, 
             customColor: color, 
             mpAccessToken: mpToken, 
             image: storeImage,
-            category: category
-        });
-        showToast('Configuración guardada', 'success');
+            category: category,
+            autoSchedule,
+            schedules
+        };
+
+        // Name change requires admin approval
+        if (name !== store.name) {
+            updates.pendingName = name;
+            showToast('Solicitud de cambio de nombre enviada al Admin', 'info');
+        }
+
+        updateStore(store.id, updates);
+        if (name === store.name) {
+            showToast('Configuración guardada', 'success');
+        }
     };
 
     return (
-        <div className="bg-white dark:bg-stone-800 p-6 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-700 max-w-2xl mx-auto animate-slide-up">
-            <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-6 flex items-center gap-2">
-                <StoreIcon size={24} className="text-brand-800" /> Personalización de Tienda
+        <div className="bg-white dark:bg-stone-800 p-8 rounded-3xl shadow-xl border border-black/[0.03] dark:border-stone-700 max-w-2xl mx-auto animate-slide-up pb-24">
+            <h3 className="text-2xl font-black text-stone-950 dark:text-white mb-8 tracking-tighter flex items-center gap-3">
+                <StoreIcon size={28} className="text-brand-500" /> Perfil del Comercio
             </h3>
 
-            <div className="space-y-6">
-                <div>
-                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Categoría del Comercio</label>
-                    <select 
-                        value={category}
-                        onChange={e => setCategory(e.target.value)}
-                        className="w-full p-3 rounded-xl border border-amber-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"
+            <div className="space-y-8">
+                {/* Logo Section - Clickable UI */}
+                <div className="flex flex-col items-center gap-4 mb-8">
+                    <label className="text-xs font-black text-stone-400 uppercase tracking-widest">Logo de Marca</label>
+                    <div 
+                        onClick={() => !isUploadingImage && logoInputRef.current?.click()}
+                        className="relative w-32 h-32 rounded-[2.5rem] bg-stone-100 dark:bg-stone-900 border-4 border-dashed border-stone-200 dark:border-stone-700 overflow-hidden cursor-pointer group hover:border-brand-500 transition-all shadow-inner"
                     >
-                        {config.categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Logo / Imagen de la Tienda</label>
-                    <div className="flex items-center gap-4">
-                        {storeImage && <img src={storeImage} alt="Store Logo" className="w-16 h-16 rounded-xl object-cover border border-amber-300 dark:border-stone-700" />}
-                        <input type="file" accept="image/*" onChange={async (e) => {
+                        {storeImage ? (
+                            <>
+                                <img src={storeImage} alt="Store Logo" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                <div className="absolute inset-0 bg-stone-950/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all backdrop-blur-sm">
+                                    <Upload size={24} className="text-white mb-2" />
+                                    <span className="text-[8px] font-black text-white uppercase tracking-widest">Cambiar</span>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                <ImageIcon size={32} className="text-stone-300 dark:text-stone-600" />
+                                <span className="text-[8px] font-black text-stone-400 uppercase tracking-widest">Subir Logo</span>
+                            </div>
+                        )}
+                        {isUploadingImage && (
+                            <div className="absolute inset-0 bg-white/80 dark:bg-stone-900/80 flex items-center justify-center">
+                                <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        )}
+                    </div>
+                    <input 
+                        type="file" 
+                        ref={logoInputRef}
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={async (e) => {
                             if (e.target.files && e.target.files[0]) {
                                 try {
                                     setIsUploadingImage(true);
-                                    showToast('Subiendo imagen...', 'info');
                                     const url = await uploadImageToCloudinary(e.target.files[0]);
                                     setStoreImage(url);
-                                    showToast('Imagen subida', 'success');
+                                    showToast('Logo actualizado', 'success');
                                 } catch {
-                                    showToast('Error al subir imagen', 'error');
+                                    showToast('Error al subir logo', 'error');
                                 } finally {
                                     setIsUploadingImage(false);
                                 }
                             }
-                        }} className="text-sm dark:text-white" disabled={isUploadingImage} />
+                        }}
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-[10px] font-black text-stone-400 mb-2 uppercase tracking-widest">Nombre Comercial</label>
+                        <input 
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            className="w-full bg-stone-50 dark:bg-stone-900 border-none p-4 rounded-2xl dark:text-white font-bold ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none" 
+                            placeholder="Nombre de tu tienda"
+                        />
+                        {store.pendingName && (
+                            <div className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-900/30">
+                                <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                                <p className="text-[8px] text-amber-700 dark:text-amber-400 font-bold uppercase tracking-widest">Cambio a "{store.pendingName}" pendiente de aprobación</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] font-black text-stone-400 mb-2 uppercase tracking-widest">Categoría</label>
+                        <select 
+                            value={category}
+                            onChange={e => setCategory(e.target.value)}
+                            className="w-full bg-stone-50 dark:bg-stone-900 border-none p-4 rounded-2xl dark:text-white font-bold ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none appearance-none"
+                        >
+                            {config.categories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Fuente de la Tienda</label>
+                <div className="space-y-4">
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">Estética de Marca</label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {fonts.map(f => (
                             <button 
                                 key={f}
                                 onClick={() => setFont(f)}
-                                className={`p-3 rounded-xl border text-sm transition-all ${font === f ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/20 text-brand-900 dark:text-brand-100 ring-2 ring-brand-500/20' : 'border-amber-300 dark:border-stone-700 text-stone-600 dark:text-stone-400 hover:border-brand-300'}`}
+                                className={`p-4 rounded-2xl border-2 transition-all ${font === f ? 'border-brand-500 bg-brand-500/5 text-stone-950 dark:text-white shadow-lg' : 'border-black/5 dark:border-white/5 text-stone-400 hover:border-brand-500/30'}`}
                                 style={{ fontFamily: f }}
                             >
-                                {f}
+                                <span className="text-xs font-bold">{f}</span>
                             </button>
                         ))}
                     </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider">Color de Marca</label>
-                    <div className="flex items-center gap-4">
-                        <input 
-                            type="color" 
-                            value={color}
-                            onChange={e => setColor(e.target.value)}
-                            className="w-16 h-16 rounded-xl cursor-pointer border-4 border-white dark:border-stone-700 shadow-lg"
-                        />
+                    
+                    <div className="flex items-center gap-6 p-6 bg-stone-50 dark:bg-stone-900 rounded-3xl border border-black/5 dark:border-white/5">
+                        <div className="relative">
+                            <input 
+                                type="color" 
+                                value={color}
+                                onChange={e => setColor(e.target.value)}
+                                className="w-16 h-16 rounded-2xl cursor-pointer bg-transparent"
+                            />
+                            <div className="absolute inset-0 pointer-events-none rounded-2xl border-4 border-white dark:border-stone-800 shadow-xl" style={{ backgroundColor: color }} />
+                        </div>
                         <div className="flex-1">
-                            <p className="text-sm text-stone-500 dark:text-stone-400">Este color se usará para botones y acentos cuando los clientes vean tu tienda.</p>
-                            <p className="font-mono text-xs mt-1 font-bold text-stone-400 uppercase">{color}</p>
+                            <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">Color Identitario</p>
+                            <p className="text-xs text-stone-500 dark:text-stone-400 leading-tight">Define la personalidad visual de tu tienda en la app.</p>
+                            <span className="inline-block mt-2 font-mono text-[9px] font-black text-brand-500 uppercase">{color}</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="border-t dark:border-stone-700 pt-6">
-                    <label className="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2 uppercase tracking-wider flex items-center gap-2">
-                        <CreditCard size={16} className="text-brand-800" /> Mercado Pago Access Token
+                <div className="border-t dark:border-stone-700 pt-8">
+                    <label className="block text-[10px] font-black text-stone-400 mb-4 uppercase tracking-widest flex items-center gap-2">
+                        <Clock size={14} className="text-brand-500" /> Horarios de Atención
                     </label>
-                    <p className="text-xs text-stone-500 dark:text-stone-400 mb-3">
-                        Si la plataforma está en modo "Descentralizado", los pagos irán directamente a tu cuenta. 
-                        Pega tu Access Token de producción aquí.
-                    </p>
+                    <div className="bg-stone-50 dark:bg-stone-900 rounded-[2rem] p-6 border border-black/5 dark:border-white/5">
+                        <div className="flex items-center justify-between mb-6 pb-4 border-b border-black/[0.03] dark:border-white/[0.03]">
+                            <div>
+                                <h4 className="text-sm font-black text-stone-900 dark:text-white">Apertura Automática</h4>
+                                <p className="text-xs text-stone-500 dark:text-stone-400 font-medium mt-1">Tu tienda se abrirá y cerrará sola según los horarios</p>
+                            </div>
+                            <button 
+                                onClick={() => setAutoSchedule(!autoSchedule)}
+                                className={`w-12 h-6 rounded-full transition-all relative ${autoSchedule ? 'bg-brand-500' : 'bg-stone-300 dark:bg-stone-700'}`}
+                            >
+                                <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-all ${autoSchedule ? 'left-7' : 'left-1'}`} />
+                            </button>
+                        </div>
+                        {autoSchedule && (
+                            <div className="space-y-3">
+                                {Object.keys(schedules).map((key) => {
+                                    const dayIdx = Number(key);
+                                    const sched = schedules[dayIdx];
+                                    return (
+                                        <div key={dayIdx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3 bg-white dark:bg-stone-800 rounded-xl border border-black/5 dark:border-white/5">
+                                            <div className="flex items-center gap-3">
+                                                <button 
+                                                    onClick={() => setSchedules({...schedules, [dayIdx]: {...sched, active: !sched.active}})}
+                                                    className={`w-6 h-6 rounded-md flex items-center justify-center transition-all ${sched.active ? 'bg-brand-500 text-brand-950' : 'bg-stone-200 dark:bg-stone-700 text-stone-400'}`}
+                                                >
+                                                    {sched.active && <span className="font-black text-xs">✓</span>}
+                                                </button>
+                                                <span className={`w-12 font-black text-xs uppercase tracking-widest ${sched.active ? 'text-stone-900 dark:text-white' : 'text-stone-400'}`}>{days[dayIdx]}</span>
+                                            </div>
+                                            {sched.active ? (
+                                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                                    <input 
+                                                        type="time" 
+                                                        value={sched.open}
+                                                        onChange={(e) => setSchedules({...schedules, [dayIdx]: {...sched, open: e.target.value}})}
+                                                        className="flex-1 sm:w-28 bg-stone-50 dark:bg-stone-950 border-none p-2 rounded-lg text-xs font-bold text-center dark:text-white outline-none focus:ring-2 ring-brand-500"
+                                                    />
+                                                    <span className="text-stone-400 font-bold">-</span>
+                                                    <input 
+                                                        type="time" 
+                                                        value={sched.close}
+                                                        onChange={(e) => setSchedules({...schedules, [dayIdx]: {...sched, close: e.target.value}})}
+                                                        className="flex-1 sm:w-28 bg-stone-50 dark:bg-stone-950 border-none p-2 rounded-lg text-xs font-bold text-center dark:text-white outline-none focus:ring-2 ring-brand-500"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-stone-400 font-bold flex-1 text-center sm:text-right">Cerrado</span>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="border-t dark:border-stone-700 pt-8">
+                    <label className="block text-[10px] font-black text-stone-400 mb-4 uppercase tracking-widest flex items-center gap-2">
+                        <CreditCard size={14} className="text-brand-500" /> Mercado Pago (Token de Producción)
+                    </label>
                     <input 
                         type="password" 
                         value={mpToken}
                         onChange={e => setMpToken(e.target.value)}
                         placeholder="APP_USR-..."
-                        className="w-full p-3 rounded-xl border border-amber-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all text-sm"
+                        className="w-full bg-stone-50 dark:bg-stone-900 border-none p-4 rounded-2xl dark:text-white font-mono text-xs ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none"
                     />
                 </div>
 
                 <div className="pt-4">
-                    <div className="p-4 rounded-xl border border-dashed border-amber-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 mb-6">
-                        <p className="text-xs font-bold text-stone-400 uppercase mb-3">Vista Previa</p>
-                        <div className="p-4 bg-white dark:bg-stone-800 rounded-lg shadow-sm border border-amber-200 dark:border-stone-700" style={{ fontFamily: font }}>
-                            <h4 className="font-bold text-lg mb-1" style={{ color }}>{store.name}</h4>
-                            <p className="text-sm text-stone-500 mb-4 dark:text-stone-400">Ejemplo de descripción de tu tienda con la fuente seleccionada.</p>
-                            <button className="px-4 py-2 rounded-lg text-white font-bold text-sm shadow-lg" style={{ backgroundColor: color }}>
-                                Botón de Ejemplo
+                    <div className="p-6 rounded-[2rem] bg-stone-900 dark:bg-black shadow-2xl mb-8 border border-white/5 overflow-hidden group">
+                        <div className="flex justify-between items-center mb-6">
+                             <p className="text-[9px] font-black text-stone-500 uppercase tracking-[0.3em]">Vista Previa Elite</p>
+                             <div className="flex gap-1">
+                                <div className="w-1 h-1 rounded-full bg-stone-700" />
+                                <div className="w-1 h-1 rounded-full bg-stone-700" />
+                                <div className="w-1 h-1 rounded-full bg-stone-700" />
+                             </div>
+                        </div>
+                        <div className="space-y-4" style={{ fontFamily: font }}>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-stone-800 overflow-hidden">
+                                     <img src={storeImage} className="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-xl text-white tracking-tighter" style={{ color }}>{name}</h4>
+                                    <p className="text-[8px] text-stone-500 font-black uppercase tracking-widest">{category || 'Categoría'}</p>
+                                </div>
+                            </div>
+                            <button className="w-full py-4 rounded-xl text-brand-950 font-black text-xs uppercase tracking-widest shadow-xl transition-transform active:scale-95" style={{ backgroundColor: color }}>
+                                Explorar Menú
                             </button>
                         </div>
                     </div>
-                    <Button fullWidth onClick={handleSave} size="lg">Guardar Cambios</Button>
+                    <Button fullWidth onClick={handleSave} size="lg" className="h-16 !rounded-2xl text-base font-black tracking-widest uppercase">Guardar Perfil</Button>
                 </div>
             </div>
         </div>
@@ -912,25 +1230,25 @@ export const MerchantView: React.FC = () => {
       {/* Merchant Header with Tabs */}
       <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-2xl shadow-sm z-10 sticky top-0 border-b border-black/[0.03] dark:border-white/[0.03]">
         <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
-            <div className="p-6 flex justify-between items-end">
-              <div>
-                <h2 className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter">{myStore.name}</h2>
-                <div className="flex items-center gap-3 mt-2">
-                  <button 
-                    id="store-status"
-                    onClick={() => updateStore(myStore.id, { isOpen: !myStore.isOpen })}
-                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black flex items-center gap-2 w-fit transition-all shadow-sm ${myStore.isOpen !== false ? 'bg-brand-500 text-brand-950' : 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400'}`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${myStore.isOpen !== false ? 'bg-brand-950 animate-pulse' : 'bg-stone-400'}`}></span>
-                    {myStore.isOpen !== false ? 'TIENDA ABIERTA' : 'TIENDA CERRADA'}
-                  </button>
-                  <span className="text-xs text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest">| {activeOrders.length} activos</span>
+            <div className="p-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-[1.5rem] bg-stone-100 dark:bg-stone-800 border-2 border-white dark:border-stone-700 overflow-hidden shadow-2xl shrink-0">
+                  <LazyImage src={myStore.image} alt="Logo" className="w-full h-full object-cover" />
                 </div>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                  <div className="w-14 h-14 rounded-[1.5rem] bg-stone-100 dark:bg-stone-800 border-2 border-white dark:border-stone-700 overflow-hidden shadow-2xl">
-                    <LazyImage src={myStore.image} alt="Logo" className="w-full h-full object-cover" />
+                <div>
+                  <h2 className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter leading-none">{myStore.name}</h2>
+                  <div className="flex items-center gap-3 mt-3">
+                    <button 
+                      id="store-status"
+                      onClick={() => updateStore(myStore.id, { isOpen: !myStore.isOpen })}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black flex items-center gap-2 w-fit transition-all shadow-sm ${myStore.isOpen !== false ? 'bg-brand-500 text-brand-950' : 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400'}`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${myStore.isOpen !== false ? 'bg-brand-950 animate-pulse' : 'bg-stone-400'}`}></span>
+                      {myStore.isOpen !== false ? 'TIENDA ABIERTA' : 'TIENDA CERRADA'}
+                    </button>
+                    <span className="text-xs text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest">| {activeOrders.length} activos</span>
                   </div>
+                </div>
               </div>
             </div>
 

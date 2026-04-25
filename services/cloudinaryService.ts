@@ -1,30 +1,47 @@
 
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { app } from '../firebase'; // Initialize app properly from firebase.ts
-
 /**
- * Uploads an image to Firebase Storage (Replacing Cloudinary due to preset errors)
+ * Compresses an image and returns it as a Base64 data URL.
+ * This bypasses Firebase Storage CORS and missing presets issues.
  */
-export const uploadImageToCloudinary = async (file: File | Blob): Promise<string> => {
-  try {
-    const storage = getStorage(app);
-    // Create a unique file name
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(2, 10);
-    const fileName = `uploads/${timestamp}-${randomString}`;
-    
-    const storageRef = ref(storage, fileName);
-    
-    // Upload the file
-    await uploadBytes(storageRef, file);
-    
-    // Get the download URL
-    const downloadURL = await getDownloadURL(storageRef);
-    return downloadURL;
-  } catch (error: any) {
-    console.error('Firebase Storage Upload Error:', error);
-    throw new Error(error.message || 'Error uploading image to storage');
-  }
+export const uploadImageToCloudinary = (file: File | Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Compress aggressively to stay well under Firestore 1MB limit
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        resolve(dataUrl);
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
 };
 
 /**

@@ -38,16 +38,22 @@ export const saveOrders = (orders: Order[]) => {
   }
 };
 
-export const loadCart = (): { product: Product; quantity: number }[] | null => {
+export const loadCart = (): CartItem[] | null => {
   try {
     const stored = localStorage.getItem(KEYS.CART);
-    return stored ? JSON.parse(stored) : null;
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    return parsed.map((item: any) => ({
+      ...item,
+      id: item.id || Date.now().toString() + Math.random().toString(36).substring(2, 9),
+      storeId: item.storeId || 'legacy-store'
+    }));
   } catch {
     return null;
   }
 };
 
-export const saveCart = (cart: { product: Product; quantity: number }[]) => {
+export const saveCart = (cart: CartItem[]) => {
   localStorage.setItem(KEYS.CART, JSON.stringify(cart));
 };
 

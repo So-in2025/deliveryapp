@@ -57,20 +57,34 @@
 
 @utility custom-scrollbar {
   &::-webkit-scrollbar {
-    width: 5px;
+    width: 6px;
+    height: 6px;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background: #e5e7eb; /* stone-200 */
+    background: rgba(0, 0, 0, 0.05); /* very subtle */
     border-radius: 20px;
-    border: 1px solid transparent;
   }
   .dark &::-webkit-scrollbar-thumb {
-    background: #292524; /* stone-800 */
+    background: rgba(255, 255, 255, 0.05);
   }
   &::-webkit-scrollbar-thumb:hover {
     background: #ffed00; /* brand-500 */
+  }
+}
+
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  body {
+    @apply custom-scrollbar;
   }
 }

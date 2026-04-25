@@ -14,18 +14,60 @@ function getAiInstance(): GoogleGenAI {
   return aiInstance;
 }
 
-export const extractProductsFromMenu = async (base64Image: string): Promise<Product[]> => {
+export const generateBannerWithAI = async (prompt: string) => {
   try {
     const ai = getAiInstance();
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: `Genera una promoción para una app de delivery basada en este tema: "${prompt}". Devuelve un objeto JSON con: title (string: impactante, corto), subtitle (string: explicativo), badge (string: PROMO, HOT, NUEVO, etc), y un termino de busqueda en ingles para unsplash (ejemplo: burger, sushi, pizza, etc).` }
+          ]
+        }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            subtitle: { type: Type.STRING },
+            badge: { type: Type.STRING },
+            unsplashTerm: { type: Type.STRING }
+          },
+          required: ["title", "subtitle", "badge", "unsplashTerm"]
+        }
+      }
+    });
+
+    const data = JSON.parse(response.text);
+    return {
+      title: data.title,
+      subtitle: data.subtitle,
+      badge: data.badge,
+      image: `https://images.unsplash.com/featured/?${encodeURIComponent(data.unsplashTerm)}`
+    };
+  } catch (error) {
+    console.error('Error generating banner:', error);
+    throw error;
+  }
+};
+
+export const extractProductsFromMenu = async (base64Image: string): Promise<Product[]> => {
+  try {
+    const ai = getAiInstance();
+    const mimeType = base64Image.split(';')[0].split(':')[1] || 'image/jpeg';
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
       contents: [
         {
           parts: [
-            { text: "Analiza esta imagen de un menú de restaurante o catálogo de productos. Extrae todos los productos, sus descripciones y sus precios. Devuelve el resultado como un array de objetos JSON con los campos: name (string), description (string), price (number). Si no hay descripción, deja el campo vacío. Asegúrate de que el precio sea un número puro." },
+            { text: "Analiza esta imagen o documento de un menú de restaurante o catálogo de productos. Extrae todos los productos, sus descripciones y sus precios. Devuelve el resultado como un array de objetos JSON con los campos: name (string), description (string), price (number). Si no hay descripción, deja el campo vacío. Asegúrate de que el precio sea un número puro." },
             {
               inlineData: {
-                mimeType: "image/jpeg",
+                mimeType: mimeType,
                 data: base64Image.split(',')[1] || base64Image
               }
             }

@@ -113,6 +113,8 @@ export interface Store {
   customColor?: string; // New: Store customization
   isActive?: boolean; // New: For Admin suspension/approval
   isOpen?: boolean; // New: For Merchant to toggle store status
+  autoSchedule?: boolean; // New: Automate open/close based on schedule
+  schedules?: { [day: number]: { open: string, close: string, active: boolean } }; // New: 0=Sun, 6=Sat
   mpAccessToken?: string; // New: For Decentralized Payment Mode
   ownerId?: string; // New: For ownership check
   lat?: number; // New: For map placement
@@ -124,13 +126,16 @@ export interface Store {
   bankAccount?: string; // Strict: Cuenta Bancaria (CLABE/CBU)
   clabe?: string; // New: CLABE Interbancaria (18 digits)
   commissionPct?: number; // New: Custom commission for this store (overrides global)
+  pendingName?: string; // New: Store name change pending admin approval
 }
 
 export interface CartItem {
+  id: string; // New: For tracking and React keys
   product: Product;
   quantity: number;
   selectedModifiers: Modifier[]; // Store selected options
   totalPrice: number; // Base + Modifiers
+  storeId: string; // New: For tracking store context
 }
 
 export interface Order {

@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { useToast } from '../context/ToastContext';
 import { OrderStatus, Store, OrderType, UserRole, Order } from '../types';
 import { formatCurrency } from '../constants';
+import { generateBannerWithAI } from '../services/geminiService';
 import { Badge, PaymentBadge, StoreBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
 import { Button } from '../components/ui/Button';
@@ -285,7 +286,10 @@ const BannersManagementTab = ({
     updateBanner: (id: string, d: any) => void, 
     deleteBanner: (id: string) => void 
 }) => {
+    const { showToast } = useToast();
     const [isAdding, setIsAdding] = useState(false);
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
     const [newBanner, setNewBanner] = useState({
         title: '',
         subtitle: '',
@@ -296,11 +300,32 @@ const BannersManagementTab = ({
         link: ''
     });
 
+    const handleGenerateAI = async () => {
+        if (!aiPrompt) return;
+        setIsGenerating(true);
+        try {
+            const result = await generateBannerWithAI(aiPrompt);
+            setNewBanner(prev => ({
+                ...prev,
+                title: result.title,
+                subtitle: result.subtitle,
+                badge: result.badge,
+                image: result.image
+            }));
+            showToast('Promoción generada con éxito!', 'success');
+        } catch (error) {
+            showToast('Error al generar la promoción', 'error');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleAdd = () => {
         if (!newBanner.title || !newBanner.image) return;
         addBanner(newBanner);
         setIsAdding(false);
         setNewBanner({ title: '', subtitle: '', image: '', badge: 'PROMO', isActive: true, priority: 0, link: '' });
+        setAiPrompt('');
     };
 
     return (
@@ -318,7 +343,26 @@ const BannersManagementTab = ({
             </div>
 
             {isAdding && (
-                <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-brand-500/30 shadow-2xl animate-slide-in-bottom space-y-4">
+                <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-brand-500/30 shadow-2xl animate-slide-in-bottom space-y-6">
+                    <div className="p-4 bg-brand-50 dark:bg-brand-900/10 rounded-xl border border-brand-200 dark:border-brand-500/20 flex flex-col gap-3">
+                        <label className="text-xs font-black text-brand-700 dark:text-brand-400 uppercase tracking-widest flex items-center gap-2">
+                            ✨ Magic AI (0 Fricción)
+                        </label>
+                        <div className="flex gap-2">
+                            <input 
+                                className="flex-1 p-3 rounded-lg border border-brand-200 dark:border-stone-700 bg-white dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all font-bold text-sm"
+                                placeholder="Ej: 50% de descuento en sushi esta semana"
+                                value={aiPrompt}
+                                onChange={e => setAiPrompt(e.target.value)}
+                            />
+                            <Button onClick={handleGenerateAI} disabled={isGenerating || !aiPrompt} className="px-6 relative overflow-hidden">
+                                {isGenerating ? (
+                                    <div className="w-5 h-5 border-2 border-brand-950 border-t-transparent rounded-full animate-spin" />
+                                ) : 'Generar'}
+                            </Button>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Título Principal</label>
@@ -357,7 +401,16 @@ const BannersManagementTab = ({
                             />
                         </div>
                     </div>
-                    <Button fullWidth onClick={handleAdd} className="h-14 text-lg">Guardar Promoción</Button>
+                    {newBanner.image && newBanner.title && (
+                        <div className="p-4 bg-stone-50 dark:bg-stone-950 rounded-xl relative overflow-hidden flex flex-col items-start justify-end h-32 border border-black/5 dark:border-white/5">
+                            <img src={newBanner.image} className="absolute inset-0 w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                            <span className="relative z-10 bg-brand-500 text-brand-950 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest mb-1 shadow-xl">{newBanner.badge}</span>
+                            <h4 className="relative z-10 text-white font-black text-xl leading-none drop-shadow-md">{newBanner.title}</h4>
+                            <p className="relative z-10 text-white/90 text-xs font-medium drop-shadow-md">{newBanner.subtitle}</p>
+                        </div>
+                    )}
+                    <Button fullWidth onClick={handleAdd} className="h-14 text-lg" disabled={!newBanner.title || !newBanner.image}>Guardar Promoción</Button>
                 </div>
             )}
 
@@ -832,6 +885,37 @@ export const AdminView: React.FC = () => {
 
                   <div className="bg-white p-4 rounded-xl border border-amber-200 space-y-3 dark:bg-stone-900 dark:border-stone-800">
                       <h3 className="font-bold text-stone-900 text-sm dark:text-white">Estado del Comercio</h3>
+                      
+                      {selectedStore.pendingName && (
+                          <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-900/30 mb-4 animate-pulse">
+                              <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Solicitud de Nuevo Nombre</p>
+                              <p className="text-sm font-bold text-stone-900 dark:text-white mb-3">"{selectedStore.pendingName}"</p>
+                              <div className="flex gap-2">
+                                  <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="flex-1 bg-red-500/10 text-red-500 border-red-500/20"
+                                      onClick={() => {
+                                          updateStore(selectedStore.id, { pendingName: null });
+                                          showToast('Cambio de nombre rechazado', 'info');
+                                      }}
+                                  >
+                                      Rechazar
+                                  </Button>
+                                  <Button 
+                                      size="sm" 
+                                      className="flex-1 bg-green-500 text-white"
+                                      onClick={() => {
+                                          updateStore(selectedStore.id, { name: selectedStore.pendingName, pendingName: null });
+                                          showToast('Nuevo nombre aprobado', 'success');
+                                      }}
+                                  >
+                                      Aprobar
+                                  </Button>
+                              </div>
+                          </div>
+                      )}
+
                       <div className="flex gap-2">
                           <Button 
                             variant="secondary" 
@@ -873,42 +957,86 @@ export const AdminView: React.FC = () => {
       )
   };
 
-  const renderStoresTab = () => (
-    <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
-      <div className="bg-white p-2 rounded-xl border border-amber-300 flex items-center gap-2 lg:max-w-md dark:bg-stone-900 dark:border-stone-800">
-         <Search size={18} className="text-stone-400 ml-2" />
-         <input 
-            placeholder="Buscar comercio..." 
-            className="flex-1 outline-none text-sm" 
-            value={storeSearch}
-            onChange={(e) => setStoreSearch(e.target.value)}
-         />
+  const renderStoresTab = () => {
+    const storesWithPending = stores.filter(s => s.pendingName);
+    
+    return (
+    <div className="space-y-6 px-4 pt-4 animate-fade-in pb-24 lg:w-full lg:px-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <h2 className="text-3xl font-black text-stone-900 dark:text-white tracking-tighter">Gestión de Comercios</h2>
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Supervisión de la Red de {stores.length} Tiendas</p>
+          </div>
+          
+          <div className="bg-white p-1.5 rounded-2xl border border-stone-100 shadow-sm flex items-center gap-2 w-full md:w-96 dark:bg-stone-900 dark:border-white/5">
+             <Search size={18} className="text-stone-400 ml-3" />
+             <input 
+                placeholder="Buscar por nombre o ID..." 
+                className="flex-1 outline-none text-sm p-2.5 bg-transparent dark:text-white font-medium" 
+                value={storeSearch}
+                onChange={(e) => setStoreSearch(e.target.value)}
+             />
+          </div>
       </div>
 
-      <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
-      {filteredStores.map(store => (
-        <div 
-            key={store.id} 
-            onClick={() => setSelectedStore(store)}
-            className="bg-white p-4 rounded-xl shadow-sm border border-amber-200 flex gap-4 items-center active:scale-[0.99] transition-transform cursor-pointer h-full dark:bg-stone-900 dark:border-stone-800"
-        >
-           <div className="w-12 h-12 bg-stone-100 rounded-lg overflow-hidden shrink-0 dark:bg-stone-800">
-              <LazyImage src={store.image} alt={store.name} className="w-full h-full" />
-           </div>
-           <div className="flex-1">
-              <h4 className="font-bold text-stone-900 dark:text-white">{store.name}</h4>
-              <p className="text-xs text-stone-500 dark:text-stone-400">{store.category} • {store.createdAt ? 'Nuevo' : 'Veterano'}</p>
-              <div className="flex items-center gap-3 mt-1">
-                 <StoreBadge isActive={store.isActive} />
-                 <span className="text-[10px] text-stone-400">ID: {store.id}</span>
+      {storesWithPending.length > 0 && (
+          <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-[2rem] flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-amber-950 shadow-lg shadow-amber-500/20">
+                      <AlertCircle size={24} />
+                  </div>
+                  <div>
+                      <p className="text-amber-600 dark:text-amber-400 font-black text-sm tracking-tight leading-none">Acciones Pendientes</p>
+                      <p className="text-[10px] font-bold text-amber-600/60 uppercase tracking-widest mt-2">{storesWithPending.length} solicitudes de cambio de nombre</p>
+                  </div>
               </div>
-           </div>
-           <ChevronRight size={18} className="text-stone-300" />
-        </div>
-      ))}
+          </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredStores.map(store => (
+            <div 
+                key={store.id} 
+                onClick={() => setSelectedStore(store)}
+                className="group bg-white dark:bg-stone-900/50 p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.02] border border-stone-100 dark:border-white/5 flex flex-col gap-5 hover:border-brand-500/30 transition-all cursor-pointer relative overflow-hidden active:scale-95"
+            >
+               {store.pendingName && (
+                   <div className="absolute top-0 right-0 p-3">
+                       <span className="flex h-3 w-3 relative">
+                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                           <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500 shadow-sm border border-white"></span>
+                       </span>
+                   </div>
+               )}
+
+               <div className="flex items-center gap-4">
+                   <div className="w-16 h-16 bg-stone-100 dark:bg-stone-800 rounded-2xl overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-500">
+                      <LazyImage src={store.image} alt={store.name} className="w-full h-full object-cover" />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                      <h4 className="font-black text-xl text-stone-900 dark:text-white tracking-tighter truncate leading-none mb-2">{store.name}</h4>
+                      <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">{store.category} • {store.isActive ? 'Activo' : 'Suspendido'}</p>
+                   </div>
+               </div>
+
+               <div className="w-full h-px bg-stone-50 dark:bg-white/5" />
+
+               <div className="flex justify-between items-center">
+                  <div className="flex gap-2">
+                     <StoreBadge isActive={store.isActive} />
+                     {store.pendingName && <span className="px-3 py-1 bg-amber-500/10 text-amber-600 text-[8px] font-black uppercase tracking-widest rounded-lg border border-amber-500/20">Solicitud</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-stone-300 dark:text-stone-600 uppercase tracking-widest">#{store.id.slice(0,6)}</span>
+                      <ChevronRight size={16} className="text-stone-300 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
+                  </div>
+               </div>
+            </div>
+        ))}
       </div>
     </div>
-  );
+    );
+  };
 
   const renderUserDetail = () => {
       if(!selectedUser) return null;

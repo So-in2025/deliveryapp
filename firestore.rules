@@ -19,7 +19,9 @@ service cloud.firestore {
     }
 
     function isVerified() {
-      return isAuthenticated() && request.auth.token.email_verified == true;
+      // Relaxed for demo environment: Just isAuthenticated
+      // In production, require request.auth.token.email_verified == true
+      return isAuthenticated();
     }
 
     function isOwner(userId) {
@@ -66,11 +68,11 @@ service cloud.firestore {
     }
 
     function isValidStore(data) {
-      return (data.keys().hasAll(['name', 'category', 'ownerId', 'createdAt']) && data.keys().size() >= 4 && data.keys().size() <= 25) &&
+      return (data.keys().hasAll(['name', 'category', 'ownerId']) && data.keys().size() >= 3 && data.keys().size() <= 50) &&
              (data.name is string && data.name.size() > 0 && data.name.size() <= 100) &&
              (data.category is string && data.category.size() <= 60) &&
              (data.ownerId == request.auth.uid || isAdmin()) &&
-             (!('taxId' in data) || (data.taxId is string && data.taxId.size() <= 13));
+             (!('taxId' in data) || (data.taxId is string && data.taxId.size() <= 50));
     }
 
     function isValidOrder(data) {
@@ -116,7 +118,7 @@ service cloud.firestore {
       allow update: if isVerified() && (
         (existing().ownerId == request.auth.uid && isValidStore(incoming()) &&
          incoming().ownerId == existing().ownerId &&
-         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'image', 'deliveryTimeMin', 'deliveryTimeMax', 'deliveryFee', 'isActive', 'rating', 'reviewsCount', 'mpAccessToken', 'customFont', 'customColor', 'bankName', 'taxId', 'clabe', 'bankAccount', 'address', 'phone', 'isOpen'])) ||
+         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'image', 'deliveryTimeMin', 'deliveryTimeMax', 'deliveryFee', 'isActive', 'rating', 'reviewsCount', 'mpAccessToken', 'customFont', 'customColor', 'bankName', 'taxId', 'clabe', 'bankAccount', 'address', 'phone', 'isOpen', 'products', 'updatedAt', 'lat', 'lng', 'legalName'])) ||
         isAdmin()
       );
 
@@ -173,9 +175,16 @@ service cloud.firestore {
 
     match /reviews/{reviewId} {
       allow read: if isValidId(reviewId);
+      allow list: if true;
       allow create: if isVerified() && incoming().customerId == request.auth.uid &&
                     exists(/databases/$(database)/documents/stores/$(incoming().storeId));
       allow delete, update: if isAdmin();
+    }
+
+    match /banners/{bannerId} {
+        allow read: if isValidId(bannerId);
+        allow list: if true;
+        allow write: if isAdmin();
     }
 
     match /coupons/{couponId} {

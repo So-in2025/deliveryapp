@@ -123,6 +123,10 @@ interface AppContextType {
   // Lifted Client State for Global Navigation
   clientViewState: ViewState;
   setClientViewState: (view: ViewState) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
   // Lifted Merchant State
   merchantViewState: MerchantViewState;
   setMerchantViewState: (view: MerchantViewState) => void;
@@ -135,6 +139,10 @@ interface AppContextType {
   
   selectedStore: Store | null;
   setSelectedStore: (store: Store | null) => void;
+  productToView: Product | null;
+  setProductToView: (product: Product | null) => void;
+  productToCustomize: Product | null;
+  setProductToCustomize: (product: Product | null) => void;
   cartStoreId: string | null;
   resetOrders: () => void; // New: For forcing a reset of orders
   darkMode: boolean;
@@ -144,6 +152,8 @@ interface AppContextType {
   notifications: AppNotification[];
   isNotificationsOpen: boolean;
   setIsNotificationsOpen: (open: boolean) => void;
+  showLocationSelector: boolean;
+  setShowLocationSelector: (show: boolean) => void;
   addNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
   clearNotifications: () => void;
@@ -708,11 +718,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Lifted State
   const [clientViewState, setClientViewState] = useState<ViewState>('BROWSE');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [merchantViewState, setMerchantViewState] = useState<MerchantViewState>('ORDERS');
   const [driverViewState, setDriverViewState] = useState<DriverViewState>('MAP');
   const [adminViewState, setAdminViewState] = useState<AdminViewState>('DASHBOARD');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [showLocationSelector, setShowLocationSelector] = useState(false);
 
   const toggleSound = () => {
     setSoundEnabled(prev => {
@@ -723,6 +736,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [productToView, setProductToView] = useState<Product | null>(null);
+  const [productToCustomize, setProductToCustomize] = useState<Product | null>(null);
 
   const [cart, setCart] = useState<CartItem[]>(() => {
       const loaded = loadCart();
@@ -842,7 +857,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         newCart = [...prev];
         newCart[existingIndex].quantity += quantity;
       } else {
-        newCart = [...prev, { product, quantity, selectedModifiers: modifiers, totalPrice: unitPrice }];
+        newCart = [...prev, { 
+            id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            product, 
+            quantity, 
+            selectedModifiers: modifiers, 
+            totalPrice: unitPrice,
+            storeId
+        }];
       }
       
       saveCart(newCart);
@@ -857,8 +879,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       localStorage.removeItem('codex_cart_store_v1');
   }, []);
 
-  const updateCartItemQuantity = (index: number, quantity: number) => {
+  const updateCartItemQuantity = (id: string, quantity: number) => {
       setCart(prev => {
+          const index = prev.findIndex(i => i.id === id);
+          if (index === -1) return prev;
+          
           const newCart = [...prev];
           if (quantity <= 0) {
               newCart.splice(index, 1);
@@ -874,10 +899,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
   };
 
-  const removeFromCart = (index: number) => {
+  const removeFromCart = (id: string) => {
       setCart(prev => {
-          const newCart = [...prev];
-          newCart.splice(index, 1);
+          const newCart = prev.filter(i => i.id !== id);
           saveCart(newCart);
           if (newCart.length === 0) {
               setCartStoreId(null);
@@ -1315,7 +1339,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         products: [...store.products, ...newProducts]
       });
     } catch (error) {
-      console.error('Error bulk adding products:', error);
+      handleFirestoreError(error, OperationType.UPDATE, `stores/${storeId}`);
     }
   };
 
@@ -1540,6 +1564,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       socket,
       clientViewState,
       setClientViewState,
+      searchQuery,
+      setSearchQuery,
+      selectedCategory,
+      setSelectedCategory,
       merchantViewState,
       setMerchantViewState,
       driverViewState,
@@ -1548,6 +1576,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setAdminViewState,
       selectedStore,
       setSelectedStore,
+      productToView,
+      setProductToView,
+      productToCustomize,
+      setProductToCustomize,
       isDriverOnline,
       toggleDriverStatus,
       cartStoreId,
@@ -1559,6 +1591,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       notifications,
       isNotificationsOpen,
       setIsNotificationsOpen,
+      showLocationSelector,
+      setShowLocationSelector,
       addNotification,
       markNotificationAsRead,
       clearNotifications,

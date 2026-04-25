@@ -53,3 +53,24 @@ export const formatCurrency = (amount: number | undefined | null) => {
     currency: 'MXN',
   }).format(amount);
 };
+
+export const isStoreOpen = (store: Store): boolean => {
+  if (store.autoSchedule && store.schedules) {
+    const now = new Date();
+    const day = now.getDay();
+    const todaySchedule = store.schedules[day];
+    
+    if (!todaySchedule || !todaySchedule.active) return false;
+    
+    const timeNow = now.getHours() * 60 + now.getMinutes();
+    const [openH, openM] = todaySchedule.open.split(':').map(Number);
+    const [closeH, closeM] = todaySchedule.close.split(':').map(Number);
+    
+    const openTime = openH * 60 + openM;
+    const closeTime = closeH * 60 + closeM;
+    
+    return timeNow >= openTime && timeNow <= closeTime;
+  }
+  
+  return store.isOpen !== false;
+};

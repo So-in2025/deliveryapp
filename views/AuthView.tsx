@@ -45,7 +45,33 @@ export const AuthView: React.FC = () => {
   const [vehicleInsurance, setVehicleInsurance] = useState('');
   const [vehiclePlate, setVehiclePlate] = useState('');
 
-  const handleRoleSelection = useCallback((role: UserRole, isGuest: boolean = false) => {
+    const checkMerchantAccount = async (uid: string) => {
+        if (appUser.ownedStoreId || myStore) return true;
+        try {
+            const { collection, query, where, getDocs, db, doc, getDoc } = await import('../firebase');
+            const q = query(collection(db, 'stores'), where('ownerId', '==', uid));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const storeId = snap.docs[0].id;
+                updateUser({ ownedStoreId: storeId }); // Auto fix
+                return true;
+            }
+            
+            // Fallback: check if store by ID exists in case ownerId was missing
+            const fallbackStoreId = `store-${uid}`;
+            const storeRef = doc(db, 'stores', fallbackStoreId);
+            const storeSnap = await getDoc(storeRef);
+            if (storeSnap.exists()) {
+                updateUser({ ownedStoreId: fallbackStoreId }); // Auto fix
+                return true;
+            }
+        } catch (e) {
+            console.error('Error fetching store', e);
+        }
+        return false;
+    };
+
+  const handleRoleSelection = useCallback(async (role: UserRole, isGuest: boolean = false) => {
     if (!authUser && !isGuest) {
       setPendingRole(role);
       showToast("Por favor, inicia sesión para continuar", "info");
@@ -60,18 +86,15 @@ export const AuthView: React.FC = () => {
       return;
     }
 
-    // Role-specific onboarding check
-    const hasMerchantAccount = appUser.ownedStoreId || myStore;
     const hasDriverAccount = appUser.isDriver;
-
-    // PROTECTION: If current DB role is ADMIN, do not downgrade it in Firestore
-    // just switch the UI role state
     const isActuallyAdmin = appUser.role === UserRole.ADMIN;
 
-    // If selecting Merchant but has no store, show onboarding form instead of switching role
-    if (role === UserRole.MERCHANT && !hasMerchantAccount) {
-      setOnboardingStep('MERCHANT');
-      return;
+    if (role === UserRole.MERCHANT) {
+      const hasMerchantAccount = await checkMerchantAccount(authUser.uid);
+      if (!hasMerchantAccount) {
+        setOnboardingStep('MERCHANT');
+        return;
+      }
     }
     
     // If selecting Driver but hasn't registered as driver, show onboarding form
