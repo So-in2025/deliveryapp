@@ -6,7 +6,7 @@ import { loadCart, saveCart } from '../services/dataService';
 import { APP_CONFIG } from '../constants';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
-import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage, getDocs } from '../firebase';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage, getDocs } from '../firebase';
 import { io, Socket } from 'socket.io-client';
 
 export const calculateDynamicDeliveryDetails = (distanceKm: number | null, fallbackFee: number, fallbackCommissionPct: number, rates?: DeliveryRatesConfig) => {
@@ -368,12 +368,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   useEffect(() => {
     // Connect to the same host that serves the frontend
-    const newSocket = io();
-    setSocket(newSocket);
+    try {
+      const newSocket = io({
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        timeout: 10000
+      });
+      
+      newSocket.on('connect_error', (err) => {
+        console.warn('Socket connection error (likely due to environment constraints):', err.message);
+      });
 
-    return () => {
-      newSocket.close();
-    };
+      setSocket(newSocket);
+
+      return () => {
+        newSocket.close();
+      };
+    } catch (e) {
+      console.warn('Failed to initialize socket:', e);
+    }
   }, []);
 
   useEffect(() => {
@@ -473,8 +486,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const remoteTours = authProfile.completedTours || [];
       const mergedTours = Array.from(new Set([...localTours, ...remoteTours]));
       
+      const isDemoUser = authProfile.email === 'soinsoluciones2025@gmail.com' || authProfile.email === 'daniel.acevedo3134@gmail.com';
+      const userRole = isDemoUser ? UserRole.ADMIN : authProfile.role;
+
       setUser({
         ...authProfile,
+        role: userRole,
         completedTours: mergedTours
       });
 
@@ -483,8 +500,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       setIsDriverOnline(!!authProfile.isOnline);
       
-      // Removed: Auto-sync UI role on login. 
-      // User now always stays in the Hub (UserRole.NONE) upon login to choose their context manually.
+      // Auto-set the UI role if it matches a valid role (security)
+      if (userRole && Object.values(UserRole).includes(userRole)) {
+          setRoleState(userRole);
+          localStorage.setItem('codex_user_role', userRole);
+      }
     } else if (isAuthReady) {
       // Only reset if auth is definitely finished and no profile exists
       setUser(DEFAULT_USER);
@@ -1468,7 +1488,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const deleteStore = async (storeId: string) => {
     try {
-      const { deleteDoc } = await import('firebase/firestore');
       await deleteDoc(doc(db, 'stores', storeId));
       showToast('Establecimiento eliminado correctamente', 'success');
     } catch (error) {

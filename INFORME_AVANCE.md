@@ -1,4 +1,4 @@
-# 📋 INFORME DE ESTADO DEL PROYECTO: Mazamitla
+# 📋 INFORME DE ESTADO DEL PROYECTO: Te lo Llevo - Delivery Cercano
 
 **Fecha:** 24 Febrero 2026
 **Estado General:** ✅ HITO 2 COMPLETADO (Demo Funcional Lista)

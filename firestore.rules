@@ -103,6 +103,8 @@ service cloud.firestore {
          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline', 'completedTours', 'lat', 'lng', 'referralCode', 'referralEarnings', 'referredBy', 'isFirstPurchaseDone', 'isApprovedDriver', 'ownedStoreId', 'isDriver', 'driverLicense', 'vehicleInsurance', 'vehiclePlate', 'role', 'adminAccessRequested', 'requestedAt'])) ||
         isAdmin()
       );
+
+      allow delete: if isAdmin();
     }
 
     match /stores/{storeId} {
@@ -122,9 +124,15 @@ service cloud.firestore {
         isAdmin()
       );
 
+      allow delete: if isVerified() && (existing().ownerId == request.auth.uid || isAdmin());
+
       match /products/{productId} {
         allow read: if isValidId(productId);
         allow write: if isVerified() && (
+          (get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid) || 
+          isAdmin()
+        );
+        allow delete: if isVerified() && (
           (get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid) || 
           isAdmin()
         );

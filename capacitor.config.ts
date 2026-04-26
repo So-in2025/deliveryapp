@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.telollevo.mazamitla',
+  appId: 'com.telollevo.app',
   appName: 'Te lo Llevo',
   webDir: 'dist',
   server: {

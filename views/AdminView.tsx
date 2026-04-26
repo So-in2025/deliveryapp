@@ -11,7 +11,7 @@ import {
   TrendingUp, Users, Store as StoreIcon, Activity, HelpCircle,
   DollarSign, Shield, Search, 
   AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail,
-  BarChart3, PieChart as PieChartIcon, Filter, Tag, X, Plus
+  BarChart3, PieChart as PieChartIcon, Filter, Tag, X, Plus, Trash2, AlertCircle
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -661,7 +661,7 @@ export const AdminView: React.FC = () => {
               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-stone-300"></div> Pedidos</span>
             </div>
           </div>
-          <div className="h-64 w-full">
+          <div className="h-[300px] w-full min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -693,7 +693,7 @@ export const AdminView: React.FC = () => {
           <h3 className="font-bold text-stone-900 mb-6 flex items-center gap-2 dark:text-white">
             <PieChartIcon size={18} className="text-brand-800" /> Estado de Pedidos
           </h3>
-          <div className="h-64 w-full flex flex-col items-center justify-center">
+          <div className="h-[250px] w-full flex flex-col items-center justify-center min-h-[250px] relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -959,12 +959,29 @@ export const AdminView: React.FC = () => {
                   </div>
 
                   <div>
-                      <h3 className="font-bold text-stone-900 mb-2 dark:text-white">Productos ({selectedStore.products.length})</h3>
-                      <div className="bg-white rounded-xl border border-amber-200 divide-y divide-stone-50 dark:bg-stone-900 dark:border-stone-800">
+                      <h3 className="font-bold text-stone-900 mb-2 dark:text-white uppercase tracking-tight text-xs">Productos ({selectedStore.products.length})</h3>
+                      <div className="bg-white rounded-xl border border-amber-200 divide-y divide-stone-50 overflow-hidden dark:bg-stone-900 dark:border-stone-800">
                           {selectedStore.products.map(p => (
-                              <div key={p.id} className="p-3 flex justify-between items-center">
-                                  <span className="text-sm font-medium">{p.name}</span>
-                                  <span className="text-sm text-stone-500 dark:text-stone-400">{formatCurrency(p.price)}</span>
+                              <div key={p.id} className="p-3 flex justify-between items-center group/prod hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors">
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-black text-stone-700 dark:text-stone-300">{p.name}</span>
+                                    <span className="text-[10px] text-stone-400 font-bold uppercase">{p.category}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-sm font-black text-brand-600">{formatCurrency(p.price)}</span>
+                                    <button 
+                                      onClick={() => {
+                                        if (window.confirm(`¿Eliminar "${p.name}"?`)) {
+                                          const updatedProducts = selectedStore.products.filter(item => item.id !== p.id);
+                                          updateStore(selectedStore.id, { products: updatedProducts });
+                                          setSelectedStore({ ...selectedStore, products: updatedProducts });
+                                        }
+                                      }}
+                                      className="p-1.5 text-stone-300 hover:text-red-500 opacity-0 group-hover/prod:opacity-100 transition-all"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
                               </div>
                           ))}
                       </div>
@@ -1017,16 +1034,27 @@ export const AdminView: React.FC = () => {
                 onClick={() => setSelectedStore(store)}
                 className="group bg-white dark:bg-stone-900/50 p-6 rounded-[2.5rem] shadow-xl shadow-black/[0.02] border border-stone-100 dark:border-white/5 flex flex-col gap-5 hover:border-brand-500/30 transition-all cursor-pointer relative overflow-hidden active:scale-95"
             >
-               {store.pendingName && (
-                   <div className="absolute top-0 right-0 p-3">
-                       <span className="flex h-3 w-3 relative">
-                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                           <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500 shadow-sm border border-white"></span>
-                       </span>
-                   </div>
-               )}
+                <div className="absolute top-4 right-4 flex gap-2">
+                    {store.pendingName && (
+                        <div className="flex h-3 w-3 relative mt-2 mr-1">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500 shadow-sm border border-white dark:border-stone-800"></span>
+                        </div>
+                    )}
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente "${store.name}"? Esta acción no se puede deshacer.`)) {
+                                deleteStore(store.id);
+                            }
+                        }}
+                        className="p-2.5 bg-red-50 text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
 
-               <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
                    <div className="w-16 h-16 bg-stone-100 dark:bg-stone-800 rounded-2xl overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-500">
                       <LazyImage src={store.image} alt={store.name} className="w-full h-full object-cover" />
                    </div>

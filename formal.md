@@ -1,7 +1,7 @@
 
 📄 DOCUMENTO FORMAL DE ALCANCE Y DESARROLLO
 
-Plataforma de Delivery Multicomercio
+Plataforma de Delivery Cercano
 
 Cliente: Arturo
 Proveedor Tecnológico: Jonathan Garro 

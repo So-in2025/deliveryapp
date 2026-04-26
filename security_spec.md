@@ -1,4 +1,4 @@
-# Security Specification: Codex Omega (Elite Delivery)
+# Security Specification: Codex Omega (Delivery Cercano)
 
 ## 1. Data Invariants
 - A **Store** must have an owner who is an authenticated user.

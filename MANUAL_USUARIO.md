@@ -1,6 +1,6 @@
-# 📖 Manual de Usuario: Plataforma Mazamitla
+# 📖 Manual de Usuario: Plataforma Te lo Llevo (Cercana)
 
-Bienvenido al manual de uso de la plataforma de delivery de Mazamitla. Este documento explica cómo operar el sistema desde los diferentes roles disponibles.
+Bienvenido al manual de uso de la plataforma de delivery Te lo Llevo. Este documento explica cómo operar el sistema desde los diferentes roles disponibles.
 
 ---
 

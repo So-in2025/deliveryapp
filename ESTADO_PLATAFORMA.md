@@ -65,7 +65,7 @@ Este es el archivo más importante. Es el "director de orquesta".
 
 | Módulo | Archivo Clave | Propósito |
 | :--- | :--- | :--- |
-| **Diseño** | `index.css` | Define los colores, fuentes y el aspecto "Premium" de la app. |
+| **Diseño** | `index.css` | Define los colores, fuentes y el aspecto "Amigable" de la app. |
 | **Entrada** | `App.tsx` | Es la puerta de entrada. Decide qué pantalla mostrar según quién entre. |
 | **Vistas** | `ClientView.tsx` | Contiene toda la lógica de compra y tracking del cliente. |
 | **Vistas** | `MerchantView.tsx` | Panel de control para los dueños de restaurantes. |
