@@ -9,6 +9,11 @@ import { useAuth } from './AuthContext';
 import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage, getDocs } from '../firebase';
 import { io, Socket } from 'socket.io-client';
 
+const ADMIN_EMAILS = [
+  'soinsoluciones2025@gmail.com',
+  'daniel.acevedo3134@gmail.com'
+];
+
 export const calculateDynamicDeliveryDetails = (distanceKm: number | null, fallbackFee: number, fallbackCommissionPct: number, rates?: DeliveryRatesConfig) => {
     if (distanceKm && distanceKm > 0) {
         // Fallback to hardcoded defaults if config is missing (for backward compatibility before admin configures it)
@@ -333,8 +338,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       try {
         new Notification(notif.title, {
           body: notif.message,
-          icon: '/vite.svg', // Fallback icon
-          badge: '/vite.svg',
+          icon: APP_CONFIG.logoUrl, // Real logo icon
+          badge: APP_CONFIG.logoUrl,
           vibrate: [200, 100, 200]
         });
       } catch (e) {
@@ -486,12 +491,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const remoteTours = authProfile.completedTours || [];
       const mergedTours = Array.from(new Set([...localTours, ...remoteTours]));
       
-      const isDemoUser = authProfile.email === 'soinsoluciones2025@gmail.com' || authProfile.email === 'daniel.acevedo3134@gmail.com';
-      const userRole = isDemoUser ? UserRole.ADMIN : authProfile.role;
+      // Dynamic Admin identification
+      const isSuperAdmin = authProfile.email && ADMIN_EMAILS.includes(authProfile.email);
+      const isConfigAdmin = config?.adminEmails?.includes(authProfile.email || '');
+      const hasAdminRole = authProfile.role === UserRole.ADMIN;
+      
+      const authenticatedRole = (isSuperAdmin || isConfigAdmin || hasAdminRole) ? UserRole.ADMIN : authProfile.role;
 
       setUser({
         ...authProfile,
-        role: userRole,
+        role: authenticatedRole,
         completedTours: mergedTours
       });
 
@@ -500,10 +509,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       setIsDriverOnline(!!authProfile.isOnline);
       
-      // Auto-set the UI role if it matches a valid role (security)
-      if (userRole && Object.values(UserRole).includes(userRole)) {
-          setRoleState(userRole);
-          localStorage.setItem('codex_user_role', userRole);
+      // Navigation Persistence Logic
+      const savedRole = localStorage.getItem('codex_user_role') as UserRole | null;
+      
+      if (!savedRole) {
+          // If no role saved, use authenticated role or CLIENT as fallback
+          const initialRole = authenticatedRole || UserRole.CLIENT;
+          setRoleState(initialRole);
+          localStorage.setItem('codex_user_role', initialRole);
+      } else {
+          // If the user has a saved role, let them stay in it IF they have permission
+          if (authenticatedRole === UserRole.ADMIN) {
+              // Admins can be in ANY role they saved
+              setRoleState(savedRole);
+          } else {
+              // Non-admins are forced to their assigned role or CLIENT
+              const finalRole = authenticatedRole || UserRole.CLIENT;
+              setRoleState(finalRole);
+              localStorage.setItem('codex_user_role', finalRole);
+          }
       }
     } else if (isAuthReady) {
       // Only reset if auth is definitely finished and no profile exists
@@ -532,11 +556,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Listen to Orders (Filtered by role)
     let ordersQuery;
-    if (authProfile?.role === 'ADMIN') {
+    const effectiveRole = authProfile?.role === 'ADMIN' || (authProfile?.email && ADMIN_EMAILS.includes(authProfile.email)) ? 'ADMIN' : authProfile?.role;
+
+    if (effectiveRole === 'ADMIN') {
       ordersQuery = collection(db, 'orders');
-    } else if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+    } else if (effectiveRole === 'MERCHANT' && authProfile?.ownedStoreId) {
       ordersQuery = query(collection(db, 'orders'), where('storeId', '==', authProfile.ownedStoreId));
-    } else if (authProfile?.role === 'DRIVER' && authUser?.uid) {
+    } else if (effectiveRole === 'DRIVER' && authUser?.uid) {
       ordersQuery = query(collection(db, 'orders'), or(
         where('driverId', '==', authUser.uid),
         where('status', 'in', ['READY', 'PREPARING', 'ACCEPTED'])
@@ -597,29 +623,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Listen to Users (Admins see all, others see drivers for tracking)
     let usersQuery;
-    if (authProfile?.role === 'ADMIN') {
+    if (effectiveRole === 'ADMIN') {
       usersQuery = collection(db, 'users');
-    } else {
-      // Everyone can see drivers for real-time tracking
+    } else if (authUser?.uid) {
+      // Authenticated users can see drivers for real-time tracking
       usersQuery = query(collection(db, 'users'), where('role', '==', 'DRIVER'));
     }
 
-    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-      const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-      setUsers(usersData);
-    }, (error) => {
-      if (error.code === 'permission-denied') {
-        console.warn('Users permission denied - access not yet propagated');
-      } else {
-        handleFirestoreError(error, OperationType.GET, 'users');
-      }
-    });
+    let unsubscribeUsers = () => {};
+    if (usersQuery) {
+      unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+        setUsers(usersData);
+      }, (error) => {
+        if (error.code === 'permission-denied') {
+          console.warn('Users permission denied - access not yet propagated');
+        } else {
+          handleFirestoreError(error, OperationType.GET, 'users');
+        }
+      });
+    }
 
     // Listen to Reviews (Optimized by role)
     let reviewsQuery;
-    if (authProfile?.role === 'ADMIN') {
+    if (effectiveRole === 'ADMIN') {
       reviewsQuery = collection(db, 'reviews');
-    } else if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+    } else if (effectiveRole === 'MERCHANT' && authProfile?.ownedStoreId) {
       reviewsQuery = query(collection(db, 'reviews'), where('storeId', '==', authProfile.ownedStoreId));
     } else if (authUser?.uid) {
       // Clients see reviews for stores (could be limited later)
@@ -645,7 +674,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           ...data,
           categories: data.categories || prev.categories
         }));
-      } else if (authProfile?.role === 'ADMIN' || authUser?.email === 'daniel.acevedo3134@gmail.com') {
+      } else if (effectiveRole === 'ADMIN' || authUser?.email === 'daniel.acevedo3134@gmail.com') {
         // Only an Admin should attempt to create initial config if it doesn't exist
         setDoc(doc(db, 'config', 'global'), {
           platformCommissionPct: APP_CONFIG.platformCommissionPct,
@@ -658,7 +687,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           referralRewardAmount: 500,
           referralDiscountPct: 0.05,
           firstPurchaseDiscountPct: 0.20,
-          adminEmails: [], // Manually add admin emails in Firebase Console
+          adminEmails: ADMIN_EMAILS, // Sync with constant
           categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales']
         }).catch(err => console.warn('Silent config initialization skip:', err.message));
       }
@@ -673,7 +702,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Listen to Coupons
     let couponsQuery;
-    if (authProfile?.role === 'MERCHANT' && authProfile.ownedStoreId) {
+    if (effectiveRole === 'MERCHANT' && authProfile?.ownedStoreId) {
       couponsQuery = query(collection(db, 'coupons'), where('storeId', '==', authProfile.ownedStoreId));
     } else {
       // Clients and Admins see all coupons (Clients will filter by storeId in UI)
@@ -1403,6 +1432,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteStore = async (storeId: string) => {
+    try {
+      // Soft delete is safer for referential integrity of orders
+      await updateDoc(doc(db, 'stores', storeId), { isActive: false });
+      showToast('Comercio desactivado correctamente', 'success');
+    } catch (error) {
+      console.error('Error deleting store:', error);
+      showToast('Error al eliminar comercio', 'error');
+    }
+  };
+
   const deleteCoupon = async (id: string) => {
       try {
         await updateDoc(doc(db, 'coupons', id), { active: false }); // Soft delete or real delete
@@ -1483,16 +1523,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await updateDoc(doc(db, 'stores', storeId), data);
     } catch (error) {
       console.error('Error updating store:', error);
-    }
-  };
-
-  const deleteStore = async (storeId: string) => {
-    try {
-      await deleteDoc(doc(db, 'stores', storeId));
-      showToast('Establecimiento eliminado correctamente', 'success');
-    } catch (error) {
-      console.error('Error deleting store:', error);
-      showToast('Error al eliminar el establecimiento', 'error');
     }
   };
 

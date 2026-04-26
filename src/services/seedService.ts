@@ -1,17 +1,22 @@
 import { db, collection, getDocs, query, where, addDoc, serverTimestamp, setDoc, doc, updateDoc } from '../../firebase';
 import { Store, Product, UserRole } from '../../types';
 
-const DEMO_EMAIL = 'soinsoluciones2025@gmail.com';
+const ADMIN_EMAILS = [
+  'soinsoluciones2025@gmail.com',
+  'daniel.acevedo3134@gmail.com'
+];
 
-export const setupDemoStore = async (showToast: (msg: string, type: 'success' | 'error' | 'info') => void) => {
+export const setupDemoStore = async (showToast: (msg: string, type: 'success' | 'error' | 'info') => void, currentUserEmail?: string | null) => {
   try {
-    // 1. Find the user with the demo email
+    const targetEmail = (currentUserEmail && ADMIN_EMAILS.includes(currentUserEmail)) ? currentUserEmail : 'soinsoluciones2025@gmail.com';
+    
+    // 1. Find the user with the target email
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', DEMO_EMAIL));
+    const q = query(usersRef, where('email', '==', targetEmail));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      showToast('No se encontró el usuario soinsoluciones2025@gmail.com. Por favor, inicia sesión con ese correo primero.', 'error');
+      showToast(`No se encontró el usuario ${targetEmail}. Por favor, inicia sesión con ese correo primero.`, 'error');
       return;
     }
 
@@ -30,7 +35,7 @@ export const setupDemoStore = async (showToast: (msg: string, type: 'success' | 
     // 3. Create or Update the Store
     const storeId = userData.ownedStoreId || `demo-store-${Date.now()}`;
     const demoStore: Partial<Store> = {
-      name: 'Delicias del Vecino - Tienda Demo',
+      name: 'Tienda Demo - Cercana',
       description: 'Tienda configurada para demostraciones reales. Gestión completa y seguimiento activo.',
       category: 'Restaurante',
       image: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&q=80&w=800',
@@ -86,11 +91,8 @@ export const setupDemoStore = async (showToast: (msg: string, type: 'success' | 
       createdAt: serverTimestamp() as any
     };
 
-    if (userData.ownedStoreId) {
-       await updateDoc(doc(db, 'stores', storeId), demoStore);
-    } else {
-       await setDoc(doc(db, 'stores', storeId), { ...demoStore, id: storeId });
-    }
+    // Use setDoc with merge to avoid "No document to update" errors
+    await setDoc(doc(db, 'stores', storeId), { ...demoStore, id: storeId }, { merge: true });
 
     // 4. Fully configure the user as both Merchant, Driver and Admin
     await updateDoc(doc(db, 'users', userId), { 
@@ -115,15 +117,15 @@ export const setupDemoStore = async (showToast: (msg: string, type: 'success' | 
       if (!configSnap.empty) {
         const configData = configSnap.docs[0].data();
         const adminEmails = configData.adminEmails || [];
-        if (!adminEmails.includes(DEMO_EMAIL)) {
+        if (!adminEmails.includes(targetEmail)) {
           await updateDoc(configRef, {
-            adminEmails: [...adminEmails, DEMO_EMAIL]
+            adminEmails: [...adminEmails, targetEmail]
           });
         }
       } else {
         // Create it if it doesn't exist
         await setDoc(configRef, {
-          adminEmails: [DEMO_EMAIL],
+          adminEmails: [targetEmail],
           platformCommissionPct: 0.15,
           baseDeliveryFee: 35,
           centerCoordinates: { lat: 19.4326, lng: -99.1332 }
@@ -133,7 +135,7 @@ export const setupDemoStore = async (showToast: (msg: string, type: 'success' | 
       console.warn('Could not update global config admins, might not have permissions yet', e);
     }
 
-    showToast('Perfil completo (Admin/Comercio/Repartidor) configurado exitosamente para soinsoluciones2025@gmail.com', 'success');
+    showToast(`Perfil completo (Admin/Comercio/Repartidor) configurado exitosamente para ${targetEmail}`, 'success');
   } catch (error) {
     console.error('Error seeding demo store:', error);
     showToast('Error al configurar la tienda demo', 'error');

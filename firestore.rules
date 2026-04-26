@@ -35,14 +35,12 @@ service cloud.firestore {
 
     // Dynamic Admin Check: Fetched from the database instead of hardcoded strings
     function isAdmin() {
-      return isVerified() && (
-        // Check 1: User has explicit ADMIN role in their profile
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN') ||
-        // Check 2: User email is in the global admin list managed via Firestore Console
-        (exists(/databases/$(database)/documents/config/global) && 
-         request.auth.token.email in get(/databases/$(database)/documents/config/global).data.adminEmails)
-      );
+      let isDev = request.auth.token.email in ['soinsoluciones2025@gmail.com', 'daniel.acevedo3134@gmail.com'];
+      let configDoc = get(/databases/$(database)/documents/config/global).data;
+      let hasAdminItem = request.auth.token.email in configDoc.adminEmails;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      
+      return isVerified() && (isDev || hasAdminItem || userDoc.role == 'ADMIN');
     }
 
     function incoming() { return request.resource.data; }

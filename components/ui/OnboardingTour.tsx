@@ -75,36 +75,36 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
         pointerEvents: 'auto',
     };
 
-    const margin = 12;
-    const cardWidth = 320;
-    const cardHeight = 280; // Estimated max height
-
+    const margin = 16;
+    const cardWidth = Math.min(window.innerWidth - 32, 340);
+    
     const stepPosition = step.position || 'bottom';
 
-    if (stepPosition === 'bottom') {
-        const spaceBelow = window.innerHeight - targetRect.bottom;
-        if (spaceBelow < cardHeight + margin && targetRect.top > cardHeight + margin) {
-            // Not enough space below, but enough above - flip to top
+    // Simplified robust placement
+    if (window.innerWidth < 768) {
+        // Mobile: Fixed bottom or top based on target
+        if (targetRect.top > window.innerHeight / 2) {
+            tooltipStyle.top = margin;
+        } else {
+            tooltipStyle.bottom = margin + 80; // Above tab bar if any
+        }
+        tooltipStyle.left = '50%';
+        tooltipStyle.transform = 'translateX(-50%)';
+    } else {
+        // Desktop: Relative to target
+        if (stepPosition === 'bottom') {
+            tooltipStyle.top = targetRect.bottom + margin;
+            tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, targetRect.left + targetRect.width / 2 - cardWidth / 2));
+        } else if (stepPosition === 'top') {
             tooltipStyle.bottom = window.innerHeight - targetRect.top + margin;
-        } else {
-            tooltipStyle.top = Math.min(window.innerHeight - cardHeight - margin, targetRect.bottom + margin);
+            tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, targetRect.left + targetRect.width / 2 - cardWidth / 2));
+        } else if (stepPosition === 'left') {
+            tooltipStyle.top = Math.max(margin, Math.min(window.innerHeight - 400, targetRect.top));
+            tooltipStyle.right = window.innerWidth - targetRect.left + margin;
+        } else if (stepPosition === 'right') {
+            tooltipStyle.top = Math.max(margin, Math.min(window.innerHeight - 400, targetRect.top));
+            tooltipStyle.left = targetRect.right + margin;
         }
-        tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, targetRect.left + targetRect.width / 2 - cardWidth / 2));
-    } else if (stepPosition === 'top') {
-        const spaceAbove = targetRect.top;
-        if (spaceAbove < cardHeight + margin && window.innerHeight - targetRect.bottom > cardHeight + margin) {
-             // Not enough space above, but enough below - flip to bottom
-             tooltipStyle.top = targetRect.bottom + margin;
-        } else {
-             tooltipStyle.bottom = window.innerHeight - targetRect.top + margin;
-        }
-        tooltipStyle.left = Math.max(margin, Math.min(window.innerWidth - cardWidth - margin, targetRect.left + targetRect.width / 2 - cardWidth / 2));
-    } else if (stepPosition === 'left') {
-        tooltipStyle.top = targetRect.top;
-        tooltipStyle.right = window.innerWidth - targetRect.left + margin;
-    } else if (stepPosition === 'right') {
-        tooltipStyle.top = targetRect.top;
-        tooltipStyle.left = targetRect.right + margin;
     }
 
     const content = (
@@ -132,9 +132,9 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 10 }}
                     style={tooltipStyle}
-                    className="w-[320px] bg-white dark:bg-stone-900 rounded-[2rem] shadow-2xl border border-brand-500/20 p-6 pointer-events-auto"
+                    className="w-[320px] max-h-[80vh] flex flex-col bg-white dark:bg-stone-900 rounded-[2rem] shadow-2xl border border-brand-500/20 p-6 pointer-events-auto"
                 >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-4 shrink-0">
                         <div className="flex items-center gap-2 text-brand-600 dark:text-brand-400">
                             <Zap size={18} />
                             <span className="text-[10px] font-black uppercase tracking-widest">Guía Práctica</span>
@@ -144,14 +144,16 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
                         </button>
                     </div>
 
-                    <h3 className="text-lg font-black text-stone-900 dark:text-white mb-2 leading-tight">
-                        {step.title}
-                    </h3>
-                    <p className="text-sm text-stone-600 dark:text-stone-400 mb-6 leading-relaxed">
-                        {step.description}
-                    </p>
+                    <div className="overflow-y-auto pr-2 custom-scrollbar flex-1">
+                        <h3 className="text-lg font-black text-stone-900 dark:text-white mb-2 leading-tight">
+                            {step.title}
+                        </h3>
+                        <p className="text-sm text-stone-600 dark:text-stone-400 mb-6 leading-relaxed">
+                            {step.description}
+                        </p>
+                    </div>
 
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t border-stone-100 dark:border-white/5 shrink-0">
                         <div className="flex gap-1">
                             {steps.map((_, i) => (
                                 <div 

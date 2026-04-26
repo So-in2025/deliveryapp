@@ -10,7 +10,7 @@ import { Button } from '../components/ui/Button';
 import { 
   TrendingUp, Users, Store as StoreIcon, Activity, HelpCircle,
   DollarSign, Shield, Search, 
-  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail,
+  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail, ChevronDown,
   BarChart3, PieChart as PieChartIcon, Filter, Tag, X, Plus, Trash2, AlertCircle
 } from 'lucide-react';
 import { 
@@ -661,31 +661,35 @@ export const AdminView: React.FC = () => {
               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-stone-300"></div> Pedidos</span>
             </div>
           </div>
-          <div className="h-[300px] w-full min-h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#facc15" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#facc15" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{fontSize: 10, fontWeight: 600, fill: '#a8a29e'}}
-                  dy={10}
-                />
-                <YAxis hide />
-                <Tooltip 
-                  contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}}
-                  formatter={(value: number) => [formatCurrency(value), 'Ventas']}
-                />
-                <Area type="monotone" dataKey="sales" stroke="#facc15" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-[300px] w-full min-h-[300px] max-h-[300px]">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="99%" height="99%" minHeight={300}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#facc15" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#facc15" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fontSize: 10, fontWeight: 600, fill: '#a8a29e'}}
+                    dy={10}
+                  />
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#a8a29e'}} />
+                  <Tooltip 
+                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold'}}
+                    formatter={(value: number) => [formatCurrency(value), 'Ventas']}
+                  />
+                  <Area type="monotone" dataKey="sales" stroke="#facc15" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+                <div className="w-full h-full flex items-center justify-center text-stone-400 font-bold text-xs"> No hay datos de ventas recientes </div>
+            )}
           </div>
         </div>
 
@@ -694,24 +698,28 @@ export const AdminView: React.FC = () => {
             <PieChartIcon size={18} className="text-brand-800" /> Estado de Pedidos
           </h3>
           <div className="h-[250px] w-full flex flex-col items-center justify-center min-h-[250px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {statusData.length > 0 && statusData.some(d => d.value > 0) ? (
+              <ResponsiveContainer width="99%" height="99%" minHeight={250}>
+                <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+                <div className="w-24 h-24 rounded-full border-4 border-stone-100 flex items-center justify-center text-[10px] text-stone-300 font-bold text-center p-2 mb-4"> Sin datos de pedidos </div>
+            )}
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 w-full">
               {statusData.map((entry, index) => (
                 <div key={entry.name} className="flex items-center gap-2">
@@ -1350,8 +1358,38 @@ export const AdminView: React.FC = () => {
                                         <span className="text-xs font-black text-white uppercase tracking-widest">Operativo</span>
                                     </div>
                                 </div>
-                                <div className="w-12 h-12 bg-stone-800 rounded-2xl flex items-center justify-center border border-white/10 shadow-xl">
-                                    <span className="font-black text-sm text-brand-500">AD</span>
+                                
+                                <div className="flex items-center gap-2">
+                                    <div className="relative group/role">
+                                        <button className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all cursor-pointer">
+                                            <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-brand-950 text-xs font-black">
+                                                {(user.name || 'A').charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="text-left hidden md:block">
+                                                <p className="text-[9px] font-black text-stone-500 uppercase tracking-widest leading-none">Cerrar Sesión</p>
+                                                <p className="text-xs font-black text-white leading-tight">Admin</p>
+                                            </div>
+                                            <ChevronDown size={14} className="text-stone-500 group-hover/role:rotate-180 transition-transform" />
+                                        </button>
+                                        
+                                        <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-stone-900 rounded-2xl shadow-2xl border border-black/5 dark:border-white/5 opacity-0 group-hover/role:opacity-100 pointer-events-none group-hover/role:pointer-events-auto transition-all translate-y-2 group-hover/role:translate-y-0 overflow-hidden z-50">
+                                            <div className="p-4 border-b border-stone-100 dark:border-white/5 bg-stone-50 dark:bg-stone-800/50">
+                                                <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1">Cambiar de Vista</p>
+                                                <p className="text-xs font-black text-stone-900 dark:text-white truncate">{user.email}</p>
+                                            </div>
+                                            <div className="p-2 space-y-1">
+                                                <button onClick={() => setRole(UserRole.CLIENT)} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
+                                                    <Search size={14} /> Vista Cliente
+                                                </button>
+                                                <button onClick={() => setRole(UserRole.MERCHANT)} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
+                                                    <StoreIcon size={14} /> Vista Comercio
+                                                </button>
+                                                <button onClick={() => setRole(UserRole.DRIVER)} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
+                                                    <Truck size={14} /> Vista Repartidor
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1445,7 +1483,7 @@ export const AdminView: React.FC = () => {
                                             <Button 
                                                 size="sm" 
                                                 className="bg-brand-500 text-brand-950 font-black uppercase tracking-widest text-[10px]"
-                                                onClick={() => setupDemoStore(showToast)}
+                                                onClick={() => setupDemoStore(showToast, user.email)}
                                             >
                                                 Habilitar Demo
                                             </Button>
