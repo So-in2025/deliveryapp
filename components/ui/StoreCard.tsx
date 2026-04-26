@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Store } from '../../types';
-import { Star, Share, Heart, Clock } from 'lucide-react';
+import { Star, Share2, Heart, Clock } from 'lucide-react';
 import { LazyImage } from './LazyImage';
 import { formatCurrency, isStoreOpen } from '../../constants';
 
@@ -22,17 +22,17 @@ export const StoreCard = React.memo(({ store, onClick, index, isFavorite, onTogg
     return (
         <div 
             onClick={() => onClick(store)}
-            className={`group bg-white dark:bg-stone-900/40 rounded-[2.5rem] p-3 shadow-2xl shadow-black/[0.05] border border-black/[0.05] dark:border-white/[0.05] backdrop-blur-sm active:scale-[0.98] transition-all duration-500 cursor-pointer animate-slide-up relative overflow-hidden hover:shadow-brand-500/10 hover:border-brand-500/30 ${compact ? 'min-w-[280px] w-[280px]' : 'w-full h-full flex flex-col'} ${!storeOpen ? 'opacity-70 grayscale-[0.5]' : ''}`}
+            className={`group bg-white dark:bg-stone-900/40 rounded-[3rem] p-4 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.12)] dark:shadow-2xl dark:shadow-black/[0.1] border-2 border-stone-200 dark:border-white/[0.08] backdrop-blur-sm active:scale-[0.98] transition-all duration-500 cursor-pointer animate-slide-up relative overflow-hidden hover:shadow-brand-500/20 hover:border-brand-500 ${compact ? 'min-w-[320px] w-[320px]' : 'w-full h-full flex flex-col'} ${!storeOpen ? 'opacity-70 grayscale-[0.5]' : ''}`}
             style={{ animationDelay: `${index * 50}ms` }}
         >
-            <div className={`relative overflow-hidden rounded-[2.2rem] bg-stone-100 dark:bg-stone-800 shrink-0 shadow-inner ${compact ? 'h-36' : 'h-48 sm:h-56'}`}>
+            <div className={`relative overflow-hidden rounded-[2.5rem] bg-stone-100 dark:bg-stone-800 shrink-0 shadow-inner border-2 border-stone-100 dark:border-transparent ${compact ? 'h-40' : 'h-52 sm:h-64'}`}>
                 <LazyImage src={store.image} alt={store.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-40 group-hover:opacity-20 transition-opacity duration-500" />
                 
                 {/* Floating Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                     {!storeOpen && (
-                        <span className="bg-stone-800 text-white text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-2xl backdrop-blur-md border border-stone-600 flex items-center gap-1">
+                        <span className="bg-stone-900 dark:bg-stone-800 text-white text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-2xl backdrop-blur-md border border-white/10 flex items-center gap-1">
                             <Clock size={12} /> Cerrado
                         </span>
                     )}
@@ -62,34 +62,31 @@ export const StoreCard = React.memo(({ store, onClick, index, isFavorite, onTogg
             <div className="p-4 flex-1 flex flex-col">
                 <div className="flex justify-between items-start gap-4">
                     <div className="min-w-0 flex-1">
-                        <h3 className="font-black text-xl text-stone-900 dark:text-white tracking-tighter leading-none truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors uppercase">{store.name}</h3>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="text-stone-400 font-black text-[10px] uppercase tracking-widest">{store.category}</span>
-                            <span className="w-1 h-1 bg-stone-300 dark:bg-stone-700 rounded-full" />
-                            <span className="text-stone-500 dark:text-brand-500/80 font-black text-[10px] uppercase tracking-widest">
-                                {store.deliveryFee === 0 ? 'Sin cargo' : formatCurrency(store.deliveryFee ?? 0)}
+                        <h3 className="font-black text-2xl text-stone-950 dark:text-white tracking-tighter leading-[1] group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors uppercase italic break-words">{store.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                            <span className="text-stone-400 dark:text-stone-500 font-black text-[9px] uppercase tracking-[0.2em]">{store.category}</span>
+                            <span className="w-1 h-1 bg-stone-200 dark:bg-stone-700 rounded-full" />
+                            <span className="text-brand-600 dark:text-brand-500 font-black text-[9px] uppercase tracking-widest bg-brand-500/10 dark:bg-brand-500/5 px-2.5 py-1 rounded-lg border-2 border-brand-500/20 whitespace-nowrap">
+                                {store.deliveryFee === 0 ? 'Envío Gratis' : `Envío ${formatCurrency(store.deliveryFee ?? 0)}`}
                             </span>
                         </div>
                     </div>
-                    <div className="bg-brand-500/10 dark:bg-brand-500/5 px-3 py-2 rounded-2xl flex items-center gap-1.5 border border-brand-500/20 group-hover:bg-brand-500 group-hover:text-brand-950 transition-all duration-500 shadow-lg shadow-brand-500/0 group-hover:shadow-brand-500/20">
-                        <Star size={14} fill="currentColor" className="text-brand-500 group-hover:text-brand-950" />
-                        <span className="text-sm font-black dark:text-white group-hover:text-brand-950">{displayRating.toFixed(1)}</span>
+                    <div className="bg-brand-500 text-brand-950 px-4 py-2.5 rounded-2xl flex items-center gap-1.5 border-2 border-brand-400 shadow-[0_10px_25px_-5px_rgba(250,204,21,0.4)] shrink-0 transition-transform group-hover:scale-110">
+                        <Star size={16} fill="currentColor" className="text-brand-950" />
+                        <span className="text-base font-black tracking-tighter">{displayRating.toFixed(1)}</span>
                     </div>
                 </div>
                 
-                <div className="mt-6 pt-4 flex items-center justify-between border-t border-black/[0.03] dark:border-white/[0.03]">
-                    <div className="flex -space-x-2">
-                        {[1,2,3].map(i => (
-                            <div key={i} className="w-6 h-6 rounded-lg border-2 border-white dark:border-stone-900 bg-stone-200 dark:bg-stone-800 flex items-center justify-center overflow-hidden">
-                                <span className="text-[6px] font-black opacity-40">U{i}</span>
-                            </div>
-                        ))}
+                <div className="mt-6 pt-5 flex items-center justify-between border-t-2 border-stone-100 dark:border-white/[0.05]">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                        <span className="text-stone-400 dark:text-stone-500 text-xs font-black uppercase tracking-tight">{store.reviewsCount > 0 ? `${store.reviewsCount} reseñas` : 'Nuevo comercio'}</span>
                     </div>
                     <button 
-                        onClick={(e) => onShare(e, store)} 
-                        className="w-8 h-8 flex items-center justify-center rounded-xl text-stone-300 hover:text-brand-500 hover:bg-brand-500/10 transition-all"
+                        onClick={(e) => { e.stopPropagation(); onShare(e, store); }} 
+                        className="w-12 h-12 flex items-center justify-center rounded-2xl text-stone-500 dark:text-stone-400 hover:text-brand-600 bg-stone-100 dark:bg-stone-800 hover:bg-brand-500/10 transition-all active:scale-95 border-2 border-stone-200/50 dark:border-white/5 hover:border-brand-500/30 shadow-sm"
                     >
-                        <Share size={16} />
+                        <Share2 size={20} />
                     </button>
                 </div>
             </div>

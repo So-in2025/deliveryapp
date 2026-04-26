@@ -1,4 +1,4 @@
-# Manual de Usuario y Gestión - Plataforma de Delivery Elite
+# Manual de Usuario y Gestión - Plataforma de Delivery Cercano
 
 Este manual proporciona una guía detallada sobre el funcionamiento, gestión y configuración de la plataforma de delivery. La plataforma está diseñada con una arquitectura de cuatro roles principales: **Cliente**, **Comercio**, **Repartidor** y **Administrador**.
 
@@ -105,4 +105,4 @@ Para que la plataforma funcione al 100%, deben configurarse:
 *   **Escalabilidad**: La arquitectura permite añadir miles de comercios sin degradación de rendimiento gracias al uso de Firebase.
 
 ---
-*Manual generado el 04 de Abril de 2026 por el Equipo de Desarrollo Elite.*
+*Manual generado el 04 de Abril de 2026 por el Equipo de Desarrollo.*

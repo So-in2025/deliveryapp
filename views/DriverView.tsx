@@ -17,7 +17,12 @@ import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
 const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
     const map = useMap();
     useEffect(() => {
-        map.setView(center, map.getZoom());
+        if (!map) return;
+        try {
+            map.setView(center, map.getZoom());
+        } catch (e) {
+            // Map might be unmounting
+        }
     }, [center, map]);
     return null;
 };
@@ -49,7 +54,7 @@ const DriverTrackingMap: React.FC<{
         }
     }, [driverLat, driverLng, destLat, destLng]);
 
-    const driverIcon = L.divIcon({
+    const driverIcon = React.useMemo(() => L.divIcon({
         className: 'custom-div-icon',
         html: `<div class="relative flex items-center justify-center">
                 <div class="absolute -inset-4 bg-brand-500/30 rounded-full animate-ping"></div>
@@ -59,16 +64,16 @@ const DriverTrackingMap: React.FC<{
                </div>`,
         iconSize: [40, 40],
         iconAnchor: [20, 20]
-    });
+    }), []);
 
-    const destIcon = L.divIcon({
+    const destIcon = React.useMemo(() => L.divIcon({
         className: 'custom-div-icon',
         html: `<div class="w-8 h-8 bg-stone-900 dark:bg-white rounded-xl border-2 border-white dark:border-stone-800 shadow-xl flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white dark:text-stone-900"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                </div>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16]
-    });
+    }), []);
 
     return (
         <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false}>

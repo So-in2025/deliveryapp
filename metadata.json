@@ -1,6 +1,6 @@
 {
-  "name": "Te lo Llevo - Elite Delivery",
-  "description": "Plataforma premium de entrega a domicilio: Abarrotes, Farmacia, Comida, Vinos y servicios logísticos integrales.",
+  "name": "Te lo Llevo - Delivery Cercano",
+  "description": "Tu plataforma de confianza para entrega a domicilio: Abarrotes, Farmacia, Comida, Vinos y servicios logísticos integrales.",
   "requestFramePermissions": [
     "camera",
     "geolocation",

@@ -63,17 +63,19 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-stone-800 rounded-xl shadow-sm border border-amber-300 dark:border-stone-700 overflow-hidden animate-slide-up">
-      <div className="p-4 border-b border-amber-200 dark:border-stone-700 flex justify-between items-center bg-stone-50/50 dark:bg-stone-800/50">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-bold text-stone-500 dark:text-stone-400">#{order.id.slice(-6)}</span>
+    <div className="bg-white dark:bg-stone-900 rounded-[2rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)] border border-stone-200/80 dark:border-white/5 overflow-hidden animate-slide-up group/card hover:border-brand-500/30 transition-all duration-500">
+      <div className="p-5 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-white dark:bg-stone-900/50">
+        <div className="flex items-center gap-3">
+          <div className="bg-stone-50 dark:bg-stone-800 px-3 py-1.5 rounded-lg border border-stone-100 dark:border-white/5">
+            <span className="font-mono text-[10px] font-black text-stone-500 tracking-tighter">#{order.id.slice(-6).toUpperCase()}</span>
+          </div>
           <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
           {order.type === OrderType.PICKUP ? (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-stone-800 dark:bg-stone-700 text-white text-[10px] font-bold uppercase shadow-sm">
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 dark:bg-stone-700 text-white text-[9px] font-black uppercase tracking-widest shadow-sm">
               <StoreIcon size={10} /> Retiro
             </span>
           ) : (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-brand-500 text-brand-950 text-[10px] font-bold uppercase shadow-sm">
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500 text-brand-950 text-[9px] font-black uppercase tracking-widest shadow-sm">
               <Bike size={10} /> Delivery
             </span>
           )}
@@ -81,42 +83,44 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
         <Badge status={order.status} />
       </div>
 
-      <div className="p-4">
-        <div className="flex gap-4 mb-4 pb-4 border-b border-amber-200 dark:border-stone-700">
+      <div className="p-6">
+        <div className="flex gap-6 mb-6 pb-6 border-b border-stone-100 dark:border-stone-800">
           <div className="flex-1">
-            <p className="text-[10px] uppercase font-bold text-stone-400 dark:text-stone-500 mb-1">Cliente</p>
-            <div className="flex items-center gap-2 text-stone-900 dark:text-white font-bold text-sm">
-              <User size={16} className="text-stone-400 dark:text-stone-500" />
+            <p className="text-[9px] uppercase font-black text-stone-400 tracking-[0.2em] mb-2 ml-1">Cliente Solicitante</p>
+            <div className="flex items-center gap-3 text-stone-950 dark:text-white font-black text-base uppercase tracking-tighter">
+              <div className="w-10 h-10 bg-brand-500/10 rounded-xl flex items-center justify-center text-brand-500 border border-brand-500/20">
+                <User size={20} />
+              </div>
               {order.customerName}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] uppercase font-bold text-stone-400 dark:text-stone-500 mb-1">Pago</p>
-            <div className={`flex items-center gap-2 text-sm font-bold justify-end ${order.paymentMethod === PaymentMethod.CASH ? 'text-amber-600 dark:text-amber-500' : 'text-stone-700 dark:text-stone-300'}`}>
-              {order.paymentMethod === PaymentMethod.CARD ? <CreditCard size={16} /> : <Banknote size={16} />}
-              {order.paymentMethod === PaymentMethod.CARD ? 'Tarjeta' : 'Efectivo'}
+            <p className="text-[9px] uppercase font-black text-stone-400 tracking-[0.2em] mb-2 mr-1 text-right">Método de Pago</p>
+            <div className={`flex items-center gap-2 text-sm font-black justify-end h-10 ${order.paymentMethod === PaymentMethod.CASH ? 'text-amber-600 dark:text-brand-500' : 'text-stone-800 dark:text-stone-300'}`}>
+              {order.paymentMethod === PaymentMethod.CARD ? <CreditCard size={18} /> : <Banknote size={18} />}
+              {order.paymentMethod === PaymentMethod.CARD ? 'TARJETA' : 'EFECTIVO'}
             </div>
           </div>
         </div>
 
         {order.notes && (
-          <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-900/30 p-3 rounded-lg flex gap-2 items-start text-xs text-yellow-800 dark:text-yellow-300">
-            <StickyNote size={14} className="shrink-0 mt-0.5" />
-            <span><span className="font-bold">Nota:</span> {order.notes}</span>
+          <div className="mb-6 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 p-4 rounded-2xl flex gap-3 items-start text-xs text-amber-800 dark:text-brand-400 font-bold shadow-inner">
+            <StickyNote size={16} className="shrink-0 text-brand-500" />
+            <span className="leading-relaxed tracking-tight"><span className="uppercase text-[9px] tracking-widest block mb-0.5 opacity-60">Instrucciones Especiales:</span> {order.notes}</span>
           </div>
         )}
 
-        <div className="space-y-2 mb-4">
+        <div className="space-y-3 mb-6 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-100 dark:border-white/5">
           {order.items?.map((item, idx) => (
-            <div key={idx} className="flex gap-3 text-sm">
-              <div className="bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded text-stone-900 dark:text-white font-bold text-xs h-fit border border-amber-300 dark:border-stone-600">
+            <div key={idx} className="flex gap-4 items-center">
+              <div className="bg-white dark:bg-stone-800 px-3 py-1 rounded-xl text-stone-950 dark:text-white font-black text-xs h-fit border border-stone-200 dark:border-white/10 shadow-sm min-w-[40px] text-center">
                 {item.quantity}x
               </div>
               <div className="flex-1">
-                <p className="text-stone-900 dark:text-white font-medium leading-tight">{item.product.name}</p>
+                <p className="text-stone-950 dark:text-white font-black text-sm leading-tight uppercase tracking-tight">{item.product.name}</p>
                 {item.selectedModifiers.length > 0 && (
-                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                    {item.selectedModifiers?.map(m => m.name).join(', ')}
+                  <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-1 font-bold">
+                    {item.selectedModifiers?.map(m => m.name).join(' • ')}
                   </p>
                 )}
               </div>
@@ -124,9 +128,9 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
           ))}
         </div>
 
-        <div className="flex justify-between items-center text-sm pt-2">
-          <span className="text-stone-500 dark:text-stone-400 font-medium">Total del pedido</span>
-          <span className="font-bold text-xl text-stone-900 dark:text-white">{formatCurrency(order.total)}</span>
+        <div className="flex justify-between items-center pt-2 px-1">
+          <span className="text-stone-400 dark:text-stone-500 font-black text-[10px] uppercase tracking-widest leading-none">Inversion Total</span>
+          <span className="font-black text-2xl text-stone-950 dark:text-white tracking-tighter">{formatCurrency(order.total)}</span>
         </div>
 
         {order.type === OrderType.DELIVERY && order.status === OrderStatus.DRIVER_ASSIGNED && (
@@ -250,24 +254,29 @@ const CouponManager: React.FC = () => {
 
     return (
         <div className="pb-24">
-            <div className="bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border border-amber-200 dark:border-stone-700 mb-6">
-                <h3 className="font-bold text-stone-900 dark:text-white mb-4">Crear Nuevo Cupón</h3>
-                <div className="space-y-3">
+            <div className="bg-white dark:bg-stone-900 p-8 rounded-[2.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)] border border-stone-200/80 dark:border-white/10 mb-8 space-y-6">
+                <h3 className="font-black text-2xl text-stone-950 dark:text-white tracking-tighter uppercase flex items-center gap-3">
+                    <div className="w-10 h-10 bg-brand-500/10 rounded-xl flex items-center justify-center text-brand-500 border border-brand-500/20">
+                        <Ticket size={22} />
+                    </div>
+                    Crear Nuevo Cupón
+                </h3>
+                <div className="space-y-4">
                     <div>
                         <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase">Código</label>
                         <input 
-                            className="w-full bg-stone-50 dark:bg-stone-900/50 border border-amber-300 dark:border-stone-700 rounded-lg px-3 py-2 font-mono uppercase font-bold text-stone-900 dark:text-white"
+                            className="w-full bg-stone-50 dark:bg-stone-900/50 border border-stone-100 dark:border-white/5 rounded-lg px-3 py-2 font-mono uppercase font-black text-stone-900 dark:text-white"
                             placeholder="Ej: VERANO20"
                             value={newCode}
                             onChange={e => setNewCode(e.target.value)}
                         />
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-4">
                         <div className="w-1/3">
                             <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase">Descuento %</label>
                             <input 
                                 type="number"
-                                className="w-full bg-stone-50 dark:bg-stone-900/50 border border-amber-300 dark:border-stone-700 rounded-lg px-3 py-2 font-bold text-stone-900 dark:text-white"
+                                className="w-full bg-stone-50 dark:bg-stone-900/50 border border-stone-100 dark:border-white/5 rounded-lg px-3 py-2 font-black text-stone-900 dark:text-white"
                                 placeholder="20"
                                 value={newDiscount}
                                 onChange={e => setNewDiscount(e.target.value)}
@@ -276,7 +285,7 @@ const CouponManager: React.FC = () => {
                         <div className="flex-1">
                             <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase">Descripción</label>
                             <input 
-                                className="w-full bg-stone-50 dark:bg-stone-900/50 border border-amber-300 dark:border-stone-700 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
+                                className="w-full bg-stone-50 dark:bg-stone-900/50 border border-stone-100 dark:border-white/5 rounded-lg px-3 py-2 text-stone-900 dark:text-white"
                                 placeholder="Para nuevos clientes"
                                 value={newDesc}
                                 onChange={e => setNewDesc(e.target.value)}
@@ -287,8 +296,8 @@ const CouponManager: React.FC = () => {
                 </div>
             </div>
 
-            <h3 className="font-bold text-stone-900 dark:text-white mb-3 px-1">Cupones Activos</h3>
-            <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+            <h3 className="font-black text-xl text-stone-950 dark:text-white mb-6 uppercase tracking-tighter px-2">Cupones de la Casa</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {coupons.length === 0 && <p className="text-stone-400 dark:text-stone-500 text-center py-4 lg:col-span-2">No hay cupones creados.</p>}
                 {coupons.map(coupon => (
                     <div key={coupon.id} className={`bg-white dark:bg-stone-800 p-4 rounded-xl shadow-sm border flex justify-between items-center ${coupon.active ? 'border-brand-200 dark:border-brand-900/30' : 'border-amber-300 dark:border-stone-700 opacity-60'}`}>
@@ -561,38 +570,41 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
   return (
     <div className="pb-24">
       <BulkProductUpload storeId={myStore.id} />
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-stone-500 dark:text-stone-400 text-sm">Gestiona tu catálogo ({myStore.products.length} productos)</p>
-        <Button id="btn-new-product" size="sm" onClick={() => handleOpenEdit()}>
-          <Plus size={16} className="mr-1" /> Nuevo
+      <div className="flex justify-between items-center mb-8 px-2">
+        <p className="text-stone-400 dark:text-stone-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+            Catálogo: {myStore.products.length} productos
+        </p>
+        <Button id="btn-new-product" size="sm" onClick={() => handleOpenEdit()} className="!rounded-xl px-6 font-black tracking-widest text-[10px]">
+          <Plus size={16} className="mr-1.5" /> AÑADIR PRODUCTO
         </Button>
       </div>
 
-      <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         {myStore.products.length === 0 && (
-            <div className="text-center py-8 bg-stone-50 dark:bg-stone-800/50 border border-dashed border-amber-300 dark:border-stone-700 rounded-xl lg:col-span-2">
-                <p className="text-stone-400 dark:text-stone-500 text-sm">Aún no tienes productos.</p>
+            <div className="text-center py-16 bg-stone-50 dark:bg-stone-900/50 border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-[2.5rem] lg:col-span-2">
+                <p className="text-stone-400 dark:text-stone-500 font-black uppercase tracking-widest text-xs">Crea tu primer producto para empezar a vender</p>
             </div>
         )}
         {myStore.products.map((product: Product) => (
-          <div key={product.id} className="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-amber-200 dark:border-stone-700 flex gap-4 items-center">
-            <div className="w-16 h-16 rounded-lg bg-stone-100 dark:bg-stone-700 overflow-hidden shrink-0">
-              <LazyImage src={product.image} alt={product.name} className="w-full h-full" />
+          <div key={product.id} className="bg-white dark:bg-stone-900 p-5 rounded-[2rem] shadow-[0_15px_40px_-12px_rgba(0,0,0,0.05)] border border-stone-200/80 dark:border-white/5 flex gap-5 items-center group hover:border-brand-500/30 transition-all active:scale-98">
+            <div className="w-20 h-20 rounded-2xl bg-stone-50 dark:bg-stone-800 overflow-hidden shrink-0 border border-stone-100 dark:border-white/5 shadow-inner">
+              <LazyImage src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h4 className="font-bold text-stone-900 dark:text-white text-sm">{product.name}</h4>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h4 className="font-black text-stone-950 dark:text-white text-base tracking-tighter uppercase truncate leading-none pt-1">{product.name}</h4>
                 {product.isAvailable === false && (
-                    <span className="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Agotado</span>
+                    <span className="text-[7px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded-lg font-black uppercase tracking-widest">AGOTADO</span>
                 )}
               </div>
-              <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-1">{product.description}</p>
-              <div className="flex items-center gap-2 mt-1">
-                  <p className="font-bold text-brand-800 dark:text-brand-400 text-sm">{formatCurrency(product.price)}</p>
+              <p className="text-[10px] text-stone-400 dark:text-stone-500 font-bold line-clamp-1 mb-2">{product.description}</p>
+              <div className="flex items-center gap-2">
+                  <p className="font-black text-brand-700 dark:text-brand-500 text-lg tracking-tighter leading-none">{formatCurrency(product.price)}</p>
               </div>
             </div>
-            <button onClick={() => handleOpenEdit(product)} className="p-2 text-stone-400 dark:text-stone-500 hover:text-brand-800 dark:hover:text-brand-400">
-              <Pencil size={18} />
+            <button onClick={() => handleOpenEdit(product)} className="w-12 h-12 flex items-center justify-center bg-stone-50 dark:bg-stone-800 rounded-2xl text-stone-400 hover:text-brand-500 hover:bg-brand-500/10 transition-all border border-stone-100 dark:border-white/5 shadow-sm">
+              <Pencil size={20} />
             </button>
           </div>
         ))}
@@ -1061,7 +1073,7 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
                 <div className="pt-4">
                     <div className="p-6 rounded-[2rem] bg-stone-900 dark:bg-black shadow-2xl mb-8 border border-white/5 overflow-hidden group">
                         <div className="flex justify-between items-center mb-6">
-                             <p className="text-[9px] font-black text-stone-500 uppercase tracking-[0.3em]">Vista Previa Elite</p>
+                             <p className="text-[9px] font-black text-stone-500 uppercase tracking-[0.3em]">Vista Previa Real</p>
                              <div className="flex gap-1">
                                 <div className="w-1 h-1 rounded-full bg-stone-700" />
                                 <div className="w-1 h-1 rounded-full bg-stone-700" />
@@ -1297,33 +1309,36 @@ export const MerchantView: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-24 lg:max-w-7xl lg:mx-auto lg:w-full lg:p-10">
+      <div className="p-6 space-y-8 flex-1 overflow-y-auto pb-32 lg:max-w-7xl lg:mx-auto lg:w-full lg:p-12">
 
         {merchantViewState === 'ORDERS' ? (
           activeOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 px-6 text-center bg-white dark:bg-stone-900 border border-black/[0.03] dark:border-white/5 rounded-3xl shadow-sm relative overflow-hidden group">
+            <div className="flex flex-col items-center justify-center py-28 px-12 text-center bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-white/5 rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] relative overflow-hidden group">
                {/* Decorative background element */}
-               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-brand-500/20 transition-all duration-700" />
+               <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 blur-[100px] rounded-full -mr-32 -mt-32 group-hover:bg-brand-500/20 transition-all duration-1000" />
+               <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-500/5 blur-[100px] rounded-full -ml-32 -mb-32 transition-all duration-1000" />
                
-               <div className="w-20 h-20 bg-stone-100 dark:bg-stone-800 rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-black/5 dark:shadow-black/20 group-hover:scale-110 transition-transform duration-500">
-                  <ShoppingBag size={32} className="text-stone-300 dark:text-stone-600" />
+               <div className="w-24 h-24 bg-stone-50 dark:bg-stone-800 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-2xl border border-stone-100 dark:border-white/5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+                  <ShoppingBag size={40} className="text-brand-500" />
                </div>
                
-               <h3 className="text-xl font-black text-stone-900 dark:text-white mb-2 tracking-tight">¡Bienvenido a tu Panel de Control!</h3>
-               <p className="text-stone-500 dark:text-stone-400 text-sm max-w-xs leading-relaxed mb-8">
-                 Tu tienda ya está activa. Aquí aparecerán los pedidos de tus clientes en tiempo real.
+               <h3 className="text-3xl font-black text-stone-950 dark:text-white mb-3 tracking-tighter uppercase">Sin pedidos por ahora</h3>
+               <p className="text-stone-400 dark:text-stone-500 text-sm max-w-sm font-bold leading-relaxed mb-10 tracking-tight">
+                 Tu tienda está en línea. Cuando un cliente realice un pedido, aparecerá mágicamente aquí con una alerta sonora.
                </p>
                
-               <button 
-                  onClick={() => setMerchantViewState('MENU')}
-                  className="bg-brand-500 hover:bg-brand-600 text-brand-950 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-brand-500/20 transition-all active:scale-95 flex items-center gap-2"
-               >
-                  <Plus size={16} />
-                  Cargar tus productos
-               </button>
+               <div className="flex gap-4">
+                   <button 
+                      onClick={() => setMerchantViewState('MENU')}
+                      className="bg-stone-950 dark:bg-white text-white dark:text-stone-950 px-8 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center gap-3 border border-white/10"
+                   >
+                      <Plus size={16} strokeWidth={3} />
+                      Gestionar Menú
+                   </button>
+               </div>
             </div>
           ) : (
-            <div className="space-y-4 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-6 lg:space-y-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {activeOrders.map(order => <OrderCard key={order.id} order={order} />)}
             </div>
           )
@@ -1334,26 +1349,51 @@ export const MerchantView: React.FC = () => {
         ) : merchantViewState === 'SETTINGS' ? (
           <StoreSettings store={myStore} />
         ) : (
-          <div className="space-y-4">
-              <div className="bg-white dark:bg-stone-800 p-4 rounded-xl border border-amber-300 dark:border-stone-700 shadow-sm flex justify-between items-center lg:max-w-md lg:mx-auto lg:mb-8">
-                  <div>
-                      <p className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase">Ventas Totales</p>
-                      <p className="text-2xl font-bold text-brand-950 dark:text-brand-400">{formatCurrency(totalRevenue)}</p>
+          <div className="space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-white dark:bg-stone-900 p-8 rounded-[2.5rem] border border-stone-200/80 dark:border-white/5 shadow-xl flex items-center justify-between group hover:border-brand-500/30 transition-all">
+                      <div>
+                          <p className="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-1">Ventas Brutas</p>
+                          <p className="text-3xl font-black text-stone-950 dark:text-brand-500 tracking-tighter">{formatCurrency(totalRevenue)}</p>
+                      </div>
+                      <div className="w-14 h-14 bg-brand-500/10 rounded-2xl flex items-center justify-center text-brand-500 border border-brand-500/20 group-hover:scale-110 transition-transform">
+                          <Banknote size={28} />
+                      </div>
                   </div>
-                  <div className="text-right">
-                      <p className="text-xs font-bold text-stone-400 dark:text-stone-500 uppercase">Pedidos Completados</p>
-                      <p className="text-xl font-bold text-stone-900 dark:text-white">{historyOrders.filter(o => o.status === OrderStatus.DELIVERED).length}</p>
+                  <div className="bg-white dark:bg-stone-900 p-8 rounded-[2.5rem] border border-stone-200/80 dark:border-white/5 shadow-xl flex items-center justify-between group hover:border-brand-500/30 transition-all">
+                      <div>
+                          <p className="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-1">Pedidos Éxito</p>
+                          <p className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter">{historyOrders.filter(o => o.status === OrderStatus.DELIVERED).length}</p>
+                      </div>
+                      <div className="w-14 h-14 bg-stone-100 dark:bg-stone-800 rounded-2xl flex items-center justify-center text-stone-900 dark:text-white border border-stone-200 dark:border-white/5 group-hover:scale-110 transition-transform">
+                          <CheckCircle size={28} />
+                      </div>
+                  </div>
+                  <div className="bg-white dark:bg-stone-900 p-8 rounded-[2.5rem] border border-stone-200/80 dark:border-white/5 shadow-xl flex items-center justify-between group hover:border-brand-500/30 transition-all flex-none">
+                      <div>
+                          <p className="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-1">Tickets Promedio</p>
+                          <p className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter">{formatCurrency(totalRevenue / (historyOrders.filter(o => o.status === OrderStatus.DELIVERED).length || 1))}</p>
+                      </div>
+                      <div className="w-14 h-14 bg-stone-100 dark:bg-stone-800 rounded-2xl flex items-center justify-center text-stone-900 dark:text-white border border-stone-200 dark:border-white/5 group-hover:scale-110 transition-transform">
+                          <ShoppingBag size={28} />
+                      </div>
                   </div>
               </div>
-              {historyOrders.length === 0 ? (
-                  <div className="text-center py-20 text-stone-400 dark:text-stone-500 border-2 border-dashed border-amber-300 dark:border-stone-700 rounded-xl">
-                      <p>No hay historial de pedidos</p>
-                  </div>
-              ) : (
-                  <div className="space-y-4 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-6 lg:space-y-0">
-                      {historyOrders.map(order => <OrderCard key={order.id} order={order} />)}
-                  </div>
-              )}
+
+              <div className="space-y-6">
+                  <h4 className="font-black text-2xl text-stone-950 dark:text-white tracking-tighter uppercase px-2 flex items-center gap-3">
+                      <History className="text-stone-400" size={24} /> Historial de Operaciones
+                  </h4>
+                  {historyOrders.length === 0 ? (
+                      <div className="text-center py-24 bg-stone-50 dark:bg-stone-900/50 border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-[3rem]">
+                          <p className="font-black text-stone-400 uppercase tracking-widest text-[10px]">Aún no hay historial disponible</p>
+                      </div>
+                  ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                          {historyOrders.map(order => <OrderCard key={order.id} order={order} />)}
+                      </div>
+                  )}
+              </div>
           </div>
         )}
       </div>

@@ -24,6 +24,14 @@ class SoundService {
     this.enabled = enabled;
   }
 
+  async play(type: string) {
+    if (type === 'NEW_ORDER') {
+      await this.playNewOrder();
+    } else {
+      await this.playNotification();
+    }
+  }
+
   async playNotification() {
     if (!this.enabled || !this.audioContext) return;
 

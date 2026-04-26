@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Store } from '../types';
-import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, User as UserIcon, Globe, Sparkles, Download, ArrowLeft, Mail, Lock, User, X } from 'lucide-react';
+import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, User as UserIcon, Globe, Download, ArrowLeft, Mail, Lock, User, X, Zap } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
@@ -409,7 +409,7 @@ export const AuthView: React.FC = () => {
                 </div>
                 <div className="flex flex-col">
                     <h1 className="text-2xl font-black text-white tracking-tighter leading-none">TE LO LLEVO</h1>
-                    <span className="text-[10px] font-bold text-brand-500 tracking-[0.3em] uppercase mt-1">Premium Delivery</span>
+                    <span className="text-[10px] font-bold text-brand-500 tracking-[0.3em] uppercase mt-1">Delivery Cercano</span>
                 </div>
             </motion.div>
 
@@ -420,11 +420,11 @@ export const AuthView: React.FC = () => {
                     transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 text-[10px] font-bold uppercase tracking-widest mb-6">
-                        <Sparkles size={12} />
-                        <span>Orgullosamente Local</span>
+                        <Zap size={12} />
+                        <span>Trato Cercano</span>
                     </div>
-                    <h2 className="text-8xl font-black text-white leading-[0.85] tracking-tighter uppercase">
-                        LO MEJOR<br/>DE NUESTRO<br/><span className="text-brand-500">PUEBLO.</span>
+                    <h2 className="text-8xl font-black text-white leading-[0.85] tracking-tighter uppercase italic">
+                        LO MEJOR DE<br/>NUESTRO<br/><span className="text-brand-500">PUEBLO.</span>
                     </h2>
                     <p className="text-stone-400 font-medium mt-8 text-xl max-w-md leading-relaxed">
                         Apoya el comercio local y recibe tus productos favoritos con la confianza y calidez de nuestra gente.
@@ -438,11 +438,11 @@ export const AuthView: React.FC = () => {
                     className="grid grid-cols-2 gap-8"
                 >
                     <div className="space-y-2">
-                        <div className="text-3xl font-black text-white tracking-tighter">Negocios</div>
+                        <div className="text-3xl font-black text-white tracking-tighter uppercase italic">Negocios</div>
                         <div className="text-xs text-stone-500 font-bold uppercase tracking-widest dark:text-stone-400">Locales</div>
                     </div>
                     <div className="space-y-2">
-                        <div className="text-3xl font-black text-white tracking-tighter">Trato</div>
+                        <div className="text-3xl font-black text-white tracking-tighter uppercase italic">Trato</div>
                         <div className="text-xs text-stone-500 font-bold uppercase tracking-widest dark:text-stone-400">Cercano</div>
                     </div>
                 </motion.div>
@@ -461,8 +461,8 @@ export const AuthView: React.FC = () => {
                         </div>
                     ))}
                 </div>
-                <p className="text-stone-500 text-[11px] font-bold uppercase tracking-wider dark:text-stone-400">
-                    Únete a nuestra <span className="text-white">comunidad local</span>
+                <p className="text-stone-500 text-[11px] font-bold uppercase tracking-wider dark:text-stone-400 italic">
+                    CONECTANDO <span className="text-white">CORAZONES Y NEGOCIOS</span> LOCALES
                 </p>
             </motion.div>
         </div>

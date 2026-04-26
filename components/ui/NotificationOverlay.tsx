@@ -28,13 +28,12 @@ export const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
                     />
 
-                    {/* Panel */}
                     <motion.div
                         initial={{ x: '100%' }}
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-zinc-900 shadow-2xl z-[70] flex flex-col dark:bg-stone-900"
+                        className="fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-stone-900 shadow-2xl z-[70] flex flex-col border-l border-white/10"
                     >
                         {/* Header */}
                         <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
@@ -87,11 +86,20 @@ export const NotificationOverlay: React.FC<NotificationOverlayProps> = ({ isOpen
                                         layout
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        onClick={() => markNotificationAsRead(notification.id)}
-                                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                        onClick={() => {
+                                            if (notification.type === 'ORDER' && notification.orderId) {
+                                                markNotificationAsRead(notification.id);
+                                                // Handle redirection based on role usually would go here
+                                                // For now, we ensure the mark as read works and close overlay if needed
+                                                onClose();
+                                            } else {
+                                                markNotificationAsRead(notification.id);
+                                            }
+                                        }}
+                                        className={`p-4 rounded-[2rem] border-2 transition-all cursor-pointer ${
                                             notification.read 
-                                                ? 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800 opacity-70' 
-                                                : 'bg-white dark:bg-zinc-800 border-orange-100 dark:border-orange-900/30 shadow-sm'
+                                                ? 'bg-stone-50/50 dark:bg-stone-800/50 border-stone-100 dark:border-white/5 opacity-70' 
+                                                : 'bg-white dark:bg-stone-800 border-brand-500/30 shadow-[0_10px_30px_-10px_rgba(250,204,21,0.2)]'
                                         }`}
                                     >
                                         <div className="flex gap-4">

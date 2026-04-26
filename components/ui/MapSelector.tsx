@@ -30,6 +30,8 @@ interface MapSelectorProps {
 }
 
 const LocationMarker = ({ position, setPosition }: { position: L.LatLng | null, setPosition: (pos: L.LatLng) => void }) => {
+  const map = useMap();
+
   useMapEvents({
     click(e) {
       setPosition(e.latlng);
@@ -44,7 +46,12 @@ const LocationMarker = ({ position, setPosition }: { position: L.LatLng | null, 
 const ChangeView = ({ center }: { center: L.LatLngExpression }) => {
   const map = useMap();
   useEffect(() => {
-    map.setView(center);
+    if (!map) return;
+    try {
+      map.setView(center);
+    } catch (e) {
+      // Map instance might be stale
+    }
   }, [center, map]);
   return null;
 };
@@ -78,11 +85,27 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
     }
   }, []);
 
+  const getCurrentLocation = useCallback(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const newPos = new L.LatLng(pos.coords.latitude, pos.coords.longitude);
+          setPosition(newPos);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+        }
+      );
+    }
+  }, []);
+
   useEffect(() => {
     if (position) {
       getAddressFromCoords(position.lat, position.lng);
+    } else {
+      getCurrentLocation();
     }
-  }, [position, getAddressFromCoords]);
+  }, [position, getAddressFromCoords, getCurrentLocation]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -113,20 +136,6 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
     if (position) {
       const finalAddress = address || `Ubicación: ${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
       onSelect(finalAddress, { lat: position.lat, lng: position.lng });
-    }
-  };
-
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const newPos = new L.LatLng(pos.coords.latitude, pos.coords.longitude);
-          setPosition(newPos);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-        }
-      );
     }
   };
 

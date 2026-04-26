@@ -100,7 +100,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (
         (isOwner(userId) && 
          (!('role' in incoming()) || (incoming().role in ['CLIENT', 'MERCHANT', 'DRIVER'] && (isVerified() || incoming().role == existing().role)) || (incoming().role == 'ADMIN' && isAdmin())) &&
-         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline', 'completedTours', 'lat', 'lng', 'referralCode', 'referralEarnings', 'referredBy', 'isFirstPurchaseDone', 'isApprovedDriver', 'ownedStoreId', 'isDriver', 'driverLicense', 'vehicleInsurance', 'vehiclePlate', 'role'])) ||
+         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline', 'completedTours', 'lat', 'lng', 'referralCode', 'referralEarnings', 'referredBy', 'isFirstPurchaseDone', 'isApprovedDriver', 'ownedStoreId', 'isDriver', 'driverLicense', 'vehicleInsurance', 'vehiclePlate', 'role', 'adminAccessRequested', 'requestedAt'])) ||
         isAdmin()
       );
     }

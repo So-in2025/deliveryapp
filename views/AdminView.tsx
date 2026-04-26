@@ -469,10 +469,12 @@ const BannersManagementTab = ({
     );
 };
 
+import { setupDemoStore } from '../src/services/seedService';
+
 export const AdminView: React.FC = () => {
   const { 
     orders, stores, assignDriver, drivers, resolveClaim, users, 
-    adminViewState, setAdminViewState, updateAnyUser, updateStore, 
+    adminViewState, setAdminViewState, updateAnyUser, updateStore, deleteStore,
     config, updateConfig, user, completeTour, settleMerchantOrder, 
     settleDriverOrder, banners, addBanner, updateBanner, deleteBanner 
   } = useApp();
@@ -915,7 +917,7 @@ export const AdminView: React.FC = () => {
                           </div>
                       )}
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mb-2">
                           <Button 
                             variant="secondary" 
                             fullWidth 
@@ -936,6 +938,22 @@ export const AdminView: React.FC = () => {
                             }}
                           >
                               Aprobar
+                          </Button>
+                      </div>
+
+                      <div className="pt-2 border-t border-stone-100 dark:border-white/5">
+                          <Button 
+                            variant="outline" 
+                            fullWidth 
+                            className="text-red-500 border-red-500/30 hover:bg-red-500 hover:text-white transition-all uppercase tracking-widest font-black text-[10px]"
+                            onClick={() => {
+                                if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente "${selectedStore.name}"? Esta acción no se puede deshacer.`)) {
+                                    deleteStore(selectedStore.id);
+                                    setSelectedStore(null);
+                                }
+                            }}
+                          >
+                              Eliminar Tienda Definitivamente
                           </Button>
                       </div>
                   </div>
@@ -1389,6 +1407,20 @@ export const AdminView: React.FC = () => {
                                                     className="w-16 p-2 bg-stone-50 border border-amber-300 rounded-lg text-center font-bold dark:bg-stone-900 dark:border-stone-800" 
                                                 />
                                             </div>
+                                        </div>
+
+                                        <div className="flex justify-between items-center pt-4 border-t border-stone-50 dark:border-white/5">
+                                            <div>
+                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Tienda de Prueba</p>
+                                                <p className="text-xs text-stone-500 dark:text-stone-400">Configura la tienda completa para soinsoluciones2025@gmail.com</p>
+                                            </div>
+                                            <Button 
+                                                size="sm" 
+                                                className="bg-brand-500 text-brand-950 font-black uppercase tracking-widest text-[10px]"
+                                                onClick={() => setupDemoStore(showToast)}
+                                            >
+                                                Habilitar Demo
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>

@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../ui/Button';
 import { formatCurrency } from '../../constants';
-import { ArrowLeft, Clock, MapPin, Tag, CreditCard, Banknote, Trash2, Plus, Minus, ChevronRight, Check, Sparkles } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Tag, CreditCard, Banknote, Trash2, Plus, Minus, ChevronRight, Check, Zap } from 'lucide-react';
 import { OrderType, PaymentMethod, OrderStatus } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -46,7 +46,8 @@ export const CheckoutView: React.FC = () => {
                 paymentMethod,
                 '', // notes
                 orderType,
-                discount
+                discount,
+                (user.lat && user.lng) ? { lat: user.lat, lng: user.lng } : undefined
             );
             // clearCart and navigation handled in AppContext
         } catch (error) {
@@ -99,12 +100,12 @@ export const CheckoutView: React.FC = () => {
                     <div className="lg:col-span-7 space-y-6">
                         
                         {/* Order Type Selector */}
-                        <div className="bg-white dark:bg-stone-900 p-1.5 rounded-2xl border border-black/[0.02] dark:border-white/5 flex gap-1 shadow-sm">
+                        <div className="bg-white dark:bg-stone-900 p-2 rounded-[1.8rem] border-2 border-stone-100 dark:border-white/5 flex gap-2 shadow-sm">
                             {(Object.values(OrderType)).map(type => (
                                 <button
                                     key={type}
                                     onClick={() => setOrderType(type)}
-                                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${orderType === type ? 'bg-stone-950 dark:bg-brand-500 text-white dark:text-brand-950 shadow-lg' : 'text-stone-400 hover:bg-stone-50 dark:hover:bg-white/5'}`}
+                                    className={`flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${orderType === type ? 'bg-stone-950 dark:bg-brand-500 text-white dark:text-brand-950 shadow-xl' : 'text-stone-400 hover:bg-stone-50 dark:hover:bg-white/5'}`}
                                 >
                                     {type === OrderType.DELIVERY ? 'Delivery' : 'Retiro Local'}
                                 </button>
@@ -113,42 +114,42 @@ export const CheckoutView: React.FC = () => {
 
                         {/* Delivery Info */}
                         {orderType === OrderType.DELIVERY && (
-                            <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 shadow-xl border border-black/[0.02] dark:border-white/5 space-y-4">
-                                <h3 className="font-black text-sm text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                                    <MapPin size={14} /> Entrega
+                            <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] p-8 shadow-xl border-2 border-stone-100 dark:border-white/5 space-y-6">
+                                <h3 className="font-black text-xs text-stone-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                                    <MapPin size={16} strokeWidth={3} /> Entrega
                                 </h3>
-                                <div className="flex items-start gap-4 p-4 bg-stone-50 dark:bg-white/5 rounded-2xl border border-black/[0.02]">
-                                    <div className="w-10 h-10 bg-brand-500/10 rounded-xl flex items-center justify-center shrink-0">
-                                        <MapPin size={20} className="text-brand-500" />
+                                <div className="flex items-start gap-4 p-5 bg-stone-50 dark:bg-white/5 rounded-3xl border-2 border-stone-100 dark:border-white/5 relative overflow-hidden group">
+                                    <div className="w-12 h-12 bg-brand-500 text-brand-950 rounded-2xl flex items-center justify-center shrink-0 shadow-lg group-hover:scale-110 transition-transform">
+                                        <MapPin size={22} strokeWidth={3} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-black text-stone-950 dark:text-white tracking-tight truncate">
+                                        <p className="font-black text-stone-950 dark:text-white tracking-tighter truncate text-lg">
                                             {user.addresses?.[0] || 'Sin dirección configurada'}
                                         </p>
-                                        <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Tu ubicación actual</p>
+                                        <p className="text-[10px] text-brand-600 dark:text-brand-400 font-black uppercase tracking-widest mt-1">Tu ubicación actual</p>
                                     </div>
-                                    <button onClick={() => setClientViewState('PROFILE')} className="text-brand-600 font-black text-[10px] uppercase tracking-widest hover:underline px-2 py-1">Cambiar</button>
+                                    <button onClick={() => setClientViewState('PROFILE')} className="bg-white dark:bg-brand-500 text-stone-950 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-stone-100 dark:border-brand-400 shadow-sm hover:scale-105 transition-transform">Cambiar</button>
                                 </div>
                             </div>
                         )}
 
                         {/* Payment Selection */}
-                        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 shadow-xl border border-black/[0.02] dark:border-white/5 space-y-4">
-                            <h3 className="font-black text-sm text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                                <CreditCard size={14} /> Pago
+                        <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] p-8 shadow-xl border-2 border-stone-100 dark:border-white/5 space-y-6">
+                            <h3 className="font-black text-xs text-stone-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                                <CreditCard size={16} strokeWidth={3} /> Pago
                             </h3>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-4">
                                 {[
                                     { id: PaymentMethod.CASH, label: 'Efectivo', icon: Banknote },
                                     { id: PaymentMethod.CARD, label: 'Tarjeta', icon: CreditCard },
-                                    { id: PaymentMethod.MERCADO_PAGO, label: 'Mercado Pago', icon: Sparkles }
+                                    { id: PaymentMethod.MERCADO_PAGO, label: 'Mercado Pago', icon: Zap }
                                 ].map(method => (
                                     <button
                                         key={method.id}
                                         onClick={() => setPaymentMethod(method.id)}
-                                        className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${paymentMethod === method.id ? 'border-brand-500 bg-brand-500/5' : 'border-stone-50 dark:border-white/5 bg-stone-50 dark:bg-white/5'}`}
+                                        className={`p-6 rounded-3xl border-2 flex flex-col items-center gap-3 transition-all ${paymentMethod === method.id ? 'border-brand-500 bg-brand-500/10 shadow-lg shadow-brand-500/10' : 'border-stone-100 dark:border-white/5 bg-stone-50 dark:bg-white/5 hover:border-brand-500/30'}`}
                                     >
-                                        <method.icon size={20} className={paymentMethod === method.id ? 'text-brand-600 dark:text-brand-400' : 'text-stone-400'} />
+                                        <method.icon size={24} className={paymentMethod === method.id ? 'text-brand-600 dark:text-brand-400' : 'text-stone-400'} strokeWidth={3} />
                                         <span className={`text-[10px] font-black uppercase tracking-widest ${paymentMethod === method.id ? 'text-brand-600 dark:text-brand-400' : 'text-stone-400'}`}>{method.label}</span>
                                     </button>
                                 ))}
@@ -188,21 +189,21 @@ export const CheckoutView: React.FC = () => {
 
                     {/* Right Column: Summary */}
                     <div className="lg:col-span-5">
-                        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 shadow-xl border border-black/[0.02] dark:border-white/5 space-y-6 sticky top-8">
-                            <h3 className="font-black text-sm text-stone-400 uppercase tracking-widest border-b border-black/[0.03] pb-4">Resumen</h3>
+                        <div className="bg-white dark:bg-stone-900 rounded-[3rem] p-10 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.15)] border-2 border-stone-100 dark:border-white/5 space-y-8 sticky top-8">
+                            <h3 className="font-black text-xs text-stone-400 uppercase tracking-[0.3em] border-b-2 border-stone-50 dark:border-white/[0.03] pb-6">Resumen</h3>
                             
                             {/* Coupon Input */}
-                            <div className="space-y-3">
-                                <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest">¿Tienes un cupón?</label>
-                                <div className="flex gap-2">
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2 ml-2"><Tag size={12} /> ¿Tienes un cupón?</label>
+                                <div className="flex gap-2 p-1.5 bg-stone-50 dark:bg-white/5 rounded-2xl border-2 border-stone-100 dark:border-transparent">
                                     <input 
                                         type="text" 
                                         placeholder="CÓDIGO" 
                                         value={couponCode}
                                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                        className="flex-1 bg-stone-50 dark:bg-white/5 rounded-xl px-4 text-xs font-black outline-none border border-black/[0.03] focus:border-brand-500 transition-all text-stone-950 dark:text-white"
+                                        className="flex-1 bg-transparent px-4 text-sm font-black outline-none text-stone-950 dark:text-white placeholder-stone-300"
                                     />
-                                    <button onClick={handleApplyCoupon} className="p-3 bg-stone-950 dark:bg-white text-white dark:text-stone-950 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">Aplicar</button>
+                                    <button onClick={handleApplyCoupon} className="px-6 py-4 bg-stone-950 dark:bg-white text-white dark:text-stone-950 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-lg hover:scale-105">Aplicar</button>
                                 </div>
                                 {appliedCoupon && (
                                     <div className="bg-brand-500/10 border border-brand-500/20 p-3 rounded-xl flex justify-between items-center text-brand-600 dark:text-brand-400">

@@ -1,7 +1,7 @@
-# Dossier de Estado de la Plataforma: Codex Omega (Elite Delivery)
+# Dossier de Estado de la Plataforma: Codex Omega (Cercano Delivery)
 
 **Fecha de Auditoría:** 17 de Abril, 2026
-**Estatus Global:** 🚀 LISTA PARA PRODUCCIÓN (RE ADY)
+**Estatus Global:** 🚀 LISTA PARA PRODUCCIÓN (READY)
 **Versión:** 1.0.5-FINAL
 
 ## 1. Arquitectura Técnica
@@ -31,7 +31,7 @@ La plataforma está construida bajo un modelo Full-Stack híbrido altamente efic
 
 ### D. Experiencia del Cliente (Client)
 - **Descubrimiento:** Filtrado por categorías, tiendas populares y promociones.
-- **Carrito Premium:** Gestión de items, aplicación de cupones y cálculo de envío dinámico.
+- **Carrito Amigable:** Gestión de items, aplicación de cupones y cálculo de envío dinámico.
 - **Tracking:** Mapa interactivo con la posición del repartidor y estados de progreso animados.
 
 ## 3. Seguridad y Privacidad (Producción Real)
@@ -39,7 +39,7 @@ La plataforma está construida bajo un modelo Full-Stack híbrido altamente efic
 - **Validación de Datos:** Regex estrictos para RFC, CLABE y Teléfonos.
 - **Cloudinary Pro:** Servidor seguro para la gestión de activos multimedia, evitando el almacenamiento local pesado.
 
-## 4. Diseño UI/UX "Elite"
+## 4. Diseño UI/UX Amigable
 - **Estética:** Tema Dark-Glassmorphism con desenfoques (backdrop-blur) y bordes sutiles de cristal.
 - **Interactividad:** Animaciones suaves con Framer Motion en transiciones de ruta y aperturas de modales.
 - **Responsividad:** Interfaz "Full Surface" optimizada para móviles (repartidores y clientes) y escritorio (administradores y comercios).

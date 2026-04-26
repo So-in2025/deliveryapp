@@ -21,13 +21,13 @@ export const Badge: React.FC<BadgeProps> = ({ status }) => {
   const labels: Record<OrderStatus, string> = {
     [OrderStatus.PENDING]: 'Pendiente',
     [OrderStatus.ACCEPTED]: 'Aceptado',
-    [OrderStatus.PREPARING]: 'Preparando',
+    [OrderStatus.PREPARING]: 'Cocinando',
     [OrderStatus.READY]: 'Listo',
-    [OrderStatus.DRIVER_ASSIGNED]: 'Asignado',
+    [OrderStatus.DRIVER_ASSIGNED]: 'Repartidor Asignado',
     [OrderStatus.PICKED_UP]: 'En Camino',
     [OrderStatus.DELIVERED]: 'Entregado',
     [OrderStatus.CANCELLED]: 'Cancelado',
-    [OrderStatus.DISPUTED]: 'En Disputa',
+    [OrderStatus.DISPUTED]: 'Reclamo',
   };
 
   return (
@@ -55,12 +55,12 @@ interface PaymentBadgeProps {
 }
 
 export const PaymentBadge: React.FC<PaymentBadgeProps> = ({ status, method }) => {
-  if (method !== 'MERCADO_PAGO') return <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Efectivo/Tarjeta</span>;
+  if (method !== 'MERCADO_PAGO') return <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-lg border border-stone-200 dark:border-white/5">Efectivo / Tarjeta Posnet</span>;
   
   const isPaid = status === 'PAID';
   return (
-    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border ${isPaid ? 'bg-green-100 text-green-700 border-green-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
-      {isPaid ? 'Pagado' : 'Pendiente Pago'}
+    <span className={`text-[10px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border ${isPaid ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'}`}>
+      {isPaid ? 'Pago Confirmado' : 'Pago Pendiente'}
     </span>
   );
 };

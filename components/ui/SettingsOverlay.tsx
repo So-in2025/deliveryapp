@@ -6,7 +6,7 @@ import { resetAppData } from '../../services/dataService';
 import { UserRole, Store } from '../../types';
 import { Button } from './Button';
 import { uploadImageToCloudinary } from '../../services/cloudinaryService';
-import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText, Image as ImageIcon, Zap } from 'lucide-react';
 
 // Internal navigation state for the overlay
 type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'PRIVACY' | 'TERMS' | 'HELP' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER';
@@ -642,7 +642,7 @@ export const SettingsOverlay: React.FC = () => {
                     >
                         <div className="flex items-center gap-3 text-stone-700 dark:text-stone-300">
                             <div className="p-2 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50 transition-colors">
-                                <Sparkles size={18} />
+                                <Zap size={18} />
                             </div>
                             <div>
                                 <p className="font-bold text-sm text-stone-900 dark:text-white uppercase tracking-tight">

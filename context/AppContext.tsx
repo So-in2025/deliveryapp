@@ -111,6 +111,7 @@ interface AppContextType {
   reviews: Review[];
   createPaymentPreference: (orderId: string, items: { name: string, price: number, quantity: number }[]) => Promise<{ id: string, init_point: string } | null>;
   updateStore: (storeId: string, data: Partial<Store>) => void;
+  deleteStore: (storeId: string) => Promise<void>;
   updateLocation: (lat: number, lng: number) => void;
   socket: Socket | null;
   
@@ -1108,18 +1109,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       status: OrderStatus.PENDING,
       items: cart,
       createdAt: serverTimestamp(),
-      address: type === OrderType.PICKUP ? 'Retiro en Local' : address,
-      customerName: user.name,
-      customerId: authUser?.uid,
+      address: type === OrderType.PICKUP ? 'Retiro en Local' : address || 'Sin dirección',
+      customerName: user?.name || 'Cliente',
+      customerId: authUser?.uid || '',
       paymentMethod,
-      notes,
+      notes: notes || '',
       type,
       isReviewed: false,
       paymentStatus: paymentMethod === PaymentMethod.MERCADO_PAGO ? 'PENDING' : 'PAID',
-      coordinates,
       firstPurchaseDiscount,
       referralDiscount
     };
+    
+    if (coordinates) {
+      newOrder.coordinates = coordinates;
+    }
     
     try {
       // If payment is Mercado Pago, we create the preference but don't clear cart yet
@@ -1462,6 +1466,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteStore = async (storeId: string) => {
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(doc(db, 'stores', storeId));
+      showToast('Establecimiento eliminado correctamente', 'success');
+    } catch (error) {
+      console.error('Error deleting store:', error);
+      showToast('Error al eliminar el establecimiento', 'error');
+    }
+  };
+
   // FCM Integration
   useEffect(() => {
     if (!messaging || !authUser) return;
@@ -1560,6 +1575,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       reviews,
       createPaymentPreference,
       updateStore,
+      deleteStore,
       updateLocation,
       socket,
       clientViewState,

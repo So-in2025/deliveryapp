@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronRight, ChevronLeft, X, Sparkles } from 'lucide-react';
+import { ChevronRight, ChevronLeft, X, Zap } from 'lucide-react';
 import { Button } from './Button';
 
 export interface TourStep {
@@ -136,8 +136,8 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
                 >
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2 text-brand-600 dark:text-brand-400">
-                            <Sparkles size={18} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Guía Elite</span>
+                            <Zap size={18} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Guía Práctica</span>
                         </div>
                         <button onClick={onComplete} className="text-stone-400 hover:text-stone-600 dark:hover:text-white transition-colors">
                             <X size={18} />

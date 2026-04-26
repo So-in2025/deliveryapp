@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Order, OrderStatus, Product, Store } from '../types';
 import { Button } from '../components/ui/Button';
 import { LazyImage } from '../components/ui/LazyImage';
-import { ShoppingBag, Star, Plus, Minus, X, ArrowLeft, Sparkles, Trash2, Search, HelpCircle, History, MapPin, ChevronDown, Check, Tag, Map as MapIcon, Navigation, Heart, Share } from 'lucide-react';
+import { ShoppingBag, Star, Plus, Minus, X, ArrowLeft, Heart, Trash2, Search, HelpCircle, History, MapPin, ChevronDown, Check, Tag, Map as MapIcon, Navigation, Share2, Award } from 'lucide-react';
 import { formatCurrency, APP_CONFIG } from '../constants';
 import { useToast } from '../context/ToastContext';
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
@@ -171,12 +171,14 @@ export const ClientView: React.FC = () => {
                      clientViewState === 'PROFILE' ? <ProfileView key="profile" /> :
                      selectedStore ? <StoreDetail key="store-detail" /> : (
                         <div key="browse" className="h-full flex flex-col">
-                            <StoreList />
                             <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
+                                <StoreList />
                                 <BannerCarousel banners={banners} />
-                                <CategoryPills categories={config.categories} selected={selectedCategory} onSelect={setSelectedCategory} />
+                                <div className="mt-8">
+                                    <CategoryPills categories={config.categories} selected={selectedCategory} onSelect={setSelectedCategory} />
+                                </div>
                                 
-                                <div className="space-y-12 mt-6">
+                                <div className="space-y-16 mt-8">
                                     {/* SECCIÓN: FAVORITOS */}
                                     {favoriteStores.length > 0 && selectedCategory === 'ALL' && searchQuery === '' && (
                                         <HorizontalSection 
@@ -193,8 +195,8 @@ export const ClientView: React.FC = () => {
                                     {selectedCategory === 'ALL' && searchQuery === '' && (
                                         <>
                                             <HorizontalSection 
-                                                title="Selección Elite" 
-                                                icon={<Sparkles size={18} className="text-amber-500" />} 
+                                                title="Seleccionados" 
+                                                icon={<Award size={18} className="text-amber-500" />} 
                                                 data={recommendedStores} 
                                                 onStoreClick={setSelectedStore} 
                                                 favorites={favorites} 
@@ -236,16 +238,16 @@ export const ClientView: React.FC = () => {
                                         </>
                                     )}
                                     
-                                    <div className="px-6 lg:px-12 space-y-8 pb-12">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-black text-3xl dark:text-white tracking-tighter">
+                                    <div className="px-6 lg:px-12 space-y-10 pb-12">
+                                        <div className="flex items-center justify-between border-b-2 border-stone-100 dark:border-white/5 pb-6">
+                                            <h3 className="font-black text-4xl text-stone-950 dark:text-white tracking-tighter uppercase italic">
                                                 {selectedCategory !== 'ALL' ? selectedCategory : 'Explora Todo'}
                                             </h3>
-                                            <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest bg-stone-100 dark:bg-white/5 px-3 py-1.5 rounded-xl border border-black/[0.03]">
+                                            <span className="text-xs font-black text-stone-500 bg-stone-100 dark:bg-white/5 px-4 py-2 rounded-2xl border-2 border-stone-200 dark:border-white/10 shadow-sm">
                                                 {filteredStores.length} Comercios
                                             </span>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
                                             {filteredStores.map((store, idx) => (
                                                 <StoreCard 
                                                     key={store.id} 
@@ -454,14 +456,14 @@ const ModifierModal = ({ product, onClose }: { product: Product, onClose: () => 
 const CategoryPills = ({ categories, selected, onSelect }: { categories: string[], selected: string, onSelect: (c: string) => void }) => {
     const list = ['Todos', ...categories];
     return (
-        <div className="flex gap-3 px-6 lg:px-12 pb-6 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-4 px-6 lg:px-12 pb-8 overflow-x-auto scrollbar-hide pt-2">
             {list.map(cat => {
                 const isSelected = (selected === cat || (selected === 'ALL' && cat === 'Todos'));
                 return (
                     <button 
                         key={cat} 
                         onClick={() => onSelect(cat === 'Todos' ? 'ALL' : cat)}
-                        className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shrink-0 border-2 ${isSelected ? 'bg-stone-950 dark:bg-brand-500 text-white dark:text-stone-950 border-stone-950 dark:border-brand-500 shadow-2xl shadow-brand-500/20 scale-105' : 'bg-white dark:bg-stone-900/40 text-stone-400 border-black/[0.03] dark:border-white/5 hover:border-brand-500/30'}`}
+                        className={`px-8 py-5 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shrink-0 border-2 ${isSelected ? 'bg-stone-950 dark:bg-brand-500 text-white dark:text-stone-950 border-stone-950 dark:border-brand-500 shadow-2xl shadow-brand-500/30 scale-105' : 'bg-white dark:bg-stone-900/40 text-stone-500 border-stone-200 dark:border-white/5 hover:border-brand-500/40 hover:text-brand-600 shadow-sm'}`}
                     >
                         {cat}
                     </button>
@@ -475,23 +477,23 @@ const BannerCarousel = ({ banners }: { banners: any[] }) => {
     const activeBanners = banners.filter(b => b.isActive);
     if (activeBanners.length === 0) return (
         <div className="px-6 lg:px-12 py-6">
-            <div className="w-full h-56 rounded-[3rem] bg-stone-950 border border-black/5 dark:border-white/5 flex items-center justify-center relative overflow-hidden group shadow-2xl">
+            <div className="w-full h-56 rounded-[3rem] bg-stone-950 border border-black/5 dark:border-white/5 relative overflow-hidden group shadow-2xl">
                 <img 
                     src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=1920" 
                     alt="Premium Food" 
-                    className="w-full h-full object-cover opacity-60 mix-blend-luminosity scale-105 group-hover:scale-110 transition-transform duration-1000 ease-out"
+                    className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity scale-105 group-hover:scale-110 transition-transform duration-1000 ease-out"
                     referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-stone-950/90 via-stone-950/60 to-brand-950/30" />
                 <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
                 
-                <div className="relative text-left w-full h-full flex flex-col justify-end p-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-500 text-[10px] font-bold uppercase tracking-widest mb-3 w-fit backdrop-blur-md">
-                        <Sparkles size={12} />
-                        <span>Bienvenido a la Élite</span>
+                <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 text-left">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-500 text-[10px] font-bold uppercase tracking-widest mb-3 w-fit backdrop-blur-md whitespace-nowrap overflow-hidden text-ellipsis max-w-[80%]">
+                        <Heart size={12} className="shrink-0" />
+                        <span className="truncate">Lo mejor de tu comunidad</span>
                     </div>
-                    <h2 className="text-white text-4xl lg:text-5xl font-black tracking-tighter leading-none uppercase">
-                        LO MEJOR DE <br/><span className="text-brand-500">LA CIUDAD.</span>
+                    <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase leading-[1.1] max-w-[85%] break-words">
+                        LO MEJOR DE <br /> <span className="text-brand-500">LA CIUDAD.</span>
                     </h2>
                 </div>
             </div>
@@ -500,12 +502,12 @@ const BannerCarousel = ({ banners }: { banners: any[] }) => {
     return (
         <div className="flex gap-6 px-6 lg:px-12 py-8 overflow-x-auto scrollbar-hide snap-x">
             {activeBanners.map(banner => (
-                <div key={banner.id} className="snap-center shrink-0 w-[90%] lg:w-[600px] h-64 lg:h-72 rounded-[3.5rem] overflow-hidden relative shadow-2xl group cursor-pointer border border-white/5">
-                    <img src={banner.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2000ms] ease-out" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent p-8 lg:p-14 flex flex-col justify-end">
+                <div key={banner.id} className="snap-center shrink-0 w-[85vw] lg:w-[600px] h-64 lg:h-72 rounded-[3.5rem] overflow-hidden relative shadow-2xl group cursor-pointer border border-white/5">
+                    <img src={banner.image} alt="" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2000ms] ease-out" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent p-6 sm:p-8 lg:p-14 flex flex-col justify-end">
                         <div className="bg-brand-500 text-brand-950 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest w-fit mb-4 shadow-xl">Promoción</div>
-                        <h3 className="text-white text-3xl lg:text-5xl font-black tracking-tighter leading-none group-hover:text-brand-500 transition-colors uppercase">{banner.title}</h3>
-                        <p className="text-stone-300 text-sm font-bold mt-4 opacity-80 max-w-md">{banner.subtitle}</p>
+                        <h3 className="text-white text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight group-hover:text-brand-500 transition-colors uppercase leading-[1.1]">{banner.title}</h3>
+                        <p className="text-stone-300 text-sm font-bold mt-3 opacity-80 max-w-md line-clamp-2">{banner.subtitle}</p>
                     </div>
                 </div>
             ))}
@@ -514,17 +516,74 @@ const BannerCarousel = ({ banners }: { banners: any[] }) => {
 };
 
 const HorizontalSection = ({ title, icon, data, onStoreClick, favorites, onToggleFavorite, onShare }: any) => {
+    const [isExpanded, setIsExpanded] = useState(false);
     if (data.length === 0) return null;
+
+    // Desktop limit: 4 (one row in xl)
+    const desktopLimit = 4;
+    const hasMore = data.length > desktopLimit;
+    const displayData = isExpanded ? data : data.slice(0, desktopLimit);
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-8">
             <div className="px-6 lg:px-12 flex items-center justify-between">
-                <h3 className="font-black text-xl dark:text-white tracking-tighter flex items-center gap-2">{icon} {title}</h3>
-            </div>
-            <div className="flex gap-6 overflow-x-auto px-6 lg:px-12 pb-6 scrollbar-hide snap-x">
-                {data.map((store: any, idx: number) => (
-                    <div key={store.id} className="snap-center">
-                        <StoreCard store={store} onClick={onStoreClick} index={idx} isFavorite={favorites.includes(store.id)} onToggleFavorite={onToggleFavorite} onShare={onShare} compact={true} />
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white dark:bg-stone-900 border-2 border-stone-200 dark:border-white/10 rounded-2xl shadow-md transition-transform hover:rotate-3">
+                        {icon}
                     </div>
+                    <h3 className="font-black text-3xl lg:text-4xl text-stone-950 dark:text-white tracking-tighter uppercase italic">{title}</h3>
+                </div>
+                {hasMore && (
+                    <button 
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="hidden lg:flex items-center gap-2 group cursor-pointer"
+                    >
+                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 group-hover:text-brand-500 transition-colors">
+                            {isExpanded ? 'Ver Menos' : 'Ver Todos'}
+                        </span>
+                        <div className={`w-8 h-8 rounded-full bg-stone-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-500 group-hover:text-brand-950 transition-all ${isExpanded ? 'rotate-180' : ''}`}>
+                            <ChevronDown size={14} strokeWidth={3} />
+                        </div>
+                    </button>
+                )}
+            </div>
+            
+            {/* Mobile: Horizontal Scroll */}
+            <div className="lg:hidden flex gap-6 overflow-x-auto px-6 pb-10 scrollbar-hide snap-x pt-2">
+                {data.map((store: any, idx: number) => (
+                    <div key={store.id} className="snap-center shrink-0">
+                        <StoreCard 
+                            store={store} 
+                            onClick={onStoreClick} 
+                            index={idx} 
+                            isFavorite={favorites.includes(store.id)} 
+                            onToggleFavorite={onToggleFavorite} 
+                            onShare={onShare} 
+                            compact={true} 
+                        />
+                    </div>
+                ))}
+            </div>
+
+            {/* Desktop: Grid Stack */}
+            <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-4 gap-10 px-12 pb-10">
+                {displayData.map((store: any, idx: number) => (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: idx * 0.05 }}
+                        key={store.id}
+                    >
+                        <StoreCard 
+                            store={store} 
+                            onClick={onStoreClick} 
+                            index={idx} 
+                            isFavorite={favorites.includes(store.id)} 
+                            onToggleFavorite={onToggleFavorite} 
+                            onShare={onShare} 
+                        />
+                    </motion.div>
                 ))}
             </div>
         </div>
@@ -545,10 +604,10 @@ const LocationModal = ({ onClose }: { onClose: () => void }) => {
     const handleMapSelect = (address: string, location: { lat: number, lng: number }) => {
         const existing = user.addresses || [];
         if (!existing.includes(address)) {
-            updateUser({ addresses: [address, ...existing] });
+            updateUser({ addresses: [address, ...existing], lat: location.lat, lng: location.lng });
         } else {
             const filtered = existing.filter(a => a !== address);
-            updateUser({ addresses: [address, ...filtered] });
+            updateUser({ addresses: [address, ...filtered], lat: location.lat, lng: location.lng });
         }
         setShowMapPicker(false);
     };

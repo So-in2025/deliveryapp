@@ -3,7 +3,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../ui/Button';
 import { formatCurrency } from '../../constants';
-import { X, Plus, Sparkles, Clock, Star, Share } from 'lucide-react';
+import { X, Plus, Clock, Star, Share2, Award } from 'lucide-react';
 import { LazyImage } from '../ui/LazyImage';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -48,7 +48,7 @@ export const ItemDetailOverlay: React.FC = () => {
 
                         <div className="absolute bottom-6 left-6 z-20">
                            <div className="flex items-center gap-2 bg-brand-500 text-brand-950 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl">
-                               <Sparkles size={14} fill="currentColor" />
+                               <Award size={14} fill="currentColor" />
                                Recomendado
                            </div>
                         </div>
@@ -95,7 +95,7 @@ export const ItemDetailOverlay: React.FC = () => {
 
                         <div className="pt-8 border-t border-black/[0.03] dark:border-white/5 flex gap-4">
                             <button className="p-5 bg-stone-100 dark:bg-stone-800 rounded-3xl text-stone-500 hover:text-stone-900 transition-colors shadow-sm">
-                                <Share size={24} />
+                                <Share2 size={24} />
                             </button>
                             <Button 
                                 fullWidth 
