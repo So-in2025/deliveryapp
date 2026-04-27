@@ -133,6 +133,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
 
+    // Check for redirect result on mount
+    const checkRedirect = async () => {
+      try {
+        const { handleRedirectResult } = await import('../firebase');
+        const result = await handleRedirectResult();
+        if (result?.user) {
+          console.log('Redirect login successful:', result.user);
+          showToast('Sesión iniciada correctamente', 'success');
+        }
+      } catch (error) {
+        console.error('Redirect result error:', error);
+      }
+    };
+    checkRedirect();
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       console.log('Auth state changed:', currentUser);
       setUser(currentUser);

@@ -29,14 +29,15 @@ export default defineConfig(({ mode }) => {
             display: 'standalone',
             icons: [
               {
-                src: 'https://cdn.jsdelivr.net/gh/lucide-icons/lucide/icons/palmtree.svg',
+                src: 'https://res.cloudinary.com/dfrb7fkni/image/upload/w_192,h_192,c_fill,f_png/v1775205995/117a5ec6-76ad-444d-ade2-7077d936ded3_ubbnbi.jpg',
                 sizes: '192x192',
-                type: 'image/svg+xml'
+                type: 'image/png'
               },
               {
-                src: 'https://cdn.jsdelivr.net/gh/lucide-icons/lucide/icons/palmtree.svg',
+                src: 'https://res.cloudinary.com/dfrb7fkni/image/upload/w_512,h_512,c_fill,f_png/v1775205995/117a5ec6-76ad-444d-ade2-7077d936ded3_ubbnbi.jpg',
                 sizes: '512x512',
-                type: 'image/svg+xml'
+                type: 'image/png',
+                purpose: 'any maskable'
               }
             ]
           }

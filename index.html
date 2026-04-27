@@ -97,6 +97,31 @@
       }
     </style>
     <link rel="stylesheet" href="/src/index.css">
+    <script>
+      // Diagnostic tool for iPhone users
+      window.addEventListener('error', function(e) {
+        console.error('Global Error Detected:', e.message);
+        if (e.message.includes('Script error')) {
+          // This usually means a CDN failed or Cross-Origin issue on iOS
+        }
+      });
+
+      // Simple Loader Timeout to alert if the app is stuck
+      window.onload = function() {
+        setTimeout(function() {
+          const root = document.getElementById('root');
+          if (root && root.innerHTML === "" && !window.__APP_LOADED__) {
+            console.warn("App taking too long to load. Checking Service Workers.");
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) { registration.unregister(); }
+                if(registrations.length > 0) window.location.reload();
+              });
+            }
+          }
+        }, 8000);
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>

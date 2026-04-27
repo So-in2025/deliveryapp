@@ -136,6 +136,13 @@ const ViewRouter = () => {
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    // Mark app as loaded for the diagnostic script in index.html
+    if (typeof window !== 'undefined') {
+      (window as any).__APP_LOADED__ = true;
+    }
+  }, []);
+
   // Version Control & Cache Busting
   useEffect(() => {
     const currentVersion = APP_CONFIG.version;
