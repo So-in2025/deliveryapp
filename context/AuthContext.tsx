@@ -68,20 +68,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Web Push Notifications via Firebase
         if (!messaging || !user) return;
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
-          if (!vapidKey) {
-            console.warn('VITE_FIREBASE_VAPID_KEY is not defined. Push notifications may not work.');
+        
+        // Detect if we are in an iframe
+        const isIframe = window.self !== window.top;
+        
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+            if (!vapidKey) {
+              showToast('Falta VITE_FIREBASE_VAPID_KEY en la configuración', 'error');
+              console.warn('VITE_FIREBASE_VAPID_KEY is not defined.');
+              return;
+            }
+            const token = await getToken(messaging, { vapidKey });
+            if (token) {
+              await updateDoc(doc(db, 'users', user.uid), { fcmToken: token });
+              setProfile(prev => prev ? { ...prev, fcmToken: token } : null);
+              showToast('Notificaciones web activadas', 'success');
+            }
+          } else {
+            if (isIframe) {
+              showToast('Permiso bloqueado por el navegador. Abre la app en una pestaña nueva para activar notificaciones.', 'warning', 6000);
+            } else {
+              showToast('Permiso de notificaciones denegado', 'error');
+            }
           }
-          const token = await getToken(messaging, { vapidKey });
-          if (token) {
-            await updateDoc(doc(db, 'users', user.uid), { fcmToken: token });
-            setProfile(prev => prev ? { ...prev, fcmToken: token } : null);
-            showToast('Notificaciones web activadas', 'success');
+        } catch (error) {
+          if (isIframe) {
+            showToast('Navegador bloqueó la solicitud en esta vista. Prueba en una pestaña nueva.', 'warning');
+          } else {
+            throw error;
           }
-        } else {
-          showToast('Permiso de notificaciones denegado', 'error');
         }
       }
     } catch (err) {
