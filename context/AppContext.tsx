@@ -180,6 +180,7 @@ interface AppContextType {
   setDriverLocation: (loc: { lat: number, lng: number }) => void;
   completeTour: (tourId: string) => void;
   requestAdminAccess: () => Promise<void>;
+  seedDemoData: () => Promise<void>;
   
   // Referral System
   validateReferralCode: (code: string) => Promise<boolean>;
@@ -544,8 +545,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Listen to Stores
     const storesQuery = collection(db, 'stores');
     const unsubscribeStores = onSnapshot(storesQuery, (snapshot) => {
-        const storesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Store[];
-        setStores(storesData); 
+        const storesData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return { 
+            id: doc.id, 
+            ...data,
+            products: Array.isArray(data.products) ? data.products : []
+          };
+        }) as Store[];
+        setStores(storesData.filter(s => s.isActive !== false)); 
     }, (error) => {
         if (error.code === 'permission-denied') {
           console.warn('Stores permission denied');
@@ -1581,6 +1589,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [user.completedTours, authUser?.uid, updateUser]);
 
+  const seedDemoData = useCallback(async () => {
+    if (stores.length > 0) return; // Don't overwrite if already has data
+    
+    showToast('Inicializando tienda demo...', 'info');
+    try {
+      const { MOCK_STORES } = await import('../constants');
+      for (const store of MOCK_STORES) {
+        await setDoc(doc(db, 'stores', store.id), {
+          ...store,
+          ownerId: authUser?.uid || 'demo-admin',
+          createdAt: serverTimestamp()
+        });
+      }
+      showToast('Tienda demo creada con éxito', 'success');
+    } catch (error) {
+      console.error('Error seeding demo data:', error);
+      showToast('Error al crear tienda demo', 'error');
+    }
+  }, [stores.length, authUser?.uid, showToast]);
+
+  // Auto-seed if stores are empty and we are admin
+  useEffect(() => {
+    const isAdmin = user.role === UserRole.ADMIN || (authUser?.email && ADMIN_EMAILS.includes(authUser.email));
+    if (isAuthReady && stores.length === 0 && isAdmin) {
+      const timer = setTimeout(() => {
+        // Double check after a short delay to ensure stores snapshot isn't just loading
+        if (stores.length === 0) {
+          seedDemoData();
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthReady, stores.length, user.role, authUser?.email, seedDemoData]);
+
   return (
     <AppContext.Provider value={{ 
       role, 
@@ -1672,6 +1714,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setDriverLocation,
       completeTour,
       requestAdminAccess,
+      seedDemoData,
       sendMessage,
       subscribeToChat,
       validateReferralCode,

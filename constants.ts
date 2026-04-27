@@ -29,7 +29,101 @@ export const PROJECT_METRICS = {
 // --- MOCK DATA ---
 // Images sourced from Unsplash for High Fidelity
 
-export const MOCK_STORES: Store[] = [];
+export const MOCK_STORES: Store[] = [
+  {
+    id: 'store-demo-1',
+    name: 'Pizza Elite & Co',
+    category: 'Comida',
+    rating: 4.9,
+    reviewsCount: 154,
+    deliveryTimeMin: 20,
+    deliveryTimeMax: 35,
+    deliveryFee: 45,
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80&w=1000',
+    isActive: true,
+    isOpen: true,
+    createdAt: new Date().toISOString(),
+    products: [
+      {
+        id: 'p1',
+        name: 'Pizza Pepperoni Supreme',
+        description: 'Masa artesanal, salsa de tomate premium y doble pepperoni.',
+        price: 180,
+        image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&q=80&w=500',
+        isAvailable: true,
+        modifierGroups: [
+          {
+            id: 'mg1',
+            name: 'Tamaño',
+            min: 1,
+            max: 1,
+            options: [
+              { id: 'm1', name: 'Mediana', price: 0 },
+              { id: 'm2', name: 'Grande', price: 60 },
+              { id: 'm3', name: 'Familiar', price: 120 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'p2',
+        name: 'Pizza Margarita',
+        description: 'Sencillez perfecta: albahaca fresca y mozzarella premium.',
+        price: 150,
+        image: 'https://images.unsplash.com/photo-1574071318508-1cdbad80ad50?auto=format&fit=crop&q=80&w=500',
+        isAvailable: true
+      }
+    ]
+  },
+  {
+    id: 'store-demo-2',
+    name: 'Sushi Master Zen',
+    category: 'Comida',
+    rating: 4.8,
+    reviewsCount: 89,
+    deliveryTimeMin: 35,
+    deliveryTimeMax: 50,
+    deliveryFee: 60,
+    image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&q=80&w=1000',
+    isActive: true,
+    isOpen: true,
+    createdAt: new Date().toISOString(),
+    products: [
+      {
+        id: 'p3',
+        name: 'Combo Samurai (15 piezas)',
+        description: 'Variedad de rolls premium seleccionados por el chef.',
+        price: 450,
+        image: 'https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&q=80&w=500',
+        isAvailable: true
+      }
+    ]
+  },
+  {
+    id: 'store-demo-3',
+    name: 'Farmacia 24/7',
+    category: 'Farmacia',
+    rating: 5.0,
+    reviewsCount: 42,
+    deliveryTimeMin: 15,
+    deliveryTimeMax: 25,
+    deliveryFee: 30,
+    image: 'https://images.unsplash.com/photo-1586015555751-63bb77f4322a?auto=format&fit=crop&q=80&w=1000',
+    isActive: true,
+    isOpen: true,
+    createdAt: new Date().toISOString(),
+    products: [
+      {
+        id: 'p4',
+        name: 'Paracetamol 500mg',
+        description: 'Caja con 20 tabletas.',
+        price: 85,
+        image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=500',
+        isAvailable: true
+      }
+    ]
+  }
+];
 
 export const INITIAL_ORDERS: Order[] = [];
 

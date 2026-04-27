@@ -54,7 +54,17 @@ const MapController: React.FC<{
     return null;
 };
 
-const TrackingMap: React.FC<{ driverLat?: number; driverLng?: number; storeLat?: number; driverId?: string; storePosKey?: string; storeLogo?: string; userLat?: number; userLng?: number }> = ({ driverLat, driverLng, storeLat, driverId, storePosKey, storeLogo, userLat, userLng }) => {
+const TrackingMap: React.FC<{ 
+    driverLat?: number; 
+    driverLng?: number; 
+    storeLat?: number; 
+    storeLng?: number;
+    driverId?: string; 
+    storePosKey?: string; 
+    storeLogo?: string; 
+    userLat?: number; 
+    userLng?: number 
+}> = ({ driverLat, driverLng, storeLat, storeLng, driverId, storePosKey, storeLogo, userLat, userLng }) => {
     const defaultCenter: [number, number] = [-34.6037, -58.3816];
     
     const driverPos: [number, number] | undefined = typeof driverLat === 'number' && typeof driverLng === 'number' && !isNaN(driverLat) && !isNaN(driverLng) ? [driverLat, driverLng] : undefined;
@@ -76,7 +86,7 @@ const TrackingMap: React.FC<{ driverLat?: number; driverLng?: number; storeLat?:
 
     const storeIcon = React.useMemo(() => {
         const storeIconHtml = storeLogo 
-            ? `<div class="w-14 h-14 bg-white dark:bg-stone-900 rounded-[1.5rem] border-4 border-white dark:border-stone-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] overflow-hidden p-0.5"><img src="${storeLogo}" alt="store" class="w-full h-full object-cover rounded-2xl" /></div>`
+            ? `<div class="w-14 h-14 bg-white dark:bg-stone-900 rounded-[1.5rem] border-4 border-white dark:border-stone-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] overflow-hidden p-0.5"><img src="${storeLogo}" alt="store" class="w-full h-full object-cover rounded-2xl" referrerpolicy="no-referrer" /></div>`
             : `<div class="w-14 h-14 bg-brand-500 rounded-[1.5rem] border-4 border-white dark:border-stone-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-brand-950"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </div>`;

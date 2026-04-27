@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { formatCurrency } from '../../constants';
-import { ArrowLeft, Star, Clock, Heart, Share2, Search, Bike, Info } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Heart, Share2, Search, Bike, Info, Plus } from 'lucide-react';
 import { LazyImage } from '../ui/LazyImage';
 import { motion } from 'motion/react';
 import { Product, Store } from '../../types';
@@ -116,7 +116,7 @@ export const StoreDetail: React.FC = () => {
                                     .map(product => (
                                         <div 
                                             key={product.id}
-                                            onClick={() => setProductToCustomize(product)}
+                                            onClick={() => setProductToView(product)}
                                             className="group bg-white dark:bg-stone-900 p-6 rounded-[3rem] border-2 border-stone-200/60 dark:border-white/5 flex gap-6 hover:border-brand-500/40 transition-all duration-500 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)] hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] cursor-pointer relative overflow-hidden"
                                         >
                                             <div className="flex-1 min-w-0 flex flex-col justify-between py-2">

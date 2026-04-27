@@ -9,7 +9,7 @@ import { OrderType, PaymentMethod, OrderStatus } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const CheckoutView: React.FC = () => {
-    const { cart, removeFromCart, updateCartItemQuantity, user, placeOrder, setClientViewState, clearCart, config, stores } = useApp();
+    const { cart, removeFromCart, updateCartItemQuantity, user, placeOrder, setClientViewState, clearCart, config, stores, coupons } = useApp();
     const { showToast } = useToast();
     const [couponCode, setCouponCode] = useState('');
     const [selectedCard, setSelectedCard] = useState<string>('');
@@ -58,17 +58,22 @@ export const CheckoutView: React.FC = () => {
     };
 
     const handleApplyCoupon = () => {
-        const coupon = config.activeCoupons?.find(c => c.code.toLowerCase() === couponCode.toLowerCase());
+        const coupon = coupons.find(c => c.code.toLowerCase() === couponCode.trim().toLowerCase() && c.active);
         if (coupon) {
+            if (coupon.storeId && coupon.storeId !== storeId) {
+                showToast('Este cupón no es válido para este comercio', 'error');
+                return;
+            }
             if (cartTotal < (coupon.minPurchase || 0)) {
                 showToast(`Compra mínima requerida: ${formatCurrency(coupon.minPurchase || 0)}`, 'error');
                 return;
             }
-            setAppliedCoupon({ code: coupon.code, discount: coupon.amount });
+            const discountAmount = coupon.discountPct ? (cartTotal * coupon.discountPct) : (coupon.amount || 0);
+            setAppliedCoupon({ code: coupon.code, discount: discountAmount });
             showToast('Cupón aplicado con éxito', 'success');
             setCouponCode('');
         } else {
-            showToast('Cupón inválido', 'error');
+            showToast('Cupón inválido o expirado', 'error');
         }
     };
 

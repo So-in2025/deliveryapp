@@ -356,17 +356,24 @@ const ModifierModal = ({ product, onClose }: { product: Product, onClose: () => 
     return (
         <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-stone-950/80 backdrop-blur-xl" onClick={onClose}></motion.div>
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="relative w-full max-w-2xl bg-white dark:bg-stone-900 rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/10">
-                <div className="p-8 lg:p-10 overflow-y-auto custom-scrollbar flex-1">
-                    <div className="flex justify-between items-start mb-8">
-                        <div>
-                            <p className="text-brand-500 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Personalización</p>
-                            <h2 className="text-3xl lg:text-4xl font-black text-stone-950 dark:text-white tracking-tighter uppercase">{product.name}</h2>
-                        </div>
-                        <button onClick={onClose} className="p-3 bg-stone-100 dark:bg-white/5 rounded-2xl text-stone-400 hover:text-stone-950 dark:hover:text-white transition-all"><X size={20}/></button>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="relative w-full max-w-2xl bg-white dark:bg-[#0A0A0A] rounded-t-[3rem] sm:rounded-[4rem] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border border-white/10">
+                <div className="overflow-y-auto custom-scrollbar flex-1">
+                    <div className="relative h-64 lg:h-72 w-full shrink-0">
+                        <LazyImage src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0A0A0A] via-transparent to-transparent"></div>
+                        <button onClick={onClose} className="absolute top-6 right-6 w-12 h-12 bg-white/10 backdrop-blur-2xl rounded-2xl text-white flex items-center justify-center hover:bg-white/20 transition-all border border-white/10 z-20 shadow-xl active:scale-90">
+                            <X size={24}/>
+                        </button>
                     </div>
 
-                    <div className="space-y-10">
+                    <div className="p-8 lg:p-12 -mt-12 relative z-10">
+                        <div className="mb-10">
+                            <p className="text-brand-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2">Personalización</p>
+                            <h2 className="text-4xl lg:text-5xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic">{product.name}</h2>
+                            <p className="text-stone-400 dark:text-stone-500 font-bold text-sm mt-2">{product.description}</p>
+                        </div>
+
+                        <div className="space-y-12">
                         {product.modifierGroups?.map(group => {
                             const selectedCount = selectedModifiers.filter(m => group.options.some(o => o.id === m.id)).length;
                             const isValid = isGroupValid(group);
@@ -418,8 +425,9 @@ const ModifierModal = ({ product, onClose }: { product: Product, onClose: () => 
                         })}
                     </div>
                 </div>
+            </div>
 
-                <div className="p-8 bg-stone-50 dark:bg-stone-800/30 border-t border-white/5">
+            <div className="p-8 bg-stone-50 dark:bg-stone-800/30 border-t border-white/5">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4 bg-white dark:bg-stone-900 p-2 rounded-2xl border border-black/[0.03] dark:border-white/10 shadow-inner">
                             <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center text-stone-400 hover:text-brand-500 transition-colors active:scale-95"><Minus size={18}/></button>

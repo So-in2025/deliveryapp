@@ -469,12 +469,10 @@ const BannersManagementTab = ({
     );
 };
 
-import { setupDemoStore } from '../src/services/seedService';
-
 export const AdminView: React.FC = () => {
   const { 
     orders, stores, assignDriver, drivers, resolveClaim, users, 
-    adminViewState, setAdminViewState, updateAnyUser, updateStore, deleteStore,
+    seedDemoData, adminViewState, setAdminViewState, updateAnyUser, updateStore, deleteStore,
     config, updateConfig, user, completeTour, settleMerchantOrder, 
     settleDriverOrder, banners, addBanner, updateBanner, deleteBanner 
   } = useApp();
@@ -618,6 +616,25 @@ export const AdminView: React.FC = () => {
 
   const renderDashboardTab = () => (
     <div className="space-y-6 animate-fade-in pb-20">
+      {stores.length === 0 && (
+         <div className="mx-4 lg:mx-8 mt-2 bg-brand-500 p-8 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row items-center gap-6 border-b-8 border-brand-700 animate-pulse transition-all">
+            <div className="w-20 h-20 bg-white/20 rounded-[1.8rem] flex items-center justify-center text-white shrink-0">
+                <Plus size={48} />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+                <h2 className="text-2xl font-black text-brand-950 uppercase tracking-tighter leading-none mb-2">Plataforma Vacía</h2>
+                <p className="text-brand-900 font-bold text-sm tracking-tight opacity-80 mb-6 max-w-xl">No hay comercios configurados. ¿Deseas inicializar la plataforma con datos de demostración (Pizza, Sushi, Farmacia) para realizar pruebas inmediatas?</p>
+                <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                    <Button 
+                        className="bg-brand-950 text-white !rounded-2xl px-8 h-14 font-black tracking-widest text-xs shadow-2xl hover:scale-105 transition-transform"
+                        onClick={() => seedDemoData()}
+                    >
+                        INICIALIZAR DEMO
+                    </Button>
+                </div>
+            </div>
+         </div>
+      )}
       <div id="admin-stats" className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 pt-2 lg:w-full lg:px-8">
         <KpiCard 
           title="Ingresos Globales" 
