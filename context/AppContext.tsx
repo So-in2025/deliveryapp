@@ -1284,10 +1284,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [authUser, role, pendingAction, placeOrder, setClientViewState, showToast]);
 
-  const updateOrder = async (orderId: string, status: OrderStatus) => {
+  const updateOrder = async (orderId: string, status: OrderStatus, driverDetails?: { driverId: string, driverName: string }) => {
     try {
-      console.log('updateOrder called:', orderId, status);
-      // Fetch order first to be sure about its state
+      console.log('updateOrder called:', orderId, status, driverDetails);
       const orderDoc = await getDoc(doc(db, 'orders', orderId));
       if (!orderDoc.exists()) {
         throw new Error('Order not found');
@@ -1295,12 +1294,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const orderData = orderDoc.data() as Order;
       
       const updateData: Partial<Order> = { status };
+      
+      if (status === OrderStatus.DRIVER_ASSIGNED && driverDetails) {
+          updateData.driverId = driverDetails.driverId;
+          updateData.driverName = driverDetails.driverName;
+      }
+      
       if (status === OrderStatus.DELIVERED) {
         updateData.deliveredAt = serverTimestamp() as any;
-        // Ensure driverId is preserved
-        if (!orderData.driverId) {
-             console.warn('CRITICAL: delivered order missing driverId', orderId);
-        }
+        // Calculate earnings
+        updateData.driverEarnings = (orderData.deliveryFee ?? 45) + (orderData.tip ?? 0);
       }                
       
       await updateDoc(doc(db, 'orders', orderId), updateData);

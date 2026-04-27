@@ -264,7 +264,7 @@ export const DriverView: React.FC = () => {
     .reduce((sum, o) => sum + (o.driverEarnings ?? 0), 0);
 
   const handleAcceptOrder = (orderId: string) => {
-    updateOrder(orderId, OrderStatus.DRIVER_ASSIGNED);
+    updateOrder(orderId, OrderStatus.DRIVER_ASSIGNED, { driverId: user.uid, driverName: user.name || 'Repartidor' });
     showToast('¡Entrega aceptada! Dirígete al local.', 'success');
     setDriverViewState('MAP');
   };
