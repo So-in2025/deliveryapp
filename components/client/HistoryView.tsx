@@ -3,7 +3,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency } from '../../constants';
-import { ArrowLeft, LogOut, History, Clock, FileText, Star } from 'lucide-react';
+import { ArrowLeft, LogOut, History as HistoryIcon, Clock, FileText, Star } from 'lucide-react';
 import { OrderStatus } from '../../types';
 import { motion } from 'motion/react';
 
@@ -44,7 +44,7 @@ export const HistoryView: React.FC = () => {
                     {pastOrders.length === 0 ? (
                         <div className="text-center py-20 bg-white dark:bg-stone-900 rounded-[2.5rem] border-2 border-dashed border-stone-100 dark:border-white/5">
                             <div className="w-20 h-20 bg-stone-50 dark:bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                              <History size={32} className="text-stone-200 dark:text-stone-700" />
+                              <HistoryIcon size={32} className="text-stone-200 dark:text-stone-700" />
                             </div>
                             <h3 className="text-lg font-black text-stone-950 dark:text-white tracking-tight">Sin historial aún</h3>
                             <p className="text-stone-400 text-xs mt-2 max-w-[200px] mx-auto font-medium">Tus pedidos aparecerán aquí una vez que realices tu primera compra.</p>

@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { Truck, Map, History, LogOut, WifiOff, Navigation, ShieldCheck, Bell, HelpCircle, Shield, User } from 'lucide-react';
+import { Truck, Map, History as HistoryIcon, LogOut, WifiOff, Navigation, ShieldCheck, Bell, HelpCircle, Shield, User } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { UserRole } from '../../types';
 
@@ -78,7 +78,7 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
                 <DesktopNavItem icon={<Navigation />} label="Pedidos Disponibles" active={driverViewState === 'DELIVERIES'} onClick={() => setDriverViewState('DELIVERIES')} />
             </div>
             <div id="history-tab">
-                <DesktopNavItem icon={<History />} label="Mis Entregas" active={driverViewState === 'HISTORY'} onClick={() => setDriverViewState('HISTORY')} />
+                <DesktopNavItem icon={<HistoryIcon />} label="Mis Entregas" active={driverViewState === 'HISTORY'} onClick={() => setDriverViewState('HISTORY')} />
             </div>
             <div id="help-tab">
                 <DesktopNavItem icon={<HelpCircle />} label="Ayuda y Soporte" active={false} onClick={() => { window.dispatchEvent(new CustomEvent('open-help')); toggleSettings(); }} />
@@ -151,7 +151,7 @@ export const DriverLayout: React.FC<{ children: React.ReactNode }> = ({ children
           <nav className="lg:hidden shrink-0 w-full bg-stone-950 border-t border-stone-800 pb-safe pt-2 px-6 flex justify-between items-center z-40 relative">
              <div id="route-tab-mobile"><NavItem icon={<Map />} label="Mapa" active={driverViewState === 'MAP'} onClick={() => setDriverViewState('MAP')} /></div>
              <div id="deliveries-tab-mobile"><NavItem icon={<Navigation />} label="Ruta" active={driverViewState === 'DELIVERIES'} onClick={() => setDriverViewState('DELIVERIES')} /></div>
-             <div id="history-tab-mobile"><NavItem icon={<History />} label="Entregas" active={driverViewState === 'HISTORY'} onClick={() => setDriverViewState('HISTORY')} /></div>
+             <div id="history-tab-mobile"><NavItem icon={<HistoryIcon />} label="Entregas" active={driverViewState === 'HISTORY'} onClick={() => setDriverViewState('HISTORY')} /></div>
              <NavItem icon={<LogOut />} label="Salir" active={false} onClick={handleSignOut} />
           </nav>
         </div>

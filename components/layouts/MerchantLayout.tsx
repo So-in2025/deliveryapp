@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { LayoutDashboard, Store, History, LogOut, WifiOff, Bell, Utensils, Tag, HelpCircle, Shield, Sliders, User } from 'lucide-react';
+import { LayoutDashboard, Store, History as HistoryIcon, LogOut, WifiOff, Bell, Utensils, Tag, HelpCircle, Shield, Sliders, User } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { UserRole } from '../../types';
 
@@ -81,7 +81,7 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
                 <DesktopNavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} />
             </div>
             <div id="history-tab">
-                <DesktopNavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
+                <DesktopNavItem icon={<HistoryIcon />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} />
             </div>
             <div id="store-settings-tab">
                 <DesktopNavItem icon={<Sliders />} label="Mi Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} />
@@ -154,7 +154,7 @@ export const MerchantLayout: React.FC<{ children: React.ReactNode }> = ({ childr
              <div id="orders-tab-mobile"><NavItem icon={<LayoutDashboard />} label="Pedidos" active={merchantViewState === 'ORDERS'} onClick={() => setMerchantViewState('ORDERS')} /></div>
              <div id="menu-tab-mobile"><NavItem icon={<Utensils />} label="Menú" active={merchantViewState === 'MENU'} onClick={() => setMerchantViewState('MENU')} /></div>
              <div id="coupons-tab-mobile"><NavItem icon={<Tag />} label="Cupones" active={merchantViewState === 'COUPONS'} onClick={() => setMerchantViewState('COUPONS')} /></div>
-             <div id="history-tab-mobile"><NavItem icon={<History />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} /></div>
+             <div id="history-tab-mobile"><NavItem icon={<HistoryIcon />} label="Historial" active={merchantViewState === 'HISTORY'} onClick={() => setMerchantViewState('HISTORY')} /></div>
              <div id="store-settings-tab-mobile"><NavItem icon={<Sliders />} label="Tienda" active={merchantViewState === 'SETTINGS'} onClick={() => setMerchantViewState('SETTINGS')} /></div>
           </nav>
         </div>

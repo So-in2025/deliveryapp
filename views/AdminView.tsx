@@ -597,11 +597,23 @@ export const AdminView: React.FC = () => {
           };
       });
 
-      if (!userSearch) return list;
+      if (!userSearch) return list.sort((a, b) => {
+          const aPending = a.role === UserRole.DRIVER && !a.isApprovedDriver;
+          const bPending = b.role === UserRole.DRIVER && !b.isApprovedDriver;
+          if (aPending && !bPending) return -1;
+          if (!aPending && bPending) return 1;
+          return 0;
+      });
       return list.filter(u => 
         u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
         u.email?.toLowerCase().includes(userSearch.toLowerCase())
-      );
+      ).sort((a, b) => {
+          const aPending = a.role === UserRole.DRIVER && !a.isApprovedDriver;
+          const bPending = b.role === UserRole.DRIVER && !b.isApprovedDriver;
+          if (aPending && !bPending) return -1;
+          if (!aPending && bPending) return 1;
+          return 0;
+      });
   }, [orders, users, userSearch]);
 
   const filteredStores = useMemo(() => {
@@ -665,6 +677,23 @@ export const AdminView: React.FC = () => {
           color="text-orange-700"
         />
       </div>
+
+      {/* Pending Drivers Section */}
+      {users.some(u => u.isDriver && !u.isApprovedDriver) && (
+          <div className="px-4 lg:px-8 mt-6">
+              <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/50 p-4 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                      <AlertTriangle className="text-red-600" size={20} />
+                      <p className="text-sm font-bold text-red-900 dark:text-red-200">
+                          {users.filter(u => u.isDriver && !u.isApprovedDriver).length} Solicitud(es) de repartidor pendiente(s)
+                      </p>
+                  </div>
+                  <Button onClick={() => setAdminViewState('USERS')} className="bg-red-600 text-white hover:bg-red-700">
+                      Ver Solicitudes
+                  </Button>
+              </div>
+          </div>
+      )}
 
       {/* Charts Section */}
       <div className="px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:w-full lg:px-8">
@@ -1160,7 +1189,7 @@ export const AdminView: React.FC = () => {
                         </div>
                       )}
 
-                      {userProfile?.role === UserRole.DRIVER && (
+                      { (userProfile?.role === UserRole.DRIVER || userProfile?.isDriver) && (
                         <div className="mt-4 pt-4 border-t border-amber-200 dark:border-stone-800">
                           <p className="text-xs font-bold text-stone-400 uppercase mb-3">Seguridad Repartidor</p>
                           <div className="flex flex-col gap-3 text-left">
@@ -1290,7 +1319,7 @@ export const AdminView: React.FC = () => {
                              <p className="text-sm font-bold text-stone-900 dark:text-white">{u.name || 'Sin nombre'}</p>
                              <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400">{roleLabels[u.role] || u.role}</span>
                              {u.role === UserRole.DRIVER && !u.isApprovedDriver && (
-                               <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/20">Pendiente</span>
+                                <span className="ml-2 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-500 text-white shadow-sm">Pendiente</span>
                              )}
                            </div>
                            <p className="text-[10px] text-stone-500 dark:text-stone-400">{u.totalOrders} pedidos • LTV: {formatCurrency(u.totalSpent)}</p>

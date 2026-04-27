@@ -6,7 +6,7 @@ import { OrderStatus, Order, PaymentMethod, OrderType, Product, ModifierGroup, M
 import { Button } from '../components/ui/Button';
 import { Badge, PaymentBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
-import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight, Upload, Download, FileText, Image as ImageIcon, MessageSquare, History } from 'lucide-react';
+import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight, Upload, Download, FileText, Image as ImageIcon, MessageSquare, History as HistoryIcon } from 'lucide-react';
 import { formatCurrency } from '../constants';
 import { extractProductsFromMenu } from '../services/geminiService';
 import * as XLSX from 'xlsx';
@@ -1382,7 +1382,7 @@ export const MerchantView: React.FC = () => {
 
               <div className="space-y-6">
                   <h4 className="font-black text-2xl text-stone-950 dark:text-white tracking-tighter uppercase px-2 flex items-center gap-3">
-                      <History className="text-stone-400" size={24} /> Historial de Operaciones
+                      <HistoryIcon className="text-stone-400" size={24} /> Historial de Operaciones
                   </h4>
                   {historyOrders.length === 0 ? (
                       <div className="text-center py-24 bg-stone-50 dark:bg-stone-900/50 border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-[3rem]">

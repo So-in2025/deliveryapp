@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../ui/Button';
 import { formatCurrency, APP_CONFIG } from '../../constants';
-import { ArrowLeft, Settings, Camera, History, Heart, Ticket, Zap, Copy, User, Mail, MapPin, Trash2, Check, WifiOff, ChevronRight, Plus, Award } from 'lucide-react';
+import { ArrowLeft, Settings, Camera, History as HistoryIcon, Heart, Ticket, Zap, Copy, User, Mail, MapPin, Trash2, Check, WifiOff, ChevronRight, Plus, Award } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export const ProfileView: React.FC = () => {
@@ -68,7 +68,7 @@ export const ProfileView: React.FC = () => {
 
                           <div className="grid grid-cols-3 gap-3">
                               {[
-                                { label: 'PEDIDOS', value: pastOrders?.length || 0, icon: <History size={12} /> },
+                                { label: 'PEDIDOS', value: pastOrders?.length || 0, icon: <HistoryIcon size={12} /> },
                                 { label: 'FAV', value: favorites?.length || 0, icon: <Heart size={12} /> },
                                 { label: 'CUPÓN', value: coupons?.length || 0, icon: <Ticket size={12} /> }
                               ].map((stat, i) => (
@@ -92,7 +92,7 @@ export const ProfileView: React.FC = () => {
                          <div className="absolute inset-0 bg-gradient-to-r from-brand-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                          <div className="flex items-center gap-4 relative z-10">
                             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white shadow-inner">
-                                <History size={24} />
+                                <HistoryIcon size={24} />
                             </div>
                             <div className="text-left font-black tracking-tighter">
                                 <span className="text-lg block leading-none">Mi Historial</span>

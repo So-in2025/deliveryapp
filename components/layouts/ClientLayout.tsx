@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { useConnectivity } from '../../context/ConnectivityContext';
-import { ShoppingBag, LogOut, WifiOff, Heart, History, User, Bell, Shield, Settings } from 'lucide-react';
+import { ShoppingBag, LogOut, WifiOff, Heart, History as HistoryIcon, User, Bell, Shield, Settings } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { APP_CONFIG } from '../../constants';
 import { UserRole } from '../../types';
@@ -92,7 +92,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
                 <DesktopNavItem icon={<Heart />} label="Mis Favoritos" active={clientViewState === 'FAVORITES'} onClick={() => setClientViewState('FAVORITES')} />
             </div>
             <div id="history-tab">
-                <DesktopNavItem icon={<History />} label="Historial de Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
+                <DesktopNavItem icon={<HistoryIcon />} label="Historial de Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
             </div>
             <div id="profile-tab">
                 <DesktopNavItem icon={<User />} label="Mi Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
@@ -167,7 +167,7 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
                  <NavItem icon={<Heart />} label="Favoritos" active={clientViewState === 'FAVORITES'} onClick={() => setClientViewState('FAVORITES')} />
              </div>
              <div id="history-tab-mobile" className="flex-1 flex justify-center">
-                 <NavItem icon={<History />} label="Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
+                 <NavItem icon={<HistoryIcon />} label="Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
              </div>
              <div id="profile-tab-mobile" className="flex-1 flex justify-center">
                  <NavItem icon={<User />} label="Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />

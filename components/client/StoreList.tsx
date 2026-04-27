@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Search, MapPin, ChevronDown, History, HelpCircle, Star } from 'lucide-react';
+import { Search, MapPin, ChevronDown, History as HistoryIcon, HelpCircle, Star } from 'lucide-react';
 
 export const StoreList = () => {
     const { setShowLocationSelector, user, toggleSettings, setClientViewState, searchQuery, setSearchQuery } = useApp();
@@ -29,7 +29,7 @@ export const StoreList = () => {
                     onClick={() => setClientViewState('HISTORY')}
                     className="flex items-center gap-2 bg-stone-50 dark:bg-stone-900 px-3 py-2 rounded-xl hover:bg-brand-500/10 hover:text-brand-600 transition-all border border-stone-200 dark:border-white/10 active:scale-95 whitespace-nowrap shrink-0"
                   >
-                      <History size={16} className="text-stone-800 dark:text-white" />
+                      <HistoryIcon size={16} className="text-stone-800 dark:text-white" />
                       <span className="font-black text-[9px] text-stone-900 dark:text-white hidden lg:block uppercase tracking-widest leading-none pt-0.5">Pedidos</span>
                   </button>
               </div>
