@@ -187,7 +187,6 @@ export const ClientView: React.FC = () => {
                                     {favoriteStores.length > 0 && selectedCategory === 'ALL' && searchQuery === '' && (
                                         <HorizontalSection 
                                             title="Tus Favoritos" 
-                                            icon={<Heart size={18} className="text-red-500" fill="currentColor" />} 
                                             data={favoriteStores} 
                                             onStoreClick={setSelectedStore} 
                                             favorites={favorites} 
@@ -200,7 +199,6 @@ export const ClientView: React.FC = () => {
                                         <>
                                             <HorizontalSection 
                                                 title="Seleccionados" 
-                                                icon={<Award size={18} className="text-amber-500" />} 
                                                 data={recommendedStores} 
                                                 onStoreClick={setSelectedStore} 
                                                 favorites={favorites} 
@@ -210,7 +208,6 @@ export const ClientView: React.FC = () => {
 
                                             <HorizontalSection 
                                                 title="Los más pedidos" 
-                                                icon={<Star size={18} className="text-brand-500" fill="currentColor" />} 
                                                 data={popularStores} 
                                                 onStoreClick={setSelectedStore} 
                                                 favorites={favorites} 
@@ -221,7 +218,6 @@ export const ClientView: React.FC = () => {
                                             {freeDeliveryStores.length > 0 && (
                                                 <HorizontalSection 
                                                     title="Envío Sin Cargo" 
-                                                    icon={<Tag size={18} className="text-emerald-500" />} 
                                                     data={freeDeliveryStores} 
                                                     onStoreClick={setSelectedStore} 
                                                     favorites={favorites} 
@@ -232,7 +228,6 @@ export const ClientView: React.FC = () => {
 
                                             <HorizontalSection 
                                                 title="Novedades" 
-                                                icon={<Plus size={18} className="text-blue-500" />} 
                                                 data={newStores} 
                                                 onStoreClick={setSelectedStore} 
                                                 favorites={favorites} 
@@ -527,7 +522,7 @@ const BannerCarousel = ({ banners }: { banners: any[] }) => {
     );
 };
 
-const HorizontalSection = ({ title, icon, data, onStoreClick, favorites, onToggleFavorite, onShare }: any) => {
+const HorizontalSection = ({ title, data, onStoreClick, favorites, onToggleFavorite, onShare }: any) => {
     const [isExpanded, setIsExpanded] = useState(false);
     if (data.length === 0) return null;
 
@@ -537,74 +532,73 @@ const HorizontalSection = ({ title, icon, data, onStoreClick, favorites, onToggl
     const displayData = isExpanded ? data : data.slice(0, desktopLimit);
 
     return (
-        <div className="space-y-8">
-            <div className="px-6 lg:px-12 flex items-end justify-between">
-                <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-white dark:bg-black/20 border border-stone-200/50 dark:border-white/5 rounded-[2rem] shadow-[0_15px_30px_rgba(0,0,0,0.05)] flex items-center justify-center transition-transform hover:-rotate-6 backdrop-blur-md">
-                        {icon}
+        <section className="relative px-4 lg:px-8 py-2">
+            <div className={`relative overflow-hidden group transition-all duration-500 rounded-[2.5rem] lg:rounded-[3.5rem] ${isExpanded ? 'bg-stone-50/50 dark:bg-white/[0.01]' : 'hover:bg-stone-50/30 dark:hover:bg-white/[0.01]'}`}>
+                <div className="relative py-8 lg:py-12 space-y-10">
+                    <div className="px-6 lg:px-12">
+                        <div className="flex items-center justify-between border-b-2 border-stone-100 dark:border-white/5 pb-6">
+                            <div>
+                                <h3 className="font-black text-3xl lg:text-4xl text-stone-950 dark:text-white tracking-tighter uppercase italic leading-none">{title}</h3>
+                                <div className="w-12 h-1.5 bg-brand-500 mt-4 rounded-full" />
+                            </div>
+                            
+                            {hasMore && (
+                                <button 
+                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    className="hidden lg:flex items-center gap-3 group cursor-pointer"
+                                >
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-stone-400 group-hover:text-brand-500 transition-colors">
+                                        {isExpanded ? 'Colapsar Vista' : 'Ver Todo'}
+                                    </span>
+                                    <div className={`w-8 h-8 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center border border-stone-200/50 dark:border-white/5 group-hover:bg-brand-500 group-hover:text-brand-950 transition-all shadow-sm ${isExpanded ? 'rotate-180' : ''}`}>
+                                        <ChevronDown size={14} strokeWidth={3} />
+                                    </div>
+                                </button>
+                            )}
+                        </div>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] mb-1">Descubre</p>
-                      <h3 className="font-black text-4xl lg:text-5xl text-stone-950 dark:text-white tracking-tighter uppercase italic leading-none">{title}</h3>
+                    
+                    {/* Mobile: Horizontal Scroll */}
+                    <div className="lg:hidden flex gap-6 overflow-x-auto px-6 pb-4 scrollbar-hide snap-x pt-2">
+                        {data.map((store: any, idx: number) => (
+                            <div key={store.id} className="snap-center shrink-0">
+                                <StoreCard 
+                                    store={store} 
+                                    onClick={onStoreClick} 
+                                    index={idx} 
+                                    isFavorite={favorites.includes(store.id)} 
+                                    onToggleFavorite={onToggleFavorite} 
+                                    onShare={onShare} 
+                                    compact={true} 
+                                />
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop: Grid */}
+                    <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-4 gap-10 px-12">
+                        {displayData.map((store: any, idx: number) => (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.1, duration: 0.5 }}
+                                key={store.id}
+                            >
+                                <StoreCard 
+                                    store={store} 
+                                    onClick={onStoreClick} 
+                                    index={idx} 
+                                    isFavorite={favorites.includes(store.id)} 
+                                    onToggleFavorite={onToggleFavorite} 
+                                    onShare={onShare} 
+                                />
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
-                {hasMore && (
-                    <button 
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="hidden lg:flex flex-col items-end gap-2 group cursor-pointer"
-                    >
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-stone-400 group-hover:text-brand-500 transition-colors">
-                              {isExpanded ? 'Colapsar Vista' : 'Explorar Todo'}
-                          </span>
-                          <div className={`w-10 h-10 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center border border-stone-200/50 dark:border-white/5 group-hover:bg-brand-500 group-hover:text-brand-950 transition-all shadow-lg ${isExpanded ? 'rotate-180' : ''}`}>
-                              <ChevronDown size={18} strokeWidth={3} />
-                          </div>
-                        </div>
-                    </button>
-                )}
             </div>
-            
-            {/* Mobile: Horizontal Scroll */}
-            <div className="lg:hidden flex gap-6 overflow-x-auto px-6 pb-12 scrollbar-hide snap-x pt-2">
-                {data.map((store: any, idx: number) => (
-                    <div key={store.id} className="snap-center shrink-0">
-                        <StoreCard 
-                            store={store} 
-                            onClick={onStoreClick} 
-                            index={idx} 
-                            isFavorite={favorites.includes(store.id)} 
-                            onToggleFavorite={onToggleFavorite} 
-                            onShare={onShare} 
-                            compact={true} 
-                        />
-                    </div>
-                ))}
-            </div>
-
-            {/* Desktop: Bento Inspired Grid */}
-            <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-4 gap-12 px-12 pb-12">
-                {displayData.map((store: any, idx: number) => (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: idx * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                        key={store.id}
-                        className={idx === 0 && !isExpanded ? 'xl:col-span-1 xl:row-span-1' : ''}
-                    >
-                        <StoreCard 
-                            store={store} 
-                            onClick={onStoreClick} 
-                            index={idx} 
-                            isFavorite={favorites.includes(store.id)} 
-                            onToggleFavorite={onToggleFavorite} 
-                            onShare={onShare} 
-                        />
-                    </motion.div>
-                ))}
-            </div>
-        </div>
+        </section>
     );
 };
 
