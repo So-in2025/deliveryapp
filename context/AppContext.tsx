@@ -6,7 +6,7 @@ import { loadCart, saveCart } from '../services/dataService';
 import { APP_CONFIG } from '../constants';
 import { useToast } from './ToastContext';
 import { useAuth } from './AuthContext';
-import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage, getDocs } from '../firebase';
+import { db, collection, onSnapshot, doc, updateDoc, setDoc, addDoc, deleteDoc, serverTimestamp, Timestamp, query, where, or, OperationType, handleFirestoreError, messaging, onMessage, getDocs, getDoc } from '../firebase';
 import { io, Socket } from 'socket.io-client';
 
 const ADMIN_EMAILS = [
@@ -1286,13 +1286,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateOrder = async (orderId: string, status: OrderStatus) => {
     try {
+      console.log('updateOrder called:', orderId, status);
+      // Fetch order first to be sure about its state
+      const orderDoc = await getDoc(doc(db, 'orders', orderId));
+      if (!orderDoc.exists()) {
+        throw new Error('Order not found');
+      }
+      const orderData = orderDoc.data() as Order;
+      
       const updateData: Partial<Order> = { status };
       if (status === OrderStatus.DELIVERED) {
-        updateData.deliveredAt = serverTimestamp();
-      }
+        updateData.deliveredAt = serverTimestamp() as any;
+        // Ensure driverId is preserved
+        if (!orderData.driverId) {
+             console.warn('CRITICAL: delivered order missing driverId', orderId);
+        }
+      }                
+      
       await updateDoc(doc(db, 'orders', orderId), updateData);
+      console.log('Order updated in Firestore successfully');
     } catch (error) {
       console.error('Error updating order:', error);
+      throw error;
     }
   };
 

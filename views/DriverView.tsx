@@ -270,11 +270,7 @@ export const DriverView: React.FC = () => {
   };
 
   const handleProgress = async (orderId: string, currentStatus: OrderStatus) => {
-    console.log('Depurando updateOrder:', typeof updateOrder, updateOrder);
     try {
-        if (!updateOrder || typeof updateOrder !== 'function') {
-            throw new Error('updateOrder no es una función válida');
-        }
         if (currentStatus === OrderStatus.DRIVER_ASSIGNED) {
           await updateOrder(orderId, OrderStatus.PICKED_UP);
           showToast('Pedido recogido. ¡En ruta al cliente!', 'info');
@@ -284,7 +280,7 @@ export const DriverView: React.FC = () => {
         }
     } catch (e) {
         console.error('Error in handleProgress:', e);
-        showToast('Error técnico: ' + (e instanceof Error ? e.message : 'Error desconocido'), 'error');
+        showToast('Error al actualizar el pedido. Intenta de nuevo.', 'error');
     }
   };
 
