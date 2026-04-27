@@ -172,7 +172,7 @@ export const ClientView: React.FC = () => {
                      selectedStore ? <StoreDetail key="store-detail" /> : (
                         <div key="browse" className="h-full flex flex-col">
                             <div className="flex-1 overflow-y-auto pb-32 scrollbar-hide">
-                                <div id="location-selector" className="mb-4 lg:mb-5 lg:px-0 px-4">
+                                <div id="location-selector" className="lg:mb-5 lg:px-0">
                                     <StoreList />
                                 </div>
                                 <div className="">

@@ -85,7 +85,7 @@ export const StoreDetail: React.FC = () => {
                 </motion.div>
 
                 {/* Search & Actions Bar - Refined Élite Sticky */}
-                <div className="sticky top-20 lg:top-0 z-40 px-6 py-4 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-xl border-b border-stone-200 dark:border-white/5 shadow-sm space-y-4">
+                <div className="sticky top-0 lg:top-0 z-40 px-6 py-4 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-xl border-b border-stone-200 dark:border-white/5 shadow-sm space-y-4">
                     <div className="max-w-7xl mx-auto flex items-center justify-between">
                         <motion.button 
                             whileTap={{ scale: 0.95 }}

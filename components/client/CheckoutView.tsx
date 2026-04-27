@@ -103,7 +103,7 @@ export const CheckoutView: React.FC = () => {
             )}
 
             {/* Header */}
-            <div className="w-full bg-white dark:bg-stone-900 px-6 py-4 border-b border-black/[0.03] dark:border-white/[0.03] flex items-center gap-4 z-50 shrink-0">
+            <div className="sticky top-0 w-full bg-white/80 dark:bg-stone-900/80 backdrop-blur-xl px-6 py-4 border-b border-black/[0.03] dark:border-white/[0.03] flex items-center gap-4 z-40 shrink-0">
                 <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-stone-900 dark:text-white hover:bg-stone-100 dark:hover:bg-white/5 rounded-xl transition-all active:scale-95"><ArrowLeft size={24} /></button>
                 <h2 className="text-xl font-black dark:text-white tracking-tighter">Finalizar Pedido</h2>
             </div>
