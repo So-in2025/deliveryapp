@@ -171,25 +171,18 @@ export const ClientView: React.FC = () => {
                      clientViewState === 'PROFILE' ? <ProfileView key="profile" /> :
                      selectedStore ? <StoreDetail key="store-detail" /> : (
                         <div key="browse" className="h-full flex flex-col">
-                            <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
-                                <div id="location-selector" onClick={() => setShowLocationSelector(true)} className="cursor-pointer mb-5">
+                            <div className="flex-1 overflow-y-auto pb-32 scrollbar-hide">
+                                <div id="location-selector" className="mb-4 lg:mb-5 lg:px-0 px-4">
                                     <StoreList />
                                 </div>
-                                <BannerCarousel banners={banners} />
-                                <div id="category-pills" className="mt-8">
+                                <div className="">
+                                    <BannerCarousel banners={banners} />
+                                </div>
+                                <div id="category-pills" className="mt-4">
                                     <CategoryPills categories={config.categories} selected={selectedCategory} onSelect={setSelectedCategory} />
                                 </div>
                                 
-                                <div id="search-bar" className="mt-8 px-6">
-                                    <input 
-                                        className="w-full bg-stone-100 dark:bg-stone-800 p-4 rounded-2xl text-stone-950 dark:text-white"
-                                        placeholder="Buscar..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                </div>
-                                
-                                <div className="space-y-16 mt-8">
+                                <div className="space-y-12 mt-4">
                                     {/* SECCIÓN: FAVORITOS */}
                                     {favoriteStores.length > 0 && selectedCategory === 'ALL' && searchQuery === '' && (
                                         <HorizontalSection 
@@ -278,9 +271,9 @@ export const ClientView: React.FC = () => {
                      )}
                 </AnimatePresence>
 
-                {/* Floating Animated Cart Button */}
+                {/* Floating Animated Cart Button - Optimized placement */}
                 {cart.length > 0 && clientViewState !== 'CHECKOUT' && (
-                    <div className="absolute bottom-6 right-4 lg:right-10 z-[100] flex items-center justify-end pointer-events-none">
+                    <div className="fixed bottom-[5.5rem] lg:bottom-10 right-4 lg:right-10 z-[100] flex items-center justify-end pointer-events-none">
                         <motion.div layout initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="pointer-events-auto">
                             <div className="absolute inset-0 bg-brand-500/20 blur-2xl rounded-full" />
                             <motion.button 
@@ -292,24 +285,24 @@ export const ClientView: React.FC = () => {
                                 onMouseLeave={() => !isMobile && setIsCartExpanded(false)}
                                 layout
                                 transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-                                className={`relative flex items-center bg-stone-950 dark:bg-brand-500 rounded-full border border-white/10 dark:border-brand-400 shadow-2xl h-16 group transition-all duration-300 ${isCartExpanded ? 'px-0 pr-2' : 'aspect-square w-16 justify-center'}`}
+                                className={`relative flex items-center bg-stone-950 dark:bg-brand-500 rounded-full border border-white/10 dark:border-brand-400 shadow-2xl h-14 lg:h-16 group transition-all duration-300 ${isCartExpanded ? 'px-0 pr-2' : 'aspect-square w-14 lg:w-16 justify-center'}`}
                             >
-                                <div className={`flex items-center justify-center shrink-0 h-full transition-all duration-500 ${isCartExpanded ? 'px-5' : 'w-full'}`}>
+                                <div className={`flex items-center justify-center shrink-0 h-full transition-all duration-500 ${isCartExpanded ? 'px-4 lg:px-5' : 'w-full'}`}>
                                     <div className="relative">
-                                        <ShoppingBag size={24} className="text-white dark:text-stone-950" />
-                                        <span className="absolute -top-3 -right-3 bg-brand-500 dark:bg-stone-950 text-brand-950 dark:text-white w-5 h-5 rounded-lg flex items-center justify-center text-[9px] font-black border-2 border-stone-950 dark:border-brand-500 shadow-lg">
+                                        <ShoppingBag size={isMobile ? 20 : 24} className="text-white dark:text-stone-950" />
+                                        <span className="absolute -top-2.5 -right-2.5 bg-brand-500 dark:bg-stone-950 text-brand-950 dark:text-white w-5 h-5 rounded-lg flex items-center justify-center text-[9px] font-black border-2 border-stone-950 dark:border-brand-500 shadow-lg">
                                             {cart.reduce((a, b) => a + b.quantity, 0)}
                                         </span>
                                     </div>
                                 </div>
                                 <AnimatePresence>
                                     {isCartExpanded && (
-                                        <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 'auto', opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="flex items-center gap-4 pr-6 overflow-hidden">
+                                        <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 'auto', opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="flex items-center gap-3 lg:gap-4 pr-4 lg:pr-6 overflow-hidden">
                                             <div className="shrink-0">
-                                                <p className="text-white dark:text-stone-950 font-black text-[8px] tracking-[0.2em] uppercase opacity-40 leading-none">Checkout</p>
-                                                <p className="text-white dark:text-stone-950 font-black text-base tracking-tighter leading-none mt-1">TOTAL</p>
+                                                <p className="text-white dark:text-stone-950 font-black text-[7px] lg:text-[8px] tracking-[0.2em] uppercase opacity-40 leading-none">Checkout</p>
+                                                <p className="text-white dark:text-stone-950 font-black text-sm lg:text-base tracking-tighter leading-none mt-1">TOTAL</p>
                                             </div>
-                                            <div className="bg-white/10 dark:bg-black/5 px-4 py-2 rounded-xl text-white dark:text-stone-950 font-black text-xl tracking-tighter leading-none">
+                                            <div className="bg-white/10 dark:bg-black/5 px-3 lg:px-4 py-1.5 lg:py-2 rounded-xl text-white dark:text-stone-950 font-black text-lg lg:text-xl tracking-tighter leading-none">
                                                 {formatCurrency(cart.reduce((a, b) => a + (b.totalPrice * b.quantity), 0))}
                                             </div>
                                         </motion.div>
@@ -475,14 +468,14 @@ const ModifierModal = ({ product, onClose }: { product: Product, onClose: () => 
 const CategoryPills = ({ categories, selected, onSelect }: { categories: string[], selected: string, onSelect: (c: string) => void }) => {
     const list = ['Todos', ...categories];
     return (
-        <div className="flex gap-4 px-6 lg:px-12 pb-8 overflow-x-auto scrollbar-hide pt-2">
+        <div className="flex gap-4 px-6 lg:px-12 pb-8 overflow-x-auto scrollbar-hide pt-4">
             {list.map(cat => {
                 const isSelected = (selected === cat || (selected === 'ALL' && cat === 'Todos'));
                 return (
                     <button 
                         key={cat} 
                         onClick={() => onSelect(cat === 'Todos' ? 'ALL' : cat)}
-                        className={`px-8 py-5 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shrink-0 border-2 ${isSelected ? 'bg-stone-950 dark:bg-brand-500 text-white dark:text-stone-950 border-stone-950 dark:border-brand-500 shadow-2xl shadow-brand-500/30 scale-105' : 'bg-white dark:bg-stone-900/40 text-stone-500 border-stone-200 dark:border-white/5 hover:border-brand-500/40 hover:text-brand-600 shadow-sm'}`}
+                        className={`px-8 py-5 rounded-[2.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shrink-0 border-2 ${isSelected ? 'bg-stone-950 dark:bg-brand-500 text-white dark:text-stone-950 border-stone-950 dark:border-brand-500 shadow-[0_20px_40px_rgba(0,0,0,0.2)] dark:shadow-brand-500/20 scale-105' : 'bg-white/40 backdrop-blur-md dark:bg-black/20 text-stone-500 border-stone-200/50 dark:border-white/5 hover:border-brand-500/40 hover:text-brand-600 hover:scale-[1.02]'}`}
                     >
                         {cat}
                     </button>
@@ -538,37 +531,42 @@ const HorizontalSection = ({ title, icon, data, onStoreClick, favorites, onToggl
     const [isExpanded, setIsExpanded] = useState(false);
     if (data.length === 0) return null;
 
-    // Desktop limit: 4 (one row in xl)
+    // Desktop limit
     const desktopLimit = 4;
     const hasMore = data.length > desktopLimit;
     const displayData = isExpanded ? data : data.slice(0, desktopLimit);
 
     return (
         <div className="space-y-8">
-            <div className="px-6 lg:px-12 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white dark:bg-stone-900 border-2 border-stone-200 dark:border-white/10 rounded-2xl shadow-md transition-transform hover:rotate-3">
+            <div className="px-6 lg:px-12 flex items-end justify-between">
+                <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white dark:bg-black/20 border border-stone-200/50 dark:border-white/5 rounded-[2rem] shadow-[0_15px_30px_rgba(0,0,0,0.05)] flex items-center justify-center transition-transform hover:-rotate-6 backdrop-blur-md">
                         {icon}
                     </div>
-                    <h3 className="font-black text-3xl lg:text-4xl text-stone-950 dark:text-white tracking-tighter uppercase italic">{title}</h3>
+                    <div>
+                      <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em] mb-1">Descubre</p>
+                      <h3 className="font-black text-4xl lg:text-5xl text-stone-950 dark:text-white tracking-tighter uppercase italic leading-none">{title}</h3>
+                    </div>
                 </div>
                 {hasMore && (
                     <button 
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="hidden lg:flex items-center gap-2 group cursor-pointer"
+                        className="hidden lg:flex flex-col items-end gap-2 group cursor-pointer"
                     >
-                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 group-hover:text-brand-500 transition-colors">
-                            {isExpanded ? 'Ver Menos' : 'Ver Todos'}
-                        </span>
-                        <div className={`w-8 h-8 rounded-full bg-stone-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-500 group-hover:text-brand-950 transition-all ${isExpanded ? 'rotate-180' : ''}`}>
-                            <ChevronDown size={14} strokeWidth={3} />
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-stone-400 group-hover:text-brand-500 transition-colors">
+                              {isExpanded ? 'Colapsar Vista' : 'Explorar Todo'}
+                          </span>
+                          <div className={`w-10 h-10 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center border border-stone-200/50 dark:border-white/5 group-hover:bg-brand-500 group-hover:text-brand-950 transition-all shadow-lg ${isExpanded ? 'rotate-180' : ''}`}>
+                              <ChevronDown size={18} strokeWidth={3} />
+                          </div>
                         </div>
                     </button>
                 )}
             </div>
             
             {/* Mobile: Horizontal Scroll */}
-            <div className="lg:hidden flex gap-6 overflow-x-auto px-6 pb-10 scrollbar-hide snap-x pt-2">
+            <div className="lg:hidden flex gap-6 overflow-x-auto px-6 pb-12 scrollbar-hide snap-x pt-2">
                 {data.map((store: any, idx: number) => (
                     <div key={store.id} className="snap-center shrink-0">
                         <StoreCard 
@@ -584,15 +582,16 @@ const HorizontalSection = ({ title, icon, data, onStoreClick, favorites, onToggl
                 ))}
             </div>
 
-            {/* Desktop: Grid Stack */}
-            <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-4 gap-10 px-12 pb-10">
+            {/* Desktop: Bento Inspired Grid */}
+            <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-4 gap-12 px-12 pb-12">
                 {displayData.map((store: any, idx: number) => (
                     <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ delay: idx * 0.05 }}
+                        transition={{ delay: idx * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                         key={store.id}
+                        className={idx === 0 && !isExpanded ? 'xl:col-span-1 xl:row-span-1' : ''}
                     >
                         <StoreCard 
                             store={store} 

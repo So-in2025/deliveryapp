@@ -118,11 +118,16 @@ service cloud.firestore {
       allow update: if isVerified() && (
         (existing().ownerId == request.auth.uid && isValidStore(incoming()) &&
          incoming().ownerId == existing().ownerId &&
-         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'image', 'deliveryTimeMin', 'deliveryTimeMax', 'deliveryFee', 'isActive', 'rating', 'reviewsCount', 'mpAccessToken', 'customFont', 'customColor', 'bankName', 'taxId', 'clabe', 'bankAccount', 'address', 'phone', 'isOpen', 'products', 'updatedAt', 'lat', 'lng', 'legalName'])) ||
+         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'image', 'deliveryTimeMin', 'deliveryTimeMax', 'deliveryFee', 'isActive', 'rating', 'reviewsCount', 'mpPublicKey', 'customFont', 'customColor', 'bankName', 'taxId', 'clabe', 'bankAccount', 'address', 'phone', 'isOpen', 'products', 'updatedAt', 'lat', 'lng', 'legalName', 'schedules', 'autoSchedule', 'pendingName'])) ||
         isAdmin()
       );
 
       allow delete: if isVerified() && (existing().ownerId == request.auth.uid || isAdmin());
+
+      // PILLAR 6: PII Isolation & Secure Credentials
+      match /private/{docId} {
+        allow read, write: if isVerified() && (get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid || isAdmin());
+      }
 
       match /products/{productId} {
         allow read: if isValidId(productId);
@@ -203,9 +208,14 @@ service cloud.firestore {
 
     match /config/{configId} {
       // Configuration is readable by everyone for system stability
-      allow read: if true;
+      allow get: if true;
+      allow list: if true;
       // Only validated Admins can push changes to global config
       allow write: if isAdmin();
+
+      match /private/{docId} {
+        allow read, write: if isAdmin();
+      }
     }
   }
 }

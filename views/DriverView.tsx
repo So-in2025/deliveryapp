@@ -724,7 +724,7 @@ export const DriverView: React.FC = () => {
                     <div className="absolute -right-10 -top-10 w-40 h-40 bg-brand-400/30 rounded-full blur-3xl"></div>
                     <div className="relative z-10">
                         <p className="text-xs font-black uppercase tracking-widest opacity-70 mb-2">Balance Disponible</p>
-                        <h2 className="text-5xl font-black tracking-tighter mb-6">{formatCurrency(totalEarnings)}</h2>
+                        <h2 className="text-4xl sm:text-5xl font-black tracking-tighter mb-6">{formatCurrency(totalEarnings)}</h2>
                         <div className="flex gap-4">
                             <div className="bg-brand-600/20 backdrop-blur-md rounded-2xl p-4 flex-1 border border-brand-400/30">
                                 <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Hoy</p>

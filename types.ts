@@ -116,6 +116,7 @@ export interface Store {
   autoSchedule?: boolean; // New: Automate open/close based on schedule
   schedules?: { [day: number]: { open: string, close: string, active: boolean } }; // New: 0=Sun, 6=Sat
   mpAccessToken?: string; // New: For Decentralized Payment Mode
+  mpPublicKey?: string; // New: For Decentralized Payment Mode UI
   ownerId?: string; // New: For ownership check
   lat?: number; // New: For map placement
   lng?: number; // New: For map placement
@@ -240,6 +241,8 @@ export interface GlobalConfig {
   firstPurchaseDiscountPct: number; // New: e.g., 0.20 for 20% off
   adminEmails: string[]; // New: For UI visibility of Admin Panel
   deliveryRates?: DeliveryRatesConfig; // New: Dynamic pricing parameters
+  mpAccessToken?: string; // New: Platform Master Access Token
+  mpPublicKey?: string; // New: Platform Master Public Key
 }
 
 export interface ChatMessage {

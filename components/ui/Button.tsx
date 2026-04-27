@@ -17,15 +17,14 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props 
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none';
+  const baseStyles = 'inline-flex items-center justify-center rounded-2xl font-black uppercase tracking-widest transition-all focus:outline-none active:scale-[0.95] disabled:opacity-50 disabled:pointer-events-none italic';
   
   const variants = {
-    primary: 'bg-brand-500 text-brand-950 hover:bg-brand-600 shadow-md shadow-brand-500/20',
-    // Added border-amber-300 and slightly darker text for better contrast against white backgrounds
-    secondary: 'bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-white border border-amber-300 dark:border-stone-700 hover:bg-stone-200 dark:hover:bg-stone-700',
-    outline: 'border-2 border-amber-300 dark:border-stone-700 text-stone-900 dark:text-white hover:bg-stone-50 dark:hover:bg-stone-800', // Darkened text
-    ghost: 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800', 
-    danger: 'bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/20'
+    primary: 'bg-brand-500 text-brand-950 hover:bg-brand-400 shadow-xl shadow-brand-500/30 border border-brand-400',
+    secondary: 'bg-stone-100 dark:bg-stone-900 text-stone-900 dark:text-white border border-stone-200 dark:border-white/10 hover:bg-stone-200 dark:hover:bg-stone-800 shadow-lg shadow-black/[0.05]',
+    outline: 'border-2 border-stone-200 dark:border-white/10 text-stone-900 dark:text-white hover:bg-stone-50 dark:hover:bg-stone-900 shadow-sm',
+    ghost: 'text-stone-700 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-white/5', 
+    danger: 'bg-red-500 text-white hover:bg-red-600 shadow-xl shadow-red-500/30 border border-red-400'
   };
 
   const sizes = {

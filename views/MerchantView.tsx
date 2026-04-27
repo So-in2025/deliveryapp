@@ -6,7 +6,7 @@ import { OrderStatus, Order, PaymentMethod, OrderType, Product, ModifierGroup, M
 import { Button } from '../components/ui/Button';
 import { Badge, PaymentBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
-import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight, Upload, Download, FileText, Image as ImageIcon, MessageSquare, History as HistoryIcon } from 'lucide-react';
+import { MapPin, CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight, Upload, Download, FileText, Image as ImageIcon, MessageSquare, History as HistoryIcon } from 'lucide-react';
 import { formatCurrency } from '../constants';
 import { extractProductsFromMenu } from '../services/geminiService';
 import * as XLSX from 'xlsx';
@@ -16,208 +16,134 @@ import { ChatOverlay } from '../components/ui/ChatOverlay';
 
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
 
-const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
+ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
   const { updateOrder, cancelOrder } = useApp();
   const { showToast } = useToast();
   const [showChat, setShowChat] = useState(false);
 
-  const handleAction = () => {
+  const getNextStatus = () => {
     switch (order.status) {
-      case OrderStatus.PENDING:
-        updateOrder(order.id, OrderStatus.ACCEPTED);
-        showToast('Pedido aceptado', 'success');
-        break;
-      case OrderStatus.ACCEPTED:
-        updateOrder(order.id, OrderStatus.PREPARING);
-        showToast('Pedido en preparación', 'info');
-        break;
-      case OrderStatus.PREPARING:
-        updateOrder(order.id, OrderStatus.READY);
-        showToast(order.type === OrderType.PICKUP ? 'Listo para retirar' : 'Drivers notificados', 'success');
-        break;
-      case OrderStatus.READY:
-        if (order.type === OrderType.PICKUP) {
-          updateOrder(order.id, OrderStatus.DELIVERED);
-          showToast('Pedido entregado al cliente', 'success');
-        }
-        break;
+      case OrderStatus.PENDING: return OrderStatus.ACCEPTED;
+      case OrderStatus.ACCEPTED: return OrderStatus.PREPARING;
+      case OrderStatus.PREPARING: return OrderStatus.READY; 
+      case OrderStatus.READY: return order.type === OrderType.PICKUP ? OrderStatus.DELIVERED : null;
+      default: return null;
+    }
+  };
+
+  const getActionLabel = () => {
+    switch (order.status) {
+      case OrderStatus.PENDING: return 'Aceptar';
+      case OrderStatus.ACCEPTED: return 'Preparar';
+      case OrderStatus.PREPARING: return order.type === OrderType.PICKUP ? 'Pedido Listo' : 'Listo para Envío';
+      case OrderStatus.READY: return order.type === OrderType.PICKUP ? 'Entregar Pago' : 'Esperando Repartidor';
+      default: return '';
+    }
+  };
+
+  const handleAction = () => {
+    const nextStatus = getNextStatus();
+    if (nextStatus) {
+      updateOrder(order.id, nextStatus);
+      showToast(`Estado actualizado: ${nextStatus}`, 'success');
     }
   };
 
   const handleCancel = () => {
-      const reason = prompt('Motivo de la cancelación:');
-      if (reason) {
-          cancelOrder(order.id, reason);
-      }
-  };
-
-  const getButtonText = () => {
-    switch (order.status) {
-      case OrderStatus.PENDING: return 'Aceptar Pedido';
-      case OrderStatus.ACCEPTED: return 'Empezar Cocina';
-      case OrderStatus.PREPARING: return order.type === OrderType.DELIVERY ? 'Listo (Llamar Driver)' : 'Marcar Listo';
-      case OrderStatus.READY:
-        return order.type === OrderType.PICKUP ? 'Entregar al Cliente' : 'Esperando Repartidor...';
-      default: return 'Esperando Repartidor';
+    const reason = window.confirm('¿Confirmas la cancelación de este pedido?');
+    if (reason) {
+      cancelOrder(order.id, 'Cancelado por el comercio');
+      showToast('Pedido rechazado', 'info');
     }
   };
 
   return (
-    <div className="bg-white dark:bg-stone-900 rounded-[2rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)] border border-stone-200/80 dark:border-white/5 overflow-hidden animate-slide-up group/card hover:border-brand-500/30 transition-all duration-500">
-      <div className="p-5 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-white dark:bg-stone-900/50">
-        <div className="flex items-center gap-3">
-          <div className="bg-stone-50 dark:bg-stone-800 px-3 py-1.5 rounded-lg border border-stone-100 dark:border-white/5">
-            <span className="font-mono text-[10px] font-black text-stone-500 tracking-tighter">#{order.id.slice(-6).toUpperCase()}</span>
-          </div>
-          <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
-          {order.type === OrderType.PICKUP ? (
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 dark:bg-stone-700 text-white text-[9px] font-black uppercase tracking-widest shadow-sm">
-              <StoreIcon size={10} /> Retiro
-            </span>
-          ) : (
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500 text-brand-950 text-[9px] font-black uppercase tracking-widest shadow-sm">
-              <Bike size={10} /> Delivery
-            </span>
-          )}
-        </div>
-        <Badge status={order.status} />
-      </div>
-
-      <div className="p-6">
-        <div className="flex gap-6 mb-6 pb-6 border-b border-stone-100 dark:border-stone-800">
-          <div className="flex-1">
-            <p className="text-[9px] uppercase font-black text-stone-400 tracking-[0.2em] mb-2 ml-1">Cliente Solicitante</p>
-            <div className="flex items-center gap-3 text-stone-950 dark:text-white font-black text-base uppercase tracking-tighter">
-              <div className="w-10 h-10 bg-brand-500/10 rounded-xl flex items-center justify-center text-brand-500 border border-brand-500/20">
-                <User size={20} />
+    <>
+      <div className="bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-white/5 overflow-hidden transition-all hover:border-brand-500/30 group p-2">
+        <div className="bg-stone-50 dark:bg-black/20 rounded-[1.5rem] p-5">
+            {/* Header: ID, Type & Status */}
+            <div className="flex justify-between items-center mb-5">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-[0.2em]">#{order.id.slice(-6).toUpperCase()}</span>
+                <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
+                    order.type === OrderType.PICKUP ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' : 'bg-brand-500 text-brand-950'
+                }`}>
+                    {order.type === OrderType.PICKUP ? <StoreIcon size={12} /> : <Bike size={12} />}
+                    {order.type === OrderType.PICKUP ? 'Retiro' : 'Delivery'}
+                </div>
               </div>
-              {order.customerName}
+              <Badge status={order.status} />
             </div>
-          </div>
-          <div className="text-right">
-            <p className="text-[9px] uppercase font-black text-stone-400 tracking-[0.2em] mb-2 mr-1 text-right">Método de Pago</p>
-            <div className={`flex items-center gap-2 text-sm font-black justify-end h-10 ${order.paymentMethod === PaymentMethod.CASH ? 'text-amber-600 dark:text-brand-500' : 'text-stone-800 dark:text-stone-300'}`}>
-              {order.paymentMethod === PaymentMethod.CARD ? <CreditCard size={18} /> : <Banknote size={18} />}
-              {order.paymentMethod === PaymentMethod.CARD ? 'TARJETA' : 'EFECTIVO'}
-            </div>
-          </div>
-        </div>
 
-        {order.notes && (
-          <div className="mb-6 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 p-4 rounded-2xl flex gap-3 items-start text-xs text-amber-800 dark:text-brand-400 font-bold shadow-inner">
-            <StickyNote size={16} className="shrink-0 text-brand-500" />
-            <span className="leading-relaxed tracking-tight"><span className="uppercase text-[9px] tracking-widest block mb-0.5 opacity-60">Instrucciones Especiales:</span> {order.notes}</span>
-          </div>
-        )}
-
-        <div className="space-y-3 mb-6 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-100 dark:border-white/5">
-          {order.items?.map((item, idx) => (
-            <div key={idx} className="flex gap-4 items-center">
-              <div className="bg-white dark:bg-stone-800 px-3 py-1 rounded-xl text-stone-950 dark:text-white font-black text-xs h-fit border border-stone-200 dark:border-white/10 shadow-sm min-w-[40px] text-center">
-                {item.quantity}x
-              </div>
+            {/* Customer & Address */}
+            <div className="flex justify-between items-end mb-6">
               <div className="flex-1">
-                <p className="text-stone-950 dark:text-white font-black text-sm leading-tight uppercase tracking-tight">{item.product.name}</p>
-                {item.selectedModifiers.length > 0 && (
-                  <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-1 font-bold">
-                    {item.selectedModifiers?.map(m => m.name).join(' • ')}
-                  </p>
+                <div className="flex items-center gap-2 text-stone-950 dark:text-white">
+                    <User size={14} className="text-stone-400" />
+                    <h4 className="text-xl font-black uppercase tracking-tight truncate leading-none">{order.customerName}</h4>
+                </div>
+                {order.type === OrderType.DELIVERY && (
+                    <div className="flex items-center gap-1 text-[10px] text-stone-400 font-bold mt-1.5">
+                        <MapPin size={12} className="text-brand-500" />
+                        <span className="truncate max-w-[200px]">{order.customerAddress ? order.customerAddress.split(',')[0] : 'Sin dirección'}</span>
+                    </div>
                 )}
               </div>
+              <div className="text-right">
+                 <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest leading-none mb-1">Total</p>
+                 <p className="text-2xl font-black text-stone-950 dark:text-brand-500 tracking-tighter leading-none">{formatCurrency(order.total)}</p>
+              </div>
             </div>
-          ))}
+
+            {/* Items List - Ultra Clean */}
+            <div className="bg-white dark:bg-stone-950 border border-stone-100 dark:border-white/5 rounded-2xl p-4 mb-5 shadow-sm">
+                <div className="space-y-2.5">
+                    {order.items?.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-xs">
+                            <div className="flex items-center gap-3">
+                                <span className="w-6 h-6 flex items-center justify-center bg-stone-100 dark:bg-stone-800 rounded-lg font-black text-stone-950 dark:text-white text-[10px]">{item.quantity}</span>
+                                <span className="font-bold text-stone-700 dark:text-stone-300 uppercase tracking-tight">{item.product.name}</span>
+                            </div>
+                            <span className="text-stone-400 font-mono text-[10px]">{formatCurrency(item.price * item.quantity)}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Action Zone */}
+            <div className="flex gap-2.5">
+                <button 
+                  onClick={() => setShowChat(true)}
+                  className="w-14 h-14 flex items-center justify-center rounded-2xl bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:text-brand-500 hover:bg-brand-500/10 transition-all active:scale-95 border border-transparent dark:border-white/5"
+                >
+                  <MessageSquare size={22} />
+                </button>
+
+                {getNextStatus() ? (
+                  <button 
+                    onClick={handleAction}
+                    className="flex-1 h-14 bg-brand-500 hover:bg-brand-600 text-brand-950 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg shadow-brand-500/20 active:translate-y-0.5"
+                  >
+                    {getActionLabel()}
+                    <CheckCircle size={18} strokeWidth={3} />
+                  </button>
+                ) : (
+                  <div className="flex-1 h-14 bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center">
+                     En Proceso...
+                  </div>
+                )}
+
+                {['PENDING', 'ACCEPTED'].includes(order.status) && (
+                   <button 
+                      onClick={handleCancel}
+                      className="w-14 h-14 flex items-center justify-center rounded-2xl bg-red-500/5 text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-95 border border-red-500/10"
+                   >
+                      <X size={22} />
+                   </button>
+                )}
+            </div>
         </div>
-
-        <div className="flex justify-between items-center pt-2 px-1">
-          <span className="text-stone-400 dark:text-stone-500 font-black text-[10px] uppercase tracking-widest leading-none">Inversion Total</span>
-          <span className="font-black text-2xl text-stone-950 dark:text-white tracking-tighter">{formatCurrency(order.total)}</span>
-        </div>
-
-        {order.type === OrderType.DELIVERY && order.status === OrderStatus.DRIVER_ASSIGNED && (
-          <div className="mt-4 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 p-2.5 rounded-lg flex items-center gap-3 text-sm text-brand-950 dark:text-brand-300">
-            <div className="bg-white dark:bg-stone-800 p-1.5 rounded-full shadow-sm">
-              <Bike size={16} className="text-brand-800 dark:text-brand-400" />
-            </div>
-            <span className="font-medium">Repartidor en camino al local</span>
-          </div>
-        )}
-
-        {order.type === OrderType.DELIVERY && order.status === OrderStatus.PICKED_UP && (
-          <div className="mt-4 bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-900/30 p-2.5 rounded-lg flex items-center gap-3 text-sm text-brand-950 dark:text-brand-300">
-            <div className="bg-white dark:bg-stone-800 p-1.5 rounded-full shadow-sm">
-              <CheckCircle size={16} className="text-brand-800 dark:text-brand-400" />
-            </div>
-            <span className="font-medium">Pedido retirado - En camino al cliente</span>
-          </div>
-        )}
-
-        {order.type === OrderType.PICKUP && order.status === OrderStatus.READY && (
-          <div className="mt-4 bg-stone-100 dark:bg-stone-700/50 border border-amber-300 dark:border-stone-600 p-2.5 rounded-lg flex items-center gap-3 text-sm text-stone-800 dark:text-stone-200">
-            <div className="bg-white dark:bg-stone-800 p-1.5 rounded-full shadow-sm">
-              <ShoppingBag size={16} className="text-stone-600 dark:text-stone-400" />
-            </div>
-            <span className="font-medium">Esperando retiro del cliente</span>
-          </div>
-        )}
       </div>
-
-      {/* Action / Information Bar */}
-      {order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.DISPUTED && (
-        <div className="p-3 bg-stone-50 dark:bg-stone-800/50 border-t border-amber-200 dark:border-stone-700 flex gap-2">
-          <button 
-            onClick={() => setShowChat(true)}
-            className="p-2.5 bg-stone-100 dark:bg-stone-700 rounded-xl text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors"
-          >
-            <MessageSquare size={20} />
-          </button>
-          
-          {order.status === OrderStatus.PENDING && (
-              <button 
-                  onClick={handleCancel}
-                  className="px-4 py-2 rounded-xl border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold text-sm bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-              >
-                  Rechazar
-              </button>
-          )}
-
-          {/* Action Button or Status Info Box */}
-          {order.status === OrderStatus.READY && order.type === OrderType.DELIVERY ? (
-             <div className="flex-1 flex items-center justify-center bg-stone-100 dark:bg-stone-700 border dark:border-stone-600 text-stone-500 dark:text-stone-300 font-bold text-sm rounded-xl">
-                Esperando repartidor...
-             </div>
-          ) : order.status === OrderStatus.DRIVER_ASSIGNED ? (
-             <div className="flex-1 flex items-center justify-center bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 font-bold text-sm rounded-xl">
-                Repartidor en camino al local
-             </div>
-          ) : order.status === OrderStatus.PICKED_UP ? (
-             <div className="flex-1 flex items-center justify-center bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 font-bold text-sm rounded-xl">
-                En ruta de entrega
-             </div>
-          ) : (
-            <Button
-              fullWidth
-              variant={order.status === OrderStatus.PENDING ? 'primary' : 'secondary'}
-              onClick={handleAction}
-              className="flex-1"
-            >
-              {order.status === OrderStatus.PENDING && <CheckCircle size={18} className="mr-2" />}
-              {getButtonText()}
-            </Button>
-          )}
-        </div>
-      )}
-      
-      {/* Audit Info */}
-      {order.status === OrderStatus.CANCELLED && order.cancelledReason && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-900/30 text-red-700 dark:text-red-400 text-sm">
-              <span className="font-bold">Cancelado:</span> {order.cancelledReason}
-          </div>
-      )}
-      {order.status === OrderStatus.DISPUTED && order.claimReason && (
-          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-100 dark:border-amber-900/30 text-amber-800 dark:text-amber-400 text-sm">
-              <span className="font-bold">Reclamo ({order.claimStatus}):</span> {order.claimReason}
-          </div>
-      )}
 
       <ChatOverlay 
           orderId={order.id} 
@@ -225,7 +151,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
           onClose={() => setShowChat(false)} 
           title={`Chat con ${order.customerName}`} 
       />
-    </div>
+    </>
   );
 };
 
@@ -614,9 +540,9 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 xl:gap-8">
         {myStore.products.length === 0 && (
-            <div className="text-center py-16 bg-stone-50 dark:bg-stone-900/50 border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-[2.5rem] lg:col-span-2">
+            <div className="text-center py-16 bg-stone-50 dark:bg-stone-900/50 border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-[2.5rem] md:col-span-2 lg:col-span-2 xl:col-span-3 2xl:col-span-4">
                 <p className="text-stone-400 dark:text-stone-500 font-black uppercase tracking-widest text-xs">Crea tu primer producto para empezar a vender</p>
             </div>
         )}
@@ -870,6 +796,7 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
     const [font, setFont] = useState(store.customFont || 'Inter');
     const [color, setColor] = useState(store.customColor || '#FACC15'); // Default brand yellow
     const [mpToken, setMpToken] = useState(store.mpAccessToken || '');
+    const [mpPk, setMpPk] = useState(store.mpPublicKey || '');
     const [storeImage, setStoreImage] = useState(store.image || '');
     const [category, setCategory] = useState(store.category || '');
     const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -888,26 +815,41 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
     const fonts = ['Inter', 'Roboto', 'Montserrat', 'Playfair Display', 'Courier New', 'Georgia'];
     const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-    const handleSave = () => {
-        const updates: any = { 
-            customFont: font, 
-            customColor: color, 
-            mpAccessToken: mpToken, 
-            image: storeImage,
-            category: category,
-            autoSchedule,
-            schedules
-        };
+    const handleSave = async () => {
+        try {
+            const updates: any = { 
+                customFont: font, 
+                customColor: color, 
+                mpPublicKey: mpPk, 
+                image: storeImage,
+                category: category,
+                autoSchedule,
+                schedules: schedules || {}
+            };
 
-        // Name change requires admin approval
-        if (name !== store.name) {
-            updates.pendingName = name;
-            showToast('Solicitud de cambio de nombre enviada al Admin', 'info');
-        }
+            // Name change requires admin approval
+            if (name !== store.name) {
+                updates.pendingName = name;
+                showToast('Solicitud de cambio de nombre enviada al Admin', 'info');
+            }
 
-        updateStore(store.id, updates);
-        if (name === store.name) {
-            showToast('Configuración guardada', 'success');
+            // Save main updates
+            await updateStore(store.id, updates);
+            
+            // Save MP Access Token to a private subcollection
+            if (mpToken) {
+                await setDoc(doc(db, 'stores', store.id, 'private', 'payment'), {
+                    mpAccessToken: mpToken,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            }
+            
+            if (name === store.name) {
+                showToast('Perfil actualizado con éxito', 'success');
+            }
+        } catch (err) {
+            console.error('Error saving store profile:', err);
+            showToast('Error al actualizar el perfil', 'error');
         }
     };
 
@@ -1091,17 +1033,32 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
                     </div>
                 </div>
 
-                <div className="border-t dark:border-stone-700 pt-8">
-                    <label className="block text-[10px] font-black text-stone-400 mb-4 uppercase tracking-widest flex items-center gap-2">
-                        <CreditCard size={14} className="text-brand-500" /> Mercado Pago (Token de Producción)
+                <div className="border-t dark:border-stone-700 pt-8 space-y-4">
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2">
+                        <CreditCard size={14} className="text-brand-500" /> Mercado Pago (Modo Descentralizado)
                     </label>
-                    <input 
-                        type="password" 
-                        value={mpToken}
-                        onChange={e => setMpToken(e.target.value)}
-                        placeholder="APP_USR-..."
-                        className="w-full bg-stone-50 dark:bg-stone-900 border-none p-4 rounded-2xl dark:text-white font-mono text-xs ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none"
-                    />
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-[9px] font-bold text-stone-500 uppercase mb-1 ml-1">Access Token (Producción)</p>
+                            <input 
+                                type="password" 
+                                value={mpToken}
+                                onChange={e => setMpToken(e.target.value)}
+                                placeholder="APP_USR-..."
+                                className="w-full bg-stone-50 dark:bg-stone-900 border-none p-4 rounded-2xl dark:text-white font-mono text-xs ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none"
+                            />
+                        </div>
+                        <div>
+                            <p className="text-[9px] font-bold text-stone-500 uppercase mb-1 ml-1">Public Key (Producción)</p>
+                            <input 
+                                type="text" 
+                                value={mpPk}
+                                onChange={e => setMpPk(e.target.value)}
+                                placeholder="APP_USR-..."
+                                className="w-full bg-stone-50 dark:bg-stone-900 border-none p-4 rounded-2xl dark:text-white font-mono text-xs ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="pt-4">
@@ -1274,31 +1231,31 @@ export const MerchantView: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-stone-50 dark:bg-stone-950 animate-fade-in">
       {/* Merchant Header with Tabs */}
-      <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-2xl shadow-sm z-10 sticky top-0 border-b border-black/[0.03] dark:border-white/[0.03]">
-        <div className="lg:max-w-7xl lg:mx-auto lg:w-full">
-            <div className="p-6 flex items-center justify-between">
+      <div className="bg-white/90 dark:bg-stone-900/95 sticky top-0 z-10 border-b border-stone-100 dark:border-white/5 backdrop-blur-md">
+        <div className="w-full">
+            <div className="px-4 py-4 lg:px-12 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-[1.5rem] bg-stone-100 dark:bg-stone-800 border-2 border-white dark:border-stone-700 overflow-hidden shadow-2xl shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-white/10 overflow-hidden shadow-sm shrink-0">
                   <LazyImage src={myStore.image} alt="Logo" className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter leading-none">{myStore.name}</h2>
-                  <div className="flex items-center gap-3 mt-3">
+                  <h2 className="text-xl font-black text-stone-900 dark:text-white tracking-tight leading-none truncate max-w-[180px] sm:max-w-none">{myStore.name}</h2>
+                  <div className="flex items-center gap-2 mt-2">
                     <button 
                       id="store-status"
                       onClick={() => updateStore(myStore.id, { isOpen: !myStore.isOpen })}
-                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black flex items-center gap-2 w-fit transition-all shadow-sm ${myStore.isOpen !== false ? 'bg-brand-500 text-brand-950' : 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400'}`}
+                      className={`px-2 py-1 rounded-lg text-[9px] font-black flex items-center gap-1.5 transition-all ${myStore.isOpen !== false ? 'bg-emerald-500 text-white' : 'bg-stone-200 dark:bg-stone-800 text-stone-500'}`}
                     >
-                      <span className={`w-2 h-2 rounded-full ${myStore.isOpen !== false ? 'bg-brand-950 animate-pulse' : 'bg-stone-400'}`}></span>
-                      {myStore.isOpen !== false ? 'TIENDA ABIERTA' : 'TIENDA CERRADA'}
+                      <div className={`w-1.5 h-1.5 rounded-full ${myStore.isOpen !== false ? 'bg-white animate-pulse' : 'bg-stone-400'}`}></div>
+                      {myStore.isOpen !== false ? 'ABIERTO' : 'CERRADO'}
                     </button>
-                    <span className="text-xs text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest">| {activeOrders.length} activos</span>
+                    <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest leading-none">| {activeOrders.length} ACTIVOS</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex p-1.5 mx-6 mb-4 bg-stone-100 dark:bg-white/5 rounded-2xl border border-black/[0.03] dark:border-white/[0.03] overflow-x-auto lg:overflow-visible lg:justify-center lg:max-w-2xl lg:mx-auto dark:bg-stone-800">
+            <div className="flex p-1.5 mx-6 lg:mx-12 mb-4 bg-stone-100 dark:bg-white/5 rounded-2xl border border-black/[0.03] dark:border-white/[0.03] overflow-x-auto lg:overflow-visible lg:justify-center dark:bg-stone-800">
               <button
                 id="orders-tab"
                 onClick={() => setMerchantViewState('ORDERS')}
@@ -1345,7 +1302,8 @@ export const MerchantView: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6 space-y-8 flex-1 overflow-y-auto pb-32 lg:max-w-7xl lg:mx-auto lg:w-full lg:p-12">
+      <div className="flex-1 overflow-y-auto pb-32 custom-scrollbar">
+        <div className="p-6 space-y-8 lg:w-full lg:p-12 h-full">
 
         {merchantViewState === 'ORDERS' ? (
           activeOrders.length === 0 ? (
@@ -1432,6 +1390,7 @@ export const MerchantView: React.FC = () => {
               </div>
           </div>
         )}
+      </div>
       </div>
       {showTour && (
           <OnboardingTour 

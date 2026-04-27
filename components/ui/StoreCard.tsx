@@ -22,7 +22,7 @@ export const StoreCard = React.memo(({ store, onClick, index, isFavorite, onTogg
     return (
         <div 
             onClick={() => onClick(store)}
-            className={`group bg-white dark:bg-stone-900/40 rounded-[3rem] p-4 shadow-[0_30px_60px_-12px_rgba(0,0,0,0.12)] dark:shadow-2xl dark:shadow-black/[0.1] border-2 border-stone-200 dark:border-white/[0.08] backdrop-blur-sm active:scale-[0.98] transition-all duration-500 cursor-pointer animate-slide-up relative overflow-hidden hover:shadow-brand-500/20 hover:border-brand-500 ${compact ? 'min-w-[320px] w-[320px]' : 'w-full h-full flex flex-col'} ${!storeOpen ? 'opacity-70 grayscale-[0.5]' : ''}`}
+            className={`group bg-white dark:bg-black/20 rounded-[3rem] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] dark:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.5)] border border-stone-200/60 dark:border-white/[0.05] backdrop-blur-md active:scale-[0.98] hover:scale-[1.02] transition-all duration-500 cursor-pointer animate-slide-up relative overflow-hidden hover:shadow-brand-500/10 hover:border-brand-500/50 ${compact ? 'min-w-[85vw] w-[85vw] sm:min-w-[320px] sm:w-[320px]' : 'w-full h-full flex flex-col'} ${!storeOpen ? 'opacity-70 grayscale-[0.5]' : ''}`}
             style={{ animationDelay: `${index * 50}ms` }}
         >
             <div className={`relative overflow-hidden rounded-[2.5rem] bg-stone-100 dark:bg-stone-800 shrink-0 shadow-inner border-2 border-stone-100 dark:border-transparent ${compact ? 'h-40' : 'h-52 sm:h-64'}`}>

@@ -39,14 +39,14 @@ interface KpiCardProps {
 }
 
 const KpiCard = ({ title, value, sub, icon: Icon, color }: KpiCardProps) => (
-  <div className="bg-white p-4 rounded-xl shadow-sm border border-amber-200 flex items-start justify-between dark:bg-stone-900 dark:border-stone-800">
+  <div className="bg-white/40 dark:bg-black/10 p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-stone-200/50 dark:border-white/[0.05] backdrop-blur-md flex items-start justify-between group hover:border-brand-500/30 transition-all duration-500">
     <div>
-      <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">{title}</p>
-      <h3 className="text-2xl font-bold text-stone-900 dark:text-white">{value}</h3>
-      <p className={`text-xs font-bold mt-1 ${color}`}>{sub}</p>
+      <p className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">{title}</p>
+      <h3 className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter">{value}</h3>
+      <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${color}`}>{sub}</p>
     </div>
-    <div className={`p-2 rounded-lg bg-stone-50 ${color.replace('text-', 'text-opacity-80 text-')} dark:bg-stone-900`}>
-      <Icon size={20} />
+    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-stone-50 dark:bg-white/5 border border-transparent dark:border-white/5 shadow-inner group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-brand-950 transition-all duration-500 ${color.replace('text-', 'text-')}`}>
+      <Icon size={22} strokeWidth={2.5} />
     </div>
   </div>
 );
@@ -123,37 +123,38 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
                             <p className="font-medium text-stone-900 dark:text-white">No hay liquidaciones pendientes</p>
                         </div>
                     ) : merchantSettlements.map(s => (
-                        <div key={s.id} className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm space-y-4 dark:bg-stone-900 dark:border-stone-800">
+                        <div key={s.id} className="bg-white/40 dark:bg-black/10 p-8 rounded-[3rem] border border-stone-200/50 dark:border-white/[0.05] shadow-[0_20px_50px_rgba(0,0,0,0.05)] backdrop-blur-md space-y-6 group hover:border-brand-500/30 transition-all duration-500">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h3 className="font-black text-stone-900 text-lg uppercase tracking-tight dark:text-white">{s.storeName}</h3>
-                                    <p className="text-[10px] text-stone-400 font-bold uppercase">ID: {s.id}</p>
+                                    <h3 className="font-black text-stone-950 text-xl uppercase tracking-tighter italic dark:text-white">{s.storeName}</h3>
+                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mt-1">ID: {s.id}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Pendiente</p>
-                                    <p className="text-xl font-black text-red-500">{formatCurrency(s.pending)}</p>
+                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mb-1">Pendiente</p>
+                                    <p className="text-3xl font-black text-red-600 tracking-tighter">{formatCurrency(s.pending)}</p>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 py-4 border-y border-stone-50">
+                            <div className="grid grid-cols-2 gap-8 py-6 border-y border-stone-200/50 dark:border-white/[0.05]">
                                 <div>
-                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Liquidado</p>
-                                    <p className="font-bold text-stone-900 dark:text-white">{formatCurrency(s.settled)}</p>
+                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mb-1">Liquidado</p>
+                                    <p className="font-black text-stone-950 dark:text-white text-lg tracking-tight">{formatCurrency(s.settled)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Total Histórico</p>
-                                    <p className="font-bold text-stone-900 dark:text-white">{formatCurrency(s.total)}</p>
+                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mb-1">Total Histórico</p>
+                                    <p className="font-black text-stone-950 dark:text-white text-lg tracking-tight">{formatCurrency(s.total)}</p>
                                 </div>
                             </div>
                             {s.pending > 0 && (
                                 <Button 
                                     fullWidth 
+                                    size="lg"
                                     onClick={() => {
                                         const pendingOrders = s.orders.filter(o => !o.merchantSettled);
                                         pendingOrders.forEach(o => settleMerchantOrder(o.id));
                                     }}
-                                    className="bg-stone-950 text-white"
+                                    className="!bg-stone-950 !text-white !rounded-2xl shadow-xl shadow-stone-950/20"
                                 >
-                                    Liquidar Todo
+                                    LIQUIDAR FONDOS
                                 </Button>
                             )}
                         </div>
@@ -523,8 +524,26 @@ export const AdminView: React.FC = () => {
   
   // Local settings state for the form
   const [localConfig, setLocalConfig] = useState(config);
-  
-  // Local drill-down state
+  const [mpCredentials, setMpCredentials] = useState({ mpAccessToken: '', mpPublicKey: '' });
+
+  useEffect(() => {
+    setLocalConfig(config);
+  }, [config]);
+
+  // Fetch secrets only for admin
+  useEffect(() => {
+    const fetchSecrets = async () => {
+      try {
+        const secretsDoc = await getDoc(doc(db, 'config', 'global', 'private', 'mercadoPago'));
+        if (secretsDoc.exists()) {
+          setMpCredentials(secretsDoc.data() as any);
+        }
+      } catch (err) {
+        console.warn('Could not fetch MP secrets (likely permission restricted or not set yet)');
+      }
+    };
+    fetchSecrets();
+  }, []);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null); // storing customerName for simplicity in MVP
   const [storeSearch, setStoreSearch] = useState('');
@@ -1342,32 +1361,42 @@ export const AdminView: React.FC = () => {
     };
 
     return (
-        <div className="space-y-4 px-4 pt-2 animate-fade-in pb-20 lg:w-full lg:px-8">
+        <div className="space-y-6 px-4 pt-4 animate-fade-in pb-24 lg:w-full lg:px-12">
             {disputedOrders.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-2xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
-                    <Shield size={40} className="mx-auto text-stone-300 mb-2" />
-                    <p className="text-stone-500 font-bold dark:text-stone-400">No hay reclamos activos</p>
+                <div className="text-center py-24 bg-white/40 dark:bg-black/10 rounded-[3rem] border border-stone-200/50 dark:border-white/[0.05] backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+                    <div className="w-20 h-20 bg-stone-100 dark:bg-stone-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-stone-300">
+                      <Shield size={40} strokeWidth={1.5} />
+                    </div>
+                    <p className="text-stone-950 dark:text-white font-black text-xl uppercase tracking-tighter">Sin incidencias activas</p>
+                    <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mt-2">Todo el ecosistema funciona correctamente</p>
                 </div>
             ) : (
-                <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
                 {disputedOrders.map(order => (
-                    <div key={order.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm h-full flex flex-col justify-between">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <p className="font-bold text-amber-900">Pedido #{order.id.slice(-6)}</p>
-                                <p className="text-xs text-amber-700">{order.storeName} • {order.customerName}</p>
+                    <div key={order.id} className="bg-orange-500/10 border border-orange-500/20 rounded-[2.5rem] p-8 shadow-xl backdrop-blur-sm h-full flex flex-col justify-between group hover:border-orange-500/50 transition-all duration-500">
+                        <div>
+                          <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-orange-950 shadow-lg shadow-orange-500/20">
+                                <AlertCircle size={24} />
+                              </div>
+                              <div>
+                                <p className="font-black text-stone-950 dark:text-white uppercase tracking-tighter italic text-lg leading-tight">Reclamo #{order.id.slice(-6).toUpperCase()}</p>
+                                <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mt-1">{order.storeName} • {order.customerName}</p>
+                              </div>
                             </div>
-                            <span className="bg-amber-200 text-amber-800 text-[10px] font-bold px-2 py-1 rounded uppercase">En Revisión</span>
+                            <span className="bg-orange-500 text-orange-950 text-[9px] font-black px-3 py-1.5 rounded-xl uppercase tracking-[0.15em] shadow-sm animate-pulse">En Revisión</span>
+                          </div>
+                          <div className="bg-white/60 dark:bg-stone-900/60 p-5 rounded-2xl border border-orange-500/10 mb-8 backdrop-blur-md shadow-inner">
+                            <p className="text-sm font-bold text-stone-800 dark:text-stone-100 leading-relaxed italic">"{order.claimReason}"</p>
+                          </div>
                         </div>
-                        <div className="bg-white p-3 rounded-lg border border-amber-100 mb-4 dark:bg-stone-900">
-                            <p className="text-sm font-medium text-stone-800 dark:text-stone-100">"{order.claimReason}"</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button variant="secondary" fullWidth className="bg-white text-red-600 border-red-200 hover:bg-red-50 dark:bg-stone-900" onClick={() => handleResolveDispute(order.id, 'REJECTED')}>
-                                Rechazar
+                        <div className="flex gap-4">
+                            <Button variant="secondary" fullWidth size="lg" className="!bg-white !text-stone-950 !rounded-2xl border-stone-200 dark:!bg-stone-800 dark:!text-stone-400" onClick={() => handleResolveDispute(order.id, 'REJECTED')}>
+                                RECHAZAR
                             </Button>
-                            <Button fullWidth className="bg-brand-500 text-brand-950 hover:bg-brand-600" onClick={() => handleResolveDispute(order.id, 'RESOLVED')}>
-                                Reembolsar
+                            <Button fullWidth size="lg" className="!bg-brand-500 !text-brand-950 !rounded-2xl shadow-xl shadow-brand-500/20" onClick={() => handleResolveDispute(order.id, 'RESOLVED')}>
+                                REEMBOLSAR
                             </Button>
                         </div>
                     </div>
@@ -1741,13 +1770,51 @@ export const AdminView: React.FC = () => {
                                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${localConfig.maintenanceMode ? 'left-7' : 'left-1'} dark:bg-stone-900`}></div>
                                             </div>
                                         </div>
+
+                                        <div className="pt-4 border-t border-stone-50 dark:border-white/5 space-y-4">
+                                            <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2">
+                                                <Activity size={14} className="text-brand-800" /> Mercado Pago (Global/Centralizado)
+                                            </h4>
+                                            <div className="grid grid-cols-1 gap-4">
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-stone-500 uppercase mb-1">Access Token</p>
+                                                    <input 
+                                                        type="password" 
+                                                        value={mpCredentials.mpAccessToken || ''} 
+                                                        onChange={(e) => setMpCredentials({...mpCredentials, mpAccessToken: e.target.value})}
+                                                        placeholder="APP_USR-..."
+                                                        className="w-full p-2 bg-stone-50 border border-amber-300 rounded-lg text-sm font-mono dark:bg-stone-900 dark:border-stone-800" 
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-stone-500 uppercase mb-1">Public Key</p>
+                                                    <input 
+                                                        type="text" 
+                                                        value={mpCredentials.mpPublicKey || ''} 
+                                                        onChange={(e) => setMpCredentials({...mpCredentials, mpPublicKey: e.target.value})}
+                                                        placeholder="APP_USR-..."
+                                                        className="w-full p-2 bg-stone-50 border border-amber-300 rounded-lg text-sm font-mono dark:bg-stone-900 dark:border-stone-800" 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="p-4 bg-stone-50 dark:bg-stone-900">
-                                    <Button fullWidth onClick={() => {
-                                        updateConfig(localConfig);
-                                        showToast('Configuración guardada', 'success');
+                                    <Button id="btn-save-global-config" fullWidth onClick={async () => {
+                                        try {
+                                            await updateConfig(localConfig);
+                                            // Handle secrets separately in a private subcollection
+                                            await setDoc(doc(db, 'config', 'global', 'private', 'mercadoPago'), {
+                                                mpAccessToken: mpCredentials.mpAccessToken,
+                                                mpPublicKey: mpCredentials.mpPublicKey,
+                                                updatedAt: serverTimestamp()
+                                            }, { merge: true });
+                                            showToast('Configuración y credenciales guardadas', 'success');
+                                        } catch (err) {
+                                            showToast('Error al guardar algunos parámetros', 'error');
+                                        }
                                     }}>
                                         Guardar Cambios Globales
                                     </Button>

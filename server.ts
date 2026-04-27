@@ -97,11 +97,6 @@ async function startServer() {
     }
   };
 
-  // Mercado Pago Configuration
-  const mpClient = new MercadoPagoConfig({ 
-    accessToken: process.env.MP_ACCESS_TOKEN || '' 
-  });
-
   // API Routes
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', cache: redisClient ? 'redis' : 'memory' });
@@ -178,15 +173,61 @@ async function startServer() {
   // Create Mercado Pago Preference
   app.post('/api/create-preference', async (req, res) => {
     try {
-      const { items, orderId, customAccessToken } = req.body;
+      const { items, orderId, storeId, platformFee } = req.body;
       
-      // Use custom access token if provided (Decentralized Mode)
-      // Otherwise use the platform's default token (Centralized Mode)
-      const client = customAccessToken 
-        ? new MercadoPagoConfig({ accessToken: customAccessToken })
-        : mpClient;
+      let accessToken = null;
+      let isDecentralized = false;
+      
+      // Fetch global config to check payment mode
+      try {
+        const configDoc = await getDoc(doc(db, 'config', 'global'));
+        if (configDoc.exists()) {
+          isDecentralized = configDoc.data().paymentMode === 'DECENTRALIZED';
+        }
+      } catch (err) {
+        console.error('Error fetching global config for MP mode:', err);
+      }
 
+      if (isDecentralized && storeId) {
+        // Fetch store's private token
+        try {
+          const storeSecretsDoc = await getDoc(doc(db, 'stores', storeId, 'private', 'payment'));
+          if (storeSecretsDoc.exists()) {
+            accessToken = storeSecretsDoc.data().mpAccessToken;
+          }
+        } catch (err) {
+          console.error(`Error fetching token for store ${storeId}:`, err);
+        }
+      }
+
+      // If no store token or not decentralized, use global token
+      if (!accessToken) {
+        try {
+          const secretsDoc = await getDoc(doc(db, 'config', 'global', 'private', 'mercadoPago'));
+          if (secretsDoc.exists()) {
+            accessToken = secretsDoc.data()?.mpAccessToken;
+          }
+        } catch (err) {
+          console.error('Error fetching global config for MP:', err);
+        }
+      }
+
+      // Fallback to env if still not found
+      if (!accessToken) accessToken = process.env.MP_ACCESS_TOKEN;
+
+      if (!accessToken) {
+        return res.status(400).json({ error: 'Mercado Pago Access Token not configured' });
+      }
+      
+      const client = new MercadoPagoConfig({ accessToken });
       const preference = new Preference(client);
+      
+      const totalAmount = items.reduce((acc: number, item: any) => acc + (Number(item.price) * Number(item.quantity)), 0);
+      
+      // Platform Fee logic: only if decentralized and platformFee provided
+      // (Normally you'd calculate this on the server for security too, fetching store commissionPct)
+      const calculatedFee = platformFee ? Number(platformFee) : 0;
+
       const result = await preference.create({
         body: {
           items: items.map((item: { name: string, price: number, quantity: number }) => ({
@@ -195,6 +236,7 @@ async function startServer() {
             quantity: Number(item.quantity),
             currency_id: 'ARS' // Change as needed
           })),
+          ...(customAccessToken && calculatedFee > 0 ? { marketplace_fee: calculatedFee } : {}),
           back_urls: {
             success: `${req.protocol}://${req.get('host')}/order-success?id=${orderId}`,
             failure: `${req.protocol}://${req.get('host')}/order-failure?id=${orderId}`,

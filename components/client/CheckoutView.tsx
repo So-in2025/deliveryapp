@@ -1,18 +1,17 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../ui/Button';
 import { formatCurrency } from '../../constants';
-import { ArrowLeft, Clock, MapPin, Tag, CreditCard, Banknote, Trash2, Plus, Minus, ChevronRight, Check, Zap } from 'lucide-react';
-import { OrderType, PaymentMethod, OrderStatus } from '../../types';
-import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, MapPin, Tag, CreditCard, Banknote, Trash2, Plus, Minus, Zap, X, ShoppingBag } from 'lucide-react';
+import { OrderType, PaymentMethod } from '../../types';
+import { motion } from 'motion/react';
 
 export const CheckoutView: React.FC = () => {
-    const { cart, removeFromCart, updateCartItemQuantity, user, placeOrder, setClientViewState, clearCart, config, stores, coupons } = useApp();
+    const { cart, removeFromCart, updateCartItemQuantity, user, placeOrder, setClientViewState, stores, coupons } = useApp();
     const { showToast } = useToast();
     const [couponCode, setCouponCode] = useState('');
-    const [selectedCard, setSelectedCard] = useState<string>('');
     const [orderType, setOrderType] = useState<OrderType>(OrderType.DELIVERY);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
     const [isPlacing, setIsPlacing] = useState(false);
@@ -50,7 +49,7 @@ export const CheckoutView: React.FC = () => {
                 (user.lat && user.lng) ? { lat: user.lat, lng: user.lng } : undefined
             );
             // clearCart and navigation handled in AppContext
-        } catch (error) {
+        } catch {
             showToast('Error al procesar el pedido', 'error');
         } finally {
             setIsPlacing(false);
@@ -92,6 +91,17 @@ export const CheckoutView: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col bg-stone-50 dark:bg-[#050505] overflow-hidden">
+            {/* Lock Overlay during processing */}
+            {isPlacing && (
+                <div className="fixed inset-0 z-[9999] bg-stone-950/60 backdrop-blur-md flex flex-col items-center justify-center cursor-wait">
+                    <div className="bg-stone-900 border border-white/10 p-8 rounded-[2.5rem] flex flex-col items-center justify-center shadow-2xl max-w-xs w-full text-center animate-slide-up">
+                        <div className="w-16 h-16 border-4 border-stone-800 border-t-brand-500 rounded-full animate-spin mb-6" />
+                        <h2 className="text-white text-xl font-black tracking-tight uppercase">Procesando...</h2>
+                        <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mt-2 px-4">Asegurando tu transacción</p>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="w-full bg-white dark:bg-stone-900 px-6 py-4 border-b border-black/[0.03] dark:border-white/[0.03] flex items-center gap-4 z-50 shrink-0">
                 <button onClick={() => setClientViewState('BROWSE')} className="p-2 -ml-2 text-stone-900 dark:text-white hover:bg-stone-100 dark:hover:bg-white/5 rounded-xl transition-all active:scale-95"><ArrowLeft size={24} /></button>
@@ -192,55 +202,58 @@ export const CheckoutView: React.FC = () => {
 
                     </div>
 
-                    {/* Right Column: Summary */}
+                    {/* Right Column: Summary - Élite Overhaul */}
                     <div className="lg:col-span-5">
-                        <div className="bg-white dark:bg-stone-900 rounded-[3rem] p-10 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.15)] border-2 border-stone-100 dark:border-white/5 space-y-8 sticky top-8">
-                            <h3 className="font-black text-xs text-stone-400 uppercase tracking-[0.3em] border-b-2 border-stone-50 dark:border-white/[0.03] pb-6">Resumen</h3>
+                        <div className="bg-white dark:bg-stone-900 rounded-[3rem] p-8 lg:p-10 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.15)] border-2 border-stone-100 dark:border-white/5 space-y-8 sticky top-8">
+                            <h3 className="font-black text-xs text-stone-400 uppercase tracking-[0.3em] border-b-2 border-stone-50 dark:border-white/[0.03] pb-6">Resumen del Pedido</h3>
                             
                             {/* Coupon Input */}
                             <div className="space-y-4">
-                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2 ml-2"><Tag size={12} /> ¿Tienes un cupón?</label>
-                                <div className="flex gap-2 p-1.5 bg-stone-50 dark:bg-white/5 rounded-2xl border-2 border-stone-100 dark:border-transparent">
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2 ml-2"><Tag size={12} /> Descuentos Especiales</label>
+                                <div className="flex gap-2 p-1.5 bg-stone-50 dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-white/5">
                                     <input 
                                         type="text" 
-                                        placeholder="CÓDIGO" 
+                                        placeholder="CÓDIGO DE CUPÓN" 
                                         value={couponCode}
                                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                        className="flex-1 bg-transparent px-4 text-sm font-black outline-none text-stone-950 dark:text-white placeholder-stone-300"
+                                        className="flex-1 bg-transparent px-4 text-sm font-black outline-none text-stone-950 dark:text-white placeholder-stone-400"
                                     />
-                                    <button onClick={handleApplyCoupon} className="px-6 py-4 bg-stone-950 dark:bg-white text-white dark:text-stone-950 rounded-xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-lg hover:scale-105">Aplicar</button>
+                                    <button onClick={handleApplyCoupon} className="px-6 py-4 bg-stone-950 dark:bg-brand-500 text-white dark:text-brand-950 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg">Aplicar</button>
                                 </div>
                                 {appliedCoupon && (
-                                    <div className="bg-brand-500/10 border border-brand-500/20 p-3 rounded-xl flex justify-between items-center text-brand-600 dark:text-brand-400">
-                                        <div className="flex items-center gap-2">
-                                            <Tag size={14} className="fill-brand-500" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest">{appliedCoupon.code}</span>
+                                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-brand-500/10 border-2 border-brand-500/20 p-4 rounded-xl flex justify-between items-center text-brand-600 dark:text-brand-400">
+                                        <div className="flex items-center gap-3">
+                                            <Tag size={16} className="fill-brand-500" />
+                                            <span className="text-xs font-black uppercase tracking-widest leading-none">{appliedCoupon.code}</span>
                                         </div>
-                                        <button onClick={() => setAppliedCoupon(null)}><X size={14} /></button>
-                                    </div>
+                                        <button onClick={() => setAppliedCoupon(null)} className="p-1 hover:bg-brand-500/20 rounded-full transition-colors"><X size={16} /></button>
+                                    </motion.div>
                                 )}
                             </div>
 
-                            <div className="space-y-3 pt-4">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-stone-400 font-bold">Subtotal</span>
-                                    <span className="font-black text-stone-950 dark:text-white">{formatCurrency(cartTotal)}</span>
+                            <div className="space-y-4 pt-4 border-t border-stone-50 dark:border-white/[0.03]">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-stone-400 font-black uppercase tracking-tighter italic text-base">Subtotal</span>
+                                    <span className="font-black text-stone-950 dark:text-white italic text-base">{formatCurrency(cartTotal)}</span>
                                 </div>
                                 {orderType === OrderType.DELIVERY && (
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-stone-400 font-bold">Envío</span>
-                                        <span className="font-black text-stone-950 dark:text-white">{formatCurrency(deliveryFee)}</span>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-stone-400 font-black uppercase tracking-tighter italic text-base">Servicio Postales</span>
+                                        <span className="font-black text-stone-950 dark:text-white italic text-base">{formatCurrency(deliveryFee)}</span>
                                     </div>
                                 )}
                                 {appliedCoupon && (
-                                    <div className="flex justify-between text-sm text-brand-600 dark:text-brand-400">
-                                        <span className="font-bold cursor-help" title="Descuento aplicado">Descuento</span>
-                                        <span className="font-black">-{formatCurrency(discount)}</span>
+                                    <div className="flex justify-between items-center text-brand-600 dark:text-brand-400">
+                                        <span className="font-black uppercase tracking-tighter italic text-base">Ahorro Élite</span>
+                                        <span className="font-black italic text-base">-{formatCurrency(discount)}</span>
                                     </div>
                                 )}
-                                <div className="pt-4 border-t border-black/[0.03] dark:border-white/[0.03] flex justify-between items-end">
-                                    <span className="font-black text-stone-950 dark:text-white text-xl tracking-tighter">Total</span>
-                                    <span className="font-black text-3xl text-brand-600 dark:text-white tracking-tighter">{formatCurrency(total)}</span>
+                                <div className="pt-6 border-t border-black/[0.03] dark:border-white/[0.03] flex justify-between items-end">
+                                    <div className="flex flex-col">
+                                        <span className="font-black text-stone-400 text-[10px] uppercase tracking-widest leading-none mb-2">Total Final</span>
+                                        <span className="font-black text-stone-950 dark:text-white text-2xl tracking-tighter uppercase italic leading-none">Checkout</span>
+                                    </div>
+                                    <span className="font-black text-5xl text-brand-600 dark:text-brand-500 tracking-tighter leading-none">{formatCurrency(total)}</span>
                                 </div>
                             </div>
 
@@ -249,14 +262,17 @@ export const CheckoutView: React.FC = () => {
                                 size="lg" 
                                 disabled={isPlacing || (orderType === OrderType.DELIVERY && !user.addresses?.[0])}
                                 onClick={handlePlaceOrder}
-                                className="py-6 !rounded-2xl text-base font-black tracking-widest uppercase shadow-2xl shadow-brand-500/20"
+                                className="!py-8 !rounded-[2rem] !text-xl !shadow-2xl !shadow-brand-500/30 font-black uppercase tracking-[0.1em] mt-2 transition-all hover:scale-[1.02]"
                             >
-                                {isPlacing ? 'PROCESANDO...' : 'REALIZAR PEDIDO'}
+                                {isPlacing ? 'VERIFICANDO...' : 'CONFIRMAR OPERACIÓN'}
                             </Button>
                             
-                            <p className="text-[8px] text-stone-400 font-bold text-center uppercase tracking-widest leading-relaxed">
-                                Al realizar el pedido, aceptas nuestros términos y condiciones de servicio.
-                            </p>
+                            <div className="flex items-center justify-center gap-3 pt-2">
+                                <Zap size={14} className="text-brand-500" />
+                                <p className="text-[9px] text-stone-400 font-black text-center uppercase tracking-widest leading-relaxed">
+                                    Transacción Segura de Grado Empresarial
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -265,11 +281,3 @@ export const CheckoutView: React.FC = () => {
         </div>
     );
 };
-
-const ShoppingBag = ({ size, className }: { size: number, className: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-);
-
-const X = ({ size, className }: { size: number, className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-);

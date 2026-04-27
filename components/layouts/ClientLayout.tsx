@@ -118,61 +118,60 @@ export const ClientLayout: React.FC<{ children: React.ReactNode }> = ({ children
         {/* CONTENT WRAPPER */}
         <div className="flex-1 flex flex-col relative overflow-hidden w-full bg-stone-50 dark:bg-stone-950">
           
-          {/* Mobile Header */}
-          <header className="lg:hidden shrink-0 z-30 bg-white/80 dark:bg-stone-900/80 backdrop-blur-2xl border-b border-black/[0.03] dark:border-white/[0.03] px-4 py-3 flex justify-between items-center pt-safe transition-colors duration-300">
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-brand-500 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/20 overflow-hidden border-2 border-white dark:border-stone-800 p-1">
+          {/* Mobile Header - More minimal and transparent */}
+          <header className="lg:hidden shrink-0 z-[60] fixed top-0 left-0 right-0 pointer-events-none px-4 py-3 flex justify-between items-center pt-safe">
+            <div className="flex items-center gap-2 pointer-events-auto bg-white/40 dark:bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/20">
+              <div className="w-8 h-8 bg-brand-500 rounded-xl flex items-center justify-center shadow-lg overflow-hidden p-1">
                 <img src={APP_CONFIG.logoUrl} alt={APP_CONFIG.appName} className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-black text-stone-950 dark:text-white tracking-tighter leading-none uppercase">{APP_CONFIG.appName}</span>
-                <span className="text-[8px] font-bold text-brand-600 dark:text-brand-400 tracking-widest uppercase">Premium Delivery</span>
+                <span className="text-[10px] font-black text-stone-950 dark:text-white tracking-tighter leading-none uppercase">{APP_CONFIG.appName}</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 pointer-events-auto">
               <button 
                   onClick={() => setIsNotificationsOpen(true)}
-                  className="p-2 rounded-lg bg-brand-950/10 dark:bg-white/10 text-brand-950 dark:text-white hover:bg-brand-950/20 transition-colors relative"
+                  className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white/40 dark:bg-black/20 backdrop-blur-md text-stone-950 dark:text-white border border-white/20 transition-all relative"
               >
                   <Bell size={18} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full border border-brand-500" />
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full border border-white" />
                   )}
               </button>
               <button 
-                  id="settings-tab-mobile"
                   onClick={toggleSettings}
-                  className="p-2 rounded-lg bg-brand-950/10 dark:bg-white/10 text-brand-950 dark:text-white hover:bg-brand-950/20 transition-colors"
-                  title="Configuración"
+                  className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white/40 dark:bg-black/20 backdrop-blur-md text-stone-950 dark:text-white border border-white/20 transition-all"
               >
                   <Settings size={18} />
               </button>
             </div>
           </header>
 
-          <main className="flex-1 overflow-y-auto scrollbar-hide relative pb-safe lg:pb-0">
+          <main className="flex-1 overflow-y-auto scrollbar-hide relative lg:pb-0 pt-16 lg:pt-0">
             <div className="w-full h-full">
                 {children}
             </div>
           </main>
 
 
-          {/* Mobile Bottom Navigation */}
-          <nav className="lg:hidden shrink-0 w-full bg-white dark:bg-stone-900 border-t border-amber-200 dark:border-stone-800 pb-safe pt-2 px-6 flex justify-between items-center z-40 relative transition-colors duration-300">
-             <div id="browse-tab-mobile" className="flex-1 flex justify-center">
-                 <NavItem icon={<ShoppingBag />} label="Inicio" active={clientViewState === 'BROWSE'} onClick={handleHomeClick} />
-             </div>
-             <div id="favorites-tab-mobile" className="flex-1 flex justify-center">
-                 <NavItem icon={<Heart />} label="Favoritos" active={clientViewState === 'FAVORITES'} onClick={() => setClientViewState('FAVORITES')} />
-             </div>
-             <div id="history-tab-mobile" className="flex-1 flex justify-center">
-                 <NavItem icon={<HistoryIcon />} label="Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
-             </div>
-             <div id="profile-tab-mobile" className="flex-1 flex justify-center">
-                 <NavItem icon={<User />} label="Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
-             </div>
-          </nav>
+          {/* Mobile Bottom Navigation - Floating Pill Bottom Nav - Refined Élite */}
+          <div className="lg:hidden fixed bottom-4 left-4 right-4 z-[60] pointer-events-none">
+            <nav className="mx-auto max-w-sm w-full bg-stone-950/80 dark:bg-stone-900/80 backdrop-blur-3xl border border-white/10 rounded-full py-2 px-4 flex justify-between items-center shadow-2xl shadow-brand-500/10 pointer-events-auto">
+              <div id="browse-tab-mobile" className="flex-1 flex justify-center">
+                  <NavItem icon={<ShoppingBag />} label="Inicio" active={clientViewState === 'BROWSE'} onClick={handleHomeClick} />
+              </div>
+              <div id="favorites-tab-mobile" className="flex-1 flex justify-center">
+                  <NavItem icon={<Heart />} label="Favoritos" active={clientViewState === 'FAVORITES'} onClick={() => setClientViewState('FAVORITES')} />
+              </div>
+              <div id="history-tab-mobile" className="flex-1 flex justify-center">
+                  <NavItem icon={<HistoryIcon />} label="Pedidos" active={clientViewState === 'HISTORY'} onClick={() => setClientViewState('HISTORY')} />
+              </div>
+              <div id="profile-tab-mobile" className="flex-1 flex justify-center">
+                  <NavItem icon={<User />} label="Perfil" active={clientViewState === 'PROFILE'} onClick={() => setClientViewState('PROFILE')} />
+              </div>
+            </nav>
+          </div>
         </div>
       </div>
     </div>

@@ -69,6 +69,13 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
     ? [initialLocation.lat, initialLocation.lng] 
     : [-34.6037, -58.3816]; // Buenos Aires as default
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
   // Reverse Geocoding: Get address from coordinates
   const getAddressFromCoords = useCallback(async (lat: number, lng: number) => {
     try {

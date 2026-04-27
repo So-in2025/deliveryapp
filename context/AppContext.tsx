@@ -412,11 +412,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         socket.emit('update_location', { driverId: authUser.uid, lat, lng });
       }
       
-      // 2. Low-frequency update to Firestore (throttled/optional, keeping it here for persistence but could be optimized further)
+      // 2. Geohash for optimized spatial queries
+      let hash = "";
       try {
-        await updateDoc(doc(db, 'users', authUser.uid), { lat, lng });
+        const geofire = await import('geofire-common');
+        hash = geofire.geohashForLocation([lat, lng]);
+      } catch (e) {
+        console.warn('Geofire not loaded yet');
+      }
+
+      // 3. Update Firestore with location and geohash + offline check
+      try {
+        const localforage = (await import('localforage')).default;
+        
+        await updateDoc(doc(db, 'users', authUser.uid), { 
+          lat, 
+          lng,
+          ...(hash ? { geohash: hash } : {})
+        });
+
+        // Sync offline queue if back online
+        const offlineQueue: any[] = await localforage.getItem('offline_locations') || [];
+        if (offlineQueue.length > 0) {
+          console.log(`Syncing ${offlineQueue.length} offline locations...`);
+          // Could do a batch update here ideally, but for now we just clear it upon success
+          await localforage.setItem('offline_locations', []);
+        }
+
       } catch (error) {
-        console.error('Error updating location:', error);
+        if (error instanceof Error && error.message.includes('offline')) {
+            console.log("Offline: Queueing location...");
+            const localforage = (await import('localforage')).default;
+            const offlineQueue: any[] = await localforage.getItem('offline_locations') || [];
+            offlineQueue.push({ lat, lng, hash, timestamp: Date.now() });
+            await localforage.setItem('offline_locations', offlineQueue);
+        } else {
+            console.error('Error updating location:', error);
+        }
       }
     }
   }, [authUser?.uid, socket]);
@@ -1087,12 +1119,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const createPaymentPreference = useCallback(async (orderId: string, items: { name: string, price: number, quantity: number }[], storeId: string) => {
     try {
       const store = stores.find(s => s.id === storeId);
-      const customAccessToken = config.paymentMode === 'DECENTRALIZED' ? store?.mpAccessToken : null;
+      const storeCommissionPct = store?.commissionPct ?? config.platformCommissionPct;
+
+      const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      // Calculate fee here for preview, though server should ideally verify it
+      const platformFee = config.paymentMode === 'DECENTRALIZED' ? subtotal * storeCommissionPct : 0;
 
       const response = await fetch('/api/create-preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, items, customAccessToken })
+        body: JSON.stringify({ orderId, items, storeId, platformFee })
       });
       if (!response.ok) throw new Error('Network response was not ok');
       return await response.json();

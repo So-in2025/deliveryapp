@@ -1,14 +1,13 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { formatCurrency } from '../../constants';
 import { ArrowLeft, Star, Clock, Heart, Share2, Search, Bike, Info, Plus } from 'lucide-react';
 import { LazyImage } from '../ui/LazyImage';
 import { motion } from 'motion/react';
-import { Product, Store } from '../../types';
 
 export const StoreDetail: React.FC = () => {
-    const { selectedStore, setSelectedStore, favorites, toggleFavorite, handleShareStore, setProductToCustomize, setProductToView } = useApp();
+    const { selectedStore, setSelectedStore, favorites, toggleFavorite, handleShareStore, setProductToView } = useApp();
     
     if (!selectedStore) return null;
 
@@ -25,126 +24,189 @@ export const StoreDetail: React.FC = () => {
     const displayRating = (isNew(selectedStore.createdAt || '') && (selectedStore.reviewsCount === 0 || !selectedStore.reviewsCount)) ? 5.0 : (selectedStore.rating || 0);
 
     return (
-            <div className="w-full h-full overflow-y-auto bg-stone-50 dark:bg-stone-950 animate-fade-in relative pb-16">
-                {/* Header / Banner */}
-                <div className="relative min-h-[22rem] md:min-h-[26rem] lg:min-h-[30rem] w-full shrink-0 flex flex-col justify-between pb-6 md:pb-8 lg:pb-14">
-                    <div className="absolute inset-0 overflow-hidden">
-                        <LazyImage src={selectedStore.image} alt={selectedStore.name} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/80 to-stone-950/20"></div>
-                    </div>
-                    
-                    <div className="absolute top-4 left-4 right-4 md:top-6 md:left-6 md:right-6 flex justify-between items-start z-20">
-                        <button 
-                            onClick={() => setSelectedStore(null)}
-                            className="w-12 h-12 md:w-14 md:h-14 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl hover:bg-white/20 transition-all active:scale-95 shrink-0"
+            <div className="w-full h-full overflow-y-auto bg-stone-50 dark:bg-stone-950 animate-fade-in relative pb-32 lg:pb-16 scroll-smooth">
+                {/* Header / Banner - Immersive Élite */}
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="relative min-h-[50vh] md:min-h-[26rem] lg:min-h-[40vh] w-full shrink-0 flex flex-col justify-between pb-6 md:pb-8 lg:pb-14 overflow-hidden"
+                >
+                    <div className="absolute inset-0 z-0">
+                        <motion.div
+                            initial={{ scale: 1.1 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 1.5, ease: "easeOut" }}
+                            className="w-full h-full"
                         >
-                            <ArrowLeft size={24} className="md:w-7 md:h-7" />
-                        </button>
-                        <div className="flex flex-wrap justify-end gap-2 md:gap-4 ml-4">
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedStore.id); }}
-                                className={`w-12 h-12 md:w-14 md:h-14 backdrop-blur-3xl border rounded-2xl md:rounded-[1.5rem] flex items-center justify-center transition-all active:scale-95 shrink-0 ${isFavorite ? 'bg-red-500 border-red-400 text-white shadow-lg' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}
-                            >
-                                <Heart size={24} className="md:w-6 md:h-6" fill={isFavorite ? 'currentColor' : 'none'} />
-                            </button>
-                            <button 
-                                onClick={(e) => handleShareStore(e, selectedStore)}
-                                className="w-12 h-12 md:w-14 md:h-14 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-95 shrink-0"
-                            >
-                                <Share2 size={24} className="md:w-6 md:h-6" />
-                            </button>
-                        </div>
+                            <LazyImage src={selectedStore.image} alt={selectedStore.name} className="w-full h-full object-cover" />
+                        </motion.div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent"></div>
+                        <div className="absolute inset-0 bg-stone-950/20 backdrop-brightness-75"></div>
                     </div>
-
-                    <div className="absolute bottom-0 left-0 w-full px-6 pb-6 md:p-8 lg:p-14 z-10">
-                        <div className="animate-slide-up">
-                            <div className="flex items-center flex-wrap gap-2 mb-3">
-                                <span className="bg-brand-500 text-brand-950 text-[10px] sm:text-xs font-black px-3 py-1 rounded-lg uppercase tracking-widest shadow-xl border border-brand-400">
+                                        <div className="relative w-full px-6 pb-6 md:p-8 lg:p-14 z-10 mt-auto">
+                        <motion.div 
+                            initial={{ y: 40, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <div className="flex items-center flex-wrap gap-2 mb-4">
+                                <span className="bg-brand-500 text-brand-950 text-[10px] sm:text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl shadow-brand-500/20">
                                     {selectedStore.category}
                                 </span>
-                                {isNew(selectedStore.createdAt) && (
-                                    <span className="bg-white/90 text-stone-950 text-[10px] sm:text-xs font-black px-3 py-1 rounded-lg uppercase tracking-widest border border-stone-200">Nuevo</span>
+                                {isNew(selectedStore.createdAt || '') && (
+                                    <span className="bg-white/10 backdrop-blur-md text-white text-[10px] sm:text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest border border-white/10">Nuevo</span>
                                 )}
                             </div>
-                            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white tracking-tighter leading-none mb-4 italic uppercase break-words">
+                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9] mb-6 italic uppercase">
                                 {selectedStore.name}
                             </h1>
                             
-                            <div className="flex items-center flex-wrap gap-y-2 gap-x-4 md:gap-x-6 bg-white/10 backdrop-blur-2xl w-fit p-3 md:p-4 rounded-2xl border border-white/20 shadow-lg">
-                                <div className="flex items-center gap-1.5 md:gap-2 font-black text-white shrink-0">
-                                    <Star size={18} className="md:w-6 md:h-6" fill={accentColor} color={accentColor} />
-                                    <span className="text-lg md:text-2xl tracking-tighter leading-none">{displayRating.toFixed(1)}</span>
-                                    <span className="text-xs md:text-sm text-stone-300 font-bold ml-0.5 leading-none">({selectedStore.reviewsCount || 0})</span>
+                            <div className="flex items-center flex-wrap gap-y-3 gap-x-6 bg-stone-950/50 backdrop-blur-3xl w-fit p-4 md:p-5 rounded-3xl border border-white/10 shadow-2xl">
+                                <div className="flex items-center gap-2 font-black text-white">
+                                    <Star size={20} fill={accentColor} color={accentColor} />
+                                    <span className="text-xl md:text-2xl tracking-tighter leading-none">{displayRating.toFixed(1)}</span>
+                                    <span className="text-xs text-white/50 font-bold ml-1 uppercase">{selectedStore.reviewsCount || 0} reseñas</span>
                                 </div>
-                                <div className="w-[2px] h-5 md:h-6 bg-white/20 rounded-full shrink-0" />
-                                <div className="flex items-center gap-1.5 md:gap-2 font-black text-white shrink-0">
-                                    <Clock size={18} className="md:w-6 md:h-6 text-stone-300" />
-                                    <span className="text-lg md:text-2xl tracking-tighter leading-none">{selectedStore.deliveryTimeMin}-{selectedStore.deliveryTimeMax}<span className="text-[10px] md:text-xs ml-0.5 uppercase tracking-wide opacity-60">min</span></span>
+                                <div className="hidden sm:block w-px h-6 bg-white/10" />
+                                <div className="flex items-center gap-2 font-black text-white">
+                                    <Clock size={20} className="text-white/50" />
+                                    <span className="text-xl md:text-2xl tracking-tighter leading-none">{selectedStore.deliveryTimeMin}-{selectedStore.deliveryTimeMax} min</span>
                                 </div>
-                                <div className="w-[2px] h-5 md:h-6 bg-white/20 rounded-full hidden sm:block shrink-0" />
-                                <div className="hidden sm:flex items-center gap-1.5 md:gap-2 font-black text-white shrink-0">
-                                    <Bike size={18} className="md:w-6 md:h-6 text-brand-500" />
-                                    <span className="text-lg md:text-2xl tracking-tighter leading-none">{formatCurrency(selectedStore.deliveryFee || 0)}</span>
+                                <div className="hidden sm:block w-px h-6 bg-white/10" />
+                                <div className="flex items-center gap-2 font-black text-white">
+                                    <div className="w-8 h-8 rounded-full bg-brand-500/20 flex items-center justify-center">
+                                        <Bike size={16} className="text-brand-500" />
+                                    </div>
+                                    <span className="text-xl md:text-2xl tracking-tighter leading-none">{formatCurrency(selectedStore.deliveryFee || 0)}</span>
                                 </div>
                             </div>
+                        </motion.div>
+                    </div>
+                </motion.div>
+
+                {/* Search & Actions Bar - Refined Élite Sticky */}
+                <div className="sticky top-20 lg:top-0 z-40 px-6 py-4 bg-stone-50/80 dark:bg-stone-950/80 backdrop-blur-xl border-b border-stone-200 dark:border-white/5 shadow-sm space-y-4">
+                    <div className="max-w-7xl mx-auto flex items-center justify-between">
+                        <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setSelectedStore(null)}
+                            className="flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-2.5 lg:py-3 bg-white dark:bg-stone-900 border border-stone-200 dark:border-white/10 rounded-2xl text-stone-950 dark:text-white font-black uppercase text-[10px] lg:text-xs tracking-widest shadow-sm"
+                        >
+                            <ArrowLeft size={18} strokeWidth={3} />
+                            <span>Volver</span>
+                        </motion.button>
+                        
+                        <div className="flex items-center gap-3">
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedStore.id); }}
+                                className={`w-12 h-12 flex items-center justify-center rounded-2xl border transition-all ${isFavorite ? 'bg-red-500 border-red-400 text-white shadow-lg shadow-red-500/20' : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-white/10 text-stone-950 dark:text-white shadow-sm'}`}
+                            >
+                                <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} strokeWidth={3} />
+                            </motion.button>
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={(e) => handleShareStore(e, selectedStore)}
+                                className="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-white/10 rounded-2xl text-stone-950 dark:text-white shadow-sm transition-all"
+                            >
+                                <Share2 size={20} strokeWidth={3} />
+                            </motion.button>
                         </div>
+                    </div>
+
+                    <div className="max-w-7xl mx-auto flex gap-4 items-center">
+                        <div className="flex-1 relative group">
+                            <Search size={22} className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-brand-500 transition-colors" />
+                            <input 
+                                placeholder="Buscar en el catálogo..." 
+                                className="w-full bg-white dark:bg-stone-900 pl-16 pr-8 py-4 rounded-2xl text-base font-bold outline-none border-2 border-transparent focus:border-brand-500/50 dark:focus:border-brand-500/20 shadow-inner transition-all text-stone-950 dark:text-white placeholder-stone-400"
+                            />
+                        </div>
+                        <button className="hidden sm:flex w-14 h-14 items-center justify-center bg-white dark:bg-stone-900 border border-stone-200 dark:border-white/10 rounded-2xl shadow-sm text-stone-950 dark:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-all">
+                            <Info size={24} />
+                        </button>
                     </div>
                 </div>
 
-                {/* Sticky Info Bar / Búsqueda */}
-            <div className="bg-white dark:bg-stone-900 border-y border-stone-200 dark:border-white/5 px-6 py-4 flex items-center justify-between z-30 shrink-0 sticky top-0 shadow-lg shadow-black/[0.02]">
-                <div className="flex-1 max-w-2xl mx-auto relative group">
-                    <Search size={22} className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300 group-focus-within:text-brand-500 transition-colors" />
-                    <input 
-                        placeholder="Buscar platos o sabores..." 
-                        className="w-full bg-stone-50 dark:bg-white/5 pl-14 pr-6 py-4 rounded-[1.5rem] text-sm font-black outline-none border-2 border-stone-100 dark:border-transparent focus:border-brand-500 transition-all text-stone-950 dark:text-white placeholder-stone-400"
-                    />
-                </div>
-            </div>
-
-            {/* Menu List */}
-            <div className="w-full p-6 lg:p-14">
-                <div className="max-w-7xl mx-auto space-y-16">
-                    {[...new Set((selectedStore.products || []).map(p => p.category || 'Destacados'))].map(category => (
-                        <div key={category} className="space-y-8">
-                            <div className="flex items-center gap-4">
-                                <div className="w-2 h-10 bg-brand-500 rounded-full shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
-                                <h2 className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic">
-                                    {category}
-                                </h2>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {(selectedStore.products || [])
-                                    .filter(p => (p.category || 'Destacados') === category)
-                                    .map(product => (
-                                        <div 
-                                            key={product.id}
-                                            onClick={() => setProductToView(product)}
-                                            className="group bg-white dark:bg-stone-900 p-6 rounded-[3rem] border-2 border-stone-200/60 dark:border-white/5 flex gap-6 hover:border-brand-500/40 transition-all duration-500 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.06)] hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] cursor-pointer relative overflow-hidden"
-                                        >
-                                            <div className="flex-1 min-w-0 flex flex-col justify-between py-2">
-                                                <div>
-                                                    <h4 className="font-black text-2xl text-stone-950 dark:text-white tracking-tight group-hover:text-brand-600 transition-colors truncate uppercase italic">{product.name}</h4>
-                                                    <p className="text-stone-400 dark:text-stone-500 text-[11px] mt-3 line-clamp-2 font-bold leading-relaxed tracking-tight">{product.description}</p>
-                                                </div>
-                                                <div className="mt-6 flex items-center justify-between">
-                                                    <span className="text-2xl font-black text-stone-950 dark:text-white tracking-tighter leading-none">{formatCurrency(product.price)}</span>
-                                                    <div className="w-12 h-12 bg-stone-50 dark:bg-stone-800 rounded-2xl flex items-center justify-center text-stone-400 group-hover:bg-brand-500 group-hover:text-brand-950 transition-all border border-stone-100 dark:border-white/5">
-                                                        <Plus size={24} strokeWidth={3} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-[2.5rem] overflow-hidden bg-stone-100 dark:bg-stone-800 shrink-0 shadow-inner border border-stone-100 dark:border-white/5 group-hover:scale-105 transition-all duration-700">
-                                                <LazyImage src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                                            </div>
+                {/* Menu List - Elite Grid */}
+                <div className="w-full p-6 lg:p-14">
+                    <div className="max-w-7xl mx-auto space-y-20">
+                        {selectedStore.products && selectedStore.products.length > 0 ? (
+                            [...new Set((selectedStore.products || []).map(p => p.category || 'Destacados'))].map((category, catIndex) => (
+                                <motion.div 
+                                    key={category} 
+                                    className="space-y-10"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, margin: "-50px" }}
+                                    transition={{ delay: catIndex * 0.1 }}
+                                >
+                                    <div className="flex items-end justify-between border-b border-stone-200 dark:border-white/10 pb-6">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-3 h-12 bg-gradient-to-b from-brand-500 to-brand-700 rounded-full shadow-[0_0_20px_rgba(250,204,21,0.4)]" />
+                                            <h2 className="text-4xl md:text-5xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic leading-none">
+                                                {category}
+                                            </h2>
                                         </div>
-                                    ))}
+                                        <span className="text-sm font-black text-stone-400 uppercase tracking-widest hidden sm:block">{(selectedStore.products || []).filter(p => (p.category || 'Destacados') === category).length} items</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                                        {(selectedStore.products || [])
+                                            .filter(p => (p.category || 'Destacados') === category)
+                                            .map((product) => (
+                                                <motion.div 
+                                                    key={product.id}
+                                                    whileHover={{ y: -8 }}
+                                                    transition={{ duration: 0.4, ease: "circOut" }}
+                                                    onClick={() => setProductToView(product)}
+                                                    className="group flex flex-col bg-white dark:bg-stone-900 rounded-[2.5rem] border border-stone-200 dark:border-white/5 hover:border-brand-500/40 transition-all duration-500 shadow-xl shadow-black/[0.03] hover:shadow-2xl hover:shadow-brand-500/10 cursor-pointer overflow-hidden p-3"
+                                                >
+                                                    <div className="relative h-64 w-full rounded-[2rem] overflow-hidden mb-6">
+                                                        <LazyImage src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                                                        <div className="absolute inset-x-4 bottom-4 flex justify-between items-end">
+                                                            <div className="bg-stone-950/80 backdrop-blur-xl px-5 py-2 rounded-2xl border border-white/10">
+                                                                <span className="text-xl font-black text-white tracking-tighter">{formatCurrency(product.price)}</span>
+                                                            </div>
+                                                            <motion.button 
+                                                                whileHover={{ scale: 1.1, rotate: 90 }}
+                                                                whileTap={{ scale: 0.9 }}
+                                                                className="w-14 h-14 bg-brand-500 text-brand-950 rounded-2xl flex items-center justify-center shadow-2xl shadow-brand-500/40 border border-brand-400 transition-all"
+                                                            >
+                                                                <Plus size={28} strokeWidth={3} />
+                                                            </motion.button>
+                                                        </div>
+                                                        {product.isAvailable === false && (
+                                                            <div className="absolute inset-0 bg-stone-950/60 backdrop-blur-sm flex items-center justify-center p-6 text-center">
+                                                                <span className="text-white font-black uppercase tracking-tighter text-2xl rotate-[-10deg] border-4 border-white px-6 py-2">No Disponible</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="px-5 pb-5">
+                                                        <h4 className="font-black text-2xl text-stone-950 dark:text-white tracking-tight uppercase italic leading-tight mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-500 transition-colors">
+                                                            {product.name}
+                                                        </h4>
+                                                        <p className="text-stone-500 dark:text-stone-400 text-xs font-bold leading-relaxed line-clamp-2 italic">
+                                                            {product.description}
+                                                        </p>
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                    </div>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                                <div className="w-32 h-32 bg-stone-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-6 border border-dashed border-stone-300 dark:border-white/10">
+                                    <ShoppingBag size={48} className="text-stone-300 dark:text-white/20" />
+                                </div>
+                                <h3 className="text-2xl font-black text-stone-950 dark:text-white uppercase italic tracking-tighter">No hay productos disponibles</h3>
+                                <p className="text-stone-500 dark:text-stone-400 font-bold mt-2">Esta tienda aún no ha cargado su menú.</p>
                             </div>
-                        </div>
-                    ))}
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
-
     );
 };

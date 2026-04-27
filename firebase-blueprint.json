@@ -46,7 +46,9 @@
         "taxId": { "type": "string", "description": "RFC / Tax ID of the store" },
         "phone": { "type": "string", "description": "Store contact phone" },
         "bankAccount": { "type": "string", "description": "Bank account for payouts" },
-        "commissionPct": { "type": "number", "description": "Custom commission percentage (0-1)" }
+        "commissionPct": { "type": "number", "description": "Custom commission percentage (0-1)" },
+        "mpAccessToken": { "type": "string", "description": "Mercado Pago Access Token for decentralized payments" },
+        "mpPublicKey": { "type": "string", "description": "Mercado Pago Public Key for decentralized payments" }
       },
       "required": ["name", "category", "ownerId", "createdAt"]
     },
@@ -167,7 +169,19 @@
       "description": "Messages for an order chat"
     },
     "/config/global": {
-      "schema": "object",
+      "schema": {
+        "title": "GlobalConfig",
+        "type": "object",
+        "properties": {
+          "platformCommissionPct": { "type": "number" },
+          "driverCommissionPct": { "type": "number" },
+          "paymentMode": { "type": "string", "enum": ["CENTRALIZED", "DECENTRALIZED"] },
+          "mpAccessToken": { "type": "string" },
+          "mpPublicKey": { "type": "string" },
+          "maintenanceMode": { "type": "boolean" },
+          "supportEmail": { "type": "string" }
+        }
+      },
       "description": "Global platform configuration"
     }
   }
