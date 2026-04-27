@@ -139,8 +139,9 @@ export const AuthView: React.FC = () => {
     e.preventDefault();
     setIsLoggingIn(true);
     try {
+      const cleanEmail = email.trim();
       if (authMode === 'EMAIL_LOGIN') {
-        await loginEmail(email, password);
+        await loginEmail(cleanEmail, password);
       } else if (authMode === 'EMAIL_REGISTER') {
         if (password !== confirmPassword) {
           showToast('Las contraseñas no coinciden', 'error');
@@ -152,9 +153,9 @@ export const AuthView: React.FC = () => {
           setIsLoggingIn(false);
           return;
         }
-        await registerEmail(email, password, name);
+        await registerEmail(cleanEmail, password, name.trim());
       } else if (authMode === 'FORGOT') {
-        await resetPass(email);
+        await resetPass(cleanEmail);
         setAuthMode('EMAIL_LOGIN');
       }
     } catch (err) {
@@ -462,7 +463,7 @@ export const AuthView: React.FC = () => {
                     ))}
                 </div>
                 <p className="text-stone-500 text-[11px] font-bold uppercase tracking-wider dark:text-stone-400 italic">
-                    CONECTANDO <span className="text-white">CORAZONES Y NEGOCIOS</span> LOCALES
+                    CONECTANDO <span className="text-white">NEGOCIOS</span> LOCALES
                 </p>
             </motion.div>
         </div>

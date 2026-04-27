@@ -33,7 +33,7 @@ export const StoreDetail: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/80 to-stone-950/20"></div>
                     </div>
                     
-                    <div className="relative top-0 w-full px-4 pt-4 md:px-6 md:pt-6 flex justify-between items-start z-20">
+                    <div className="absolute top-4 left-4 right-4 md:top-6 md:left-6 md:right-6 flex justify-between items-start z-20">
                         <button 
                             onClick={() => setSelectedStore(null)}
                             className="w-12 h-12 md:w-14 md:h-14 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl hover:bg-white/20 transition-all active:scale-95 shrink-0"
@@ -56,7 +56,7 @@ export const StoreDetail: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="relative w-full px-6 md:px-8 lg:px-14 z-10 mt-12">
+                    <div className="absolute bottom-0 left-0 w-full px-6 pb-6 md:p-8 lg:p-14 z-10">
                         <div className="animate-slide-up">
                             <div className="flex items-center flex-wrap gap-2 mb-3">
                                 <span className="bg-brand-500 text-brand-950 text-[10px] sm:text-xs font-black px-3 py-1 rounded-lg uppercase tracking-widest shadow-xl border border-brand-400">

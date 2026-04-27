@@ -133,11 +133,11 @@ const TrackingMap: React.FC<{
             />
             <MapController driverPos={driverPos} storePos={storePos} userPos={userPos} />
             
-            {routePath.length > 1 && <Polyline positions={routePath} color="#000000" weight={4} dashArray="10, 10" opacity={0.4} />}
+            {routePath.length > 1 && <Polyline key={`route-${routePath.length}`} positions={routePath} color="#000000" weight={4} dashArray="10, 10" opacity={0.4} />}
 
-            {storePos && <Marker position={storePos} icon={storeIcon}><Popup>Tienda</Popup></Marker>}
-            {userPos && <Marker position={userPos} icon={userIcon}><Popup>Tu ubicación</Popup></Marker>}
-            {driverPos && <Marker position={driverPos} icon={driverIcon}><Popup>Repartidor</Popup></Marker>}
+            {storePos && <Marker key="store-marker" position={storePos} icon={storeIcon}><Popup>Tienda</Popup></Marker>}
+            {userPos && <Marker key="user-marker" position={userPos} icon={userIcon}><Popup>Tu ubicación</Popup></Marker>}
+            {driverPos && <Marker key={`driver-marker-${driverId || 'id'}`} position={driverPos} icon={driverIcon}><Popup>Repartidor</Popup></Marker>}
         </MapContainer>
     );
 };

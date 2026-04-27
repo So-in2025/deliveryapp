@@ -515,9 +515,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       if (!savedRole) {
           // If no role saved, use authenticated role or CLIENT as fallback
-          const initialRole = authenticatedRole || UserRole.CLIENT;
+          const initialRole = authenticatedRole === UserRole.ADMIN ? UserRole.NONE : (authenticatedRole || UserRole.CLIENT);
           setRoleState(initialRole);
-          localStorage.setItem('codex_user_role', initialRole);
+          if (initialRole !== UserRole.NONE) {
+              localStorage.setItem('codex_user_role', initialRole);
+          }
       } else {
           // If the user has a saved role, let them stay in it IF they have permission
           if (authenticatedRole === UserRole.ADMIN) {
@@ -582,6 +584,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     let unsubscribeOrders = () => {};
     if (ordersQuery) {
+      let isInitialSnapshot = true;
       unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
           const data = doc.data();
@@ -595,7 +598,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
 
         // Sound feedback for new orders or status changes
-        if (!initialLoadRef.current.orders) {
+        if (!isInitialSnapshot) {
           snapshot.docChanges().forEach(change => {
             if (change.type === 'added') {
               soundService.play('NEW_ORDER');
@@ -619,7 +622,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
 
         setOrders(ordersData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
-        initialLoadRef.current.orders = false;
+        isInitialSnapshot = false;
       }, (error) => {
         if (error.code === 'permission-denied') {
           console.warn('Orders permission denied - user might not have access yet');

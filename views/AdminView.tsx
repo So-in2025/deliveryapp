@@ -474,7 +474,7 @@ export const AdminView: React.FC = () => {
     orders, stores, assignDriver, drivers, resolveClaim, users, 
     seedDemoData, adminViewState, setAdminViewState, updateAnyUser, updateStore, deleteStore,
     config, updateConfig, user, completeTour, settleMerchantOrder, 
-    settleDriverOrder, banners, addBanner, updateBanner, deleteBanner 
+    settleDriverOrder, banners, addBanner, updateBanner, deleteBanner, setRole
   } = useApp();
   const { showToast } = useToast();
 
@@ -1672,7 +1672,7 @@ export const AdminView: React.FC = () => {
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <div className="flex-1 pr-4">
-                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100 flex items-center gap-2 group/tooltip relative cursor-help">
+                                                <div className="text-sm font-bold text-stone-800 dark:text-stone-100 flex items-center gap-2 group/tooltip relative cursor-help">
                                                     Modo de Pago 
                                                     <HelpCircle size={14} className="text-stone-400" />
                                                     <div className="absolute bottom-full left-0 mb-2 w-72 bg-white dark:bg-stone-800 text-stone-950 dark:text-white text-[10px] p-4 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 transition-all pointer-events-none z-50 shadow-2xl border border-black/5 dark:border-white/10 translate-y-2 group-hover/tooltip:translate-y-0">
@@ -1681,7 +1681,7 @@ export const AdminView: React.FC = () => {
                                                         <p className="font-black mb-1 border-b border-black/5 dark:border-white/5 pb-1 uppercase tracking-widest text-blue-500">Descentralizado:</p>
                                                         <p className="font-medium opacity-80">El cliente paga directo al comercio o repartidor (Efectivo/Transferencia). La App solo registra la orden. Los comercios deben pagar su comisión a la App manualmente.</p>
                                                     </div>
-                                                </p>
+                                                </div>
                                                 <p className="text-xs text-stone-500 dark:text-stone-400">Define el flujo de dinero en la plataforma</p>
                                             </div>
                                             <div className="flex bg-stone-100 p-1 rounded-lg gap-1 dark:bg-stone-800">

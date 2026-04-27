@@ -137,9 +137,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               uid: currentUser.uid,
               name: currentUser.displayName || 'Usuario',
               email: currentUser.email || '',
-              avatar: currentUser.photoURL || undefined,
               role: UserRole.CLIENT,
             };
+            if (currentUser.photoURL) {
+              data.avatar = currentUser.photoURL;
+            }
             try {
               await setDoc(userDocRef, data);
               // setProfile will be called by the next snapshot
@@ -227,6 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       await logout();
+      localStorage.removeItem('codex_user_role');
       showToast('Sesión cerrada', 'info');
     } catch (error) {
       console.error('Logout error:', error);
