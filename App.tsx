@@ -136,17 +136,12 @@ const ViewRouter = () => {
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Mark app as loaded for the diagnostic script in index.html
-    if (typeof window !== 'undefined') {
-      (window as any).__APP_LOADED__ = true;
-    }
-  }, []);
-
   // Version Control & Cache Busting
   useEffect(() => {
     const currentVersion = APP_CONFIG.version;
     const storedVersion = localStorage.getItem('app_version');
+    
+    console.log('App version check:', { currentVersion, storedVersion });
     
     if (storedVersion && storedVersion !== currentVersion) {
       console.log(`Actualización detectada: ${currentVersion}. Limpiando caché...`);
@@ -154,8 +149,11 @@ const App: React.FC = () => {
       localStorage.clear();
       if (theme) localStorage.setItem('codex_theme_v2', theme);
       localStorage.setItem('app_version', currentVersion);
-      // Force reload to get newest JS files
-      window.location.href = window.location.origin + window.location.pathname + '?v=' + currentVersion;
+      
+      // Preserve existing search params to avoid breaking deep links
+      const url = new URL(window.location.href);
+      url.searchParams.set('v', currentVersion);
+      window.location.href = url.toString();
     } else {
       localStorage.setItem('app_version', currentVersion);
     }

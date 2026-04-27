@@ -3,8 +3,6 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup, 
-  signInWithRedirect,
-  getRedirectResult,
   signOut, 
   onAuthStateChanged,
   createUserWithEmailAndPassword,
@@ -95,33 +93,13 @@ const googleProvider = new GoogleAuthProvider();
 
 export const loginWithGoogle = async () => {
   try {
-    // Detection for mobile/Safari to use redirect instead of popup
-    const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isSafari = typeof window !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    
-    if (isMobile || isSafari) {
-      console.log('Mobile/Safari detected. Using signInWithRedirect.');
-      await signInWithRedirect(auth, googleProvider);
-      return; // Will redirect away from page
-    }
-
-    const result = await signInWithPopup(auth, googleProvider).catch(async (err) => {
-      // Fallback if popup is blocked
-      if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
-        console.warn('Popup blocked, falling back to redirect...');
-        await signInWithRedirect(auth, googleProvider);
-        return null;
-      }
-      throw err;
-    });
-    return result?.user;
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
   } catch (error) {
     console.error('Error during Google login:', error);
     throw error;
   }
 };
-
-export const handleRedirectResult = () => getRedirectResult(auth);
 
 export const loginWithEmail = (email: string, pass: string) => signInWithEmailAndPassword(auth, email, pass);
 export const registerWithEmail = (email: string, pass: string) => createUserWithEmailAndPassword(auth, email, pass);
