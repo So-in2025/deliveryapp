@@ -158,21 +158,22 @@ service cloud.firestore {
                     (!('createdAt' in incoming()) || isRecent(incoming().createdAt)) &&
                     exists(/databases/$(database)/documents/stores/$(incoming().storeId));
 
-      allow update: if isVerified() && (
+      allow update: if isVerified() && isValidOrder(incoming()) && (                
         // Action: Customer Cancel (cannot cancel if already out for delivery or finished)
         (existing().customerId == request.auth.uid && incoming().status == 'CANCELLED' && 
-         existing().status in ['PENDING', 'ACCEPTED', 'PREPARING'] &&
+         existing().status in ['PENDING', 'ACCEPTED', 'PREPARING'] && incoming().customerId == existing().customerId &&
          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'cancelledReason', 'updatedAt'])) ||
         
         // Action: Driver Assign/Progress
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'DRIVER' &&
          ((!('driverId' in existing()) && incoming().driverId == request.auth.uid && incoming().status == 'ACCEPTED') ||
-          (existing().driverId == request.auth.uid)) &&
+          (existing().driverId == request.auth.uid && incoming().driverId == existing().driverId)) &&
          incoming().diff(existing()).affectedKeys().hasAll(['status']) &&
          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'deliveredAt', 'updatedAt', 'claimReason', 'claimStatus'])) ||
         
         // Action: Merchant Progress
         (get(/databases/$(database)/documents/stores/$(existing().storeId)).data.ownerId == request.auth.uid &&
+         incoming().storeId == existing().storeId &&
          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'paymentStatus', 'merchantSettled', 'updatedAt', 'merchantEarnings', 'claimReason', 'claimStatus'])) ||
         
         isAdmin()

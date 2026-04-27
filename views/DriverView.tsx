@@ -178,8 +178,11 @@ export const DriverView: React.FC = () => {
                     updateLocation(latitude, longitude);
                 },
                 (error) => {
-                    console.error("Error watching position:", error);
-                    showToast("Error al obtener ubicación GPS", "error");
+                    // Only show toast for actual errors, not permission issues which are common in browser sandbox
+                    if (error.code !== 1) { // 1 is PERMISSION_DENIED
+                        console.error("Error watching position:", error);
+                        showToast("Error al obtener ubicación GPS: " + error.message, "error");
+                    }
                 },
                 {
                     enableHighAccuracy: true,
@@ -266,13 +269,22 @@ export const DriverView: React.FC = () => {
     setDriverViewState('MAP');
   };
 
-  const handleProgress = (orderId: string, currentStatus: OrderStatus) => {
-    if (currentStatus === OrderStatus.DRIVER_ASSIGNED) {
-      updateOrder(orderId, OrderStatus.PICKED_UP);
-      showToast('Pedido recogido. ¡En ruta al cliente!', 'info');
-    } else if (currentStatus === OrderStatus.PICKED_UP) {
-      updateOrder(orderId, OrderStatus.DELIVERED);
-      showToast('¡Pedido entregado! Ganancias actualizadas.', 'success');
+  const handleProgress = async (orderId: string, currentStatus: OrderStatus) => {
+    console.log('Depurando updateOrder:', typeof updateOrder, updateOrder);
+    try {
+        if (!updateOrder || typeof updateOrder !== 'function') {
+            throw new Error('updateOrder no es una función válida');
+        }
+        if (currentStatus === OrderStatus.DRIVER_ASSIGNED) {
+          await updateOrder(orderId, OrderStatus.PICKED_UP);
+          showToast('Pedido recogido. ¡En ruta al cliente!', 'info');
+        } else if (currentStatus === OrderStatus.PICKED_UP) {
+          await updateOrder(orderId, OrderStatus.DELIVERED);
+          showToast('¡Pedido entregado! Ganancias actualizadas.', 'success');
+        }
+    } catch (e) {
+        console.error('Error in handleProgress:', e);
+        showToast('Error técnico: ' + (e instanceof Error ? e.message : 'Error desconocido'), 'error');
     }
   };
 
