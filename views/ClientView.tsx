@@ -36,6 +36,7 @@ export const ClientView: React.FC = () => {
         productToView, setProductToView, productToCustomize, setProductToCustomize
     } = useApp();
     const { showToast } = useToast();
+    const { user: authUser } = useAuth();
     
     // UI Local State
     const [selectedReceiptOrder, setSelectedReceiptOrder] = useState<Order | null>(null);
@@ -43,6 +44,7 @@ export const ClientView: React.FC = () => {
     const [claimOrder, setClaimOrder] = useState<Order | null>(null);
 
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
+    const isAdmin = user.role === 'ADMIN' || (authUser?.email && ['soinsoluciones2025@gmail.com', 'daniel.acevedo3134@gmail.com'].includes(authUser.email));
 
     // --- ALGORITHMIC LISTS ---
     const recommendedStores = useMemo(() => {
@@ -147,6 +149,36 @@ export const ClientView: React.FC = () => {
                     />
                 )}
             </AnimatePresence>
+
+            {/* ADMIN DEBUG TOOLS */}
+            {isAdmin && clientViewState === 'BROWSE' && (
+                <motion.div 
+                    initial={{ x: 100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="fixed right-4 top-24 z-[60] flex flex-col gap-2"
+                >
+                    <button 
+                        onClick={async () => {
+                            // Synchronize with Demo Store (Angel de la Independencia)
+                            const demoLat = 19.428500;
+                            const demoLng = -99.168500;
+                            updateUser({ 
+                                lat: demoLat, 
+                                lng: demoLng, 
+                                addresses: ['Cerca del Ángel de la Independencia, CDMX', ...(user.addresses || [])] 
+                            });
+                            showToast('Ubicación sincronizada con Demo CDMX', 'success');
+                        }}
+                        className="bg-brand-500 text-brand-950 p-3 rounded-2xl shadow-2xl border border-brand-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-transform"
+                    >
+                        <Navigation size={14} /> Sincronizar Demo
+                    </button>
+                    <div className="bg-stone-900/80 backdrop-blur-md border border-white/10 p-3 rounded-2xl text-white text-[8px] font-mono leading-none">
+                        LAT: {user.lat?.toFixed(4) || '??'}<br/>
+                        LNG: {user.lng?.toFixed(4) || '??'}
+                    </div>
+                </motion.div>
+            )}
 
             {activeOrder && clientViewState !== 'TRACKING' && clientViewState === 'BROWSE' && (
                 <div onClick={() => setClientViewState('TRACKING')} className="w-full bg-brand-500 text-black p-3 flex justify-between items-center cursor-pointer shrink-0 z-50 shadow-xl animate-slide-down border-b border-black/10">

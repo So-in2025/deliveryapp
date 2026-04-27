@@ -2,7 +2,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { formatCurrency } from '../../constants';
-import { ArrowLeft, Star, Clock, Heart, Share2, Search, Bike, Info, Plus } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Heart, Share2, Search, Bike, Info, Plus, MapPin } from 'lucide-react';
 import { LazyImage } from '../ui/LazyImage';
 import { motion } from 'motion/react';
 
@@ -78,6 +78,11 @@ export const StoreDetail: React.FC = () => {
                                         <Bike size={16} className="text-brand-500" />
                                     </div>
                                     <span className="text-xl md:text-2xl tracking-tighter leading-none">{formatCurrency(selectedStore.deliveryFee || 0)}</span>
+                                </div>
+                                <div className="hidden sm:block w-px h-6 bg-white/10" />
+                                <div className="flex items-center gap-2 font-black text-white">
+                                    <MapPin size={20} className="text-white/50" />
+                                    <span className="text-xs md:text-sm tracking-tight leading-tight max-w-[150px] line-clamp-1">{selectedStore.address || 'Ubicación no disponible'}</span>
                                 </div>
                             </div>
                         </motion.div>

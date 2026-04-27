@@ -1143,10 +1143,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const subtotal = cart.reduce((sum, item) => sum + (item.totalPrice * item.quantity), 0);
     
     // Geofencing Check
+    const isAdminUser = user.role === UserRole.ADMIN || (authUser?.email && ADMIN_EMAILS.includes(authUser.email));
+    
     if (type === OrderType.DELIVERY && coordinates && config.maxDeliveryRadiusKm > 0) {
       const distance = await getRouteDistance(config.centerCoordinates, coordinates);
-      if (distance > config.maxDeliveryRadiusKm) {
-        showToast(`Lo sentimos, el domicilio está fuera de nuestra zona de cobertura (${config.maxDeliveryRadiusKm}km)`, 'error');
+      if (distance > config.maxDeliveryRadiusKm && !isAdminUser) {
+        showToast(`Lo sentimos, el domicilio está fuera de nuestra zona de cobertura (${config.maxDeliveryRadiusKm}km). Tu distancia: ${distance.toFixed(1)}km`, 'error');
         return;
       }
     }
@@ -1163,6 +1165,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         if (coordinates && store?.lat && store?.lng) {
             activeDistance = await getRouteDistance({ lat: store.lat, lng: store.lng }, coordinates);
+            
+            // Critical fix for Demo Users: If distance is massive (>500km) and it's an admin, 
+            // set distance to 1km to avoid extreme delivery fees and allow the demo.
+            if (activeDistance > 500 && isAdminUser) {
+              console.log('Admin Demo detected: Simulating 1km distance instead of', activeDistance);
+              activeDistance = 1; 
+            }
         }
         
         const details = calculateDynamicDeliveryDetails(activeDistance, fallbackFee, config.driverCommissionPct, config.deliveryRates);

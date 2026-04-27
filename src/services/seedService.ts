@@ -23,11 +23,11 @@ export const setupDemoStore = async (showToast: (msg: string, type: 'success' | 
     const userDoc = querySnapshot.docs[0];
     const userId = userDoc.id;
 
-    // Default coordinates (closer together for better demo tracking)
-    const storeLat = 19.432608;
-    const storeLng = -99.133209;
-    const userLat = 19.433012;
-    const userLng = -99.133815;
+    // Angel de la Independencia, CDMX coordinates
+    const storeLat = 19.427050;
+    const storeLng = -99.167645;
+    const userLat = 19.428500; // Very close
+    const userLng = -99.168500;
 
     // 2. Check if the user already has a store
     const userData = userDoc.data();
