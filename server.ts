@@ -1,7 +1,7 @@
+import 'dotenv/config';
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import webpush from 'web-push';
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
@@ -9,8 +9,6 @@ import { db, doc, updateDoc, getDoc, collection, getDocs } from './firebase.js';
 import { createClient } from 'redis';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-
-dotenv.config();
 
 // Web Push Configuration
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || '';

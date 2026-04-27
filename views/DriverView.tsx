@@ -101,6 +101,7 @@ const DriverTrackingMap: React.FC<{
 };
 
 export const DriverView: React.FC = () => {
+    console.log('DriverView component mounted');
   const { user, role, setRole, orders, stores, updateOrder, isDriverOnline, toggleDriverStatus, driverViewState, setDriverViewState, soundEnabled, toggleSound, driverLocation, updateLocation, completeTour } = useApp();
   const { showToast } = useToast();
 
@@ -116,13 +117,13 @@ export const DriverView: React.FC = () => {
         position: 'bottom'
     },
     {
-        targetId: isMobile ? 'deliveries-tab-mobile' : 'deliveries-tab',
+        targetId: 'deliveries-tab',
         title: 'Pedidos Disponibles',
         description: 'Aquí aparecerán todos los pedidos listos para ser recogidos en los locales. Acepta los que más te convengan.',
         position: isMobile ? 'top' : 'right'
     },
     {
-        targetId: isMobile ? 'route-tab-mobile' : 'route-tab',
+        targetId: 'route-tab',
         title: 'Tu Ruta Activa',
         description: 'Cuando aceptes un pedido, aquí verás el mapa y las instrucciones paso a paso para la entrega.',
         position: isMobile ? 'top' : 'right'
@@ -134,13 +135,13 @@ export const DriverView: React.FC = () => {
         position: 'bottom'
     },
     {
-        targetId: isMobile ? 'history-tab-mobile' : 'history-tab',
+        targetId: 'history-tab',
         title: 'Historial de Entregas',
         description: 'Revisa el detalle de todas las entregas que has completado exitosamente.',
         position: isMobile ? 'top' : 'right'
     },
     {
-        targetId: isMobile ? 'settings-tab-mobile' : 'settings-tab',
+        targetId: 'settings-tab',
         title: 'Ajustes y Soporte',
         description: 'Modifica tu perfil, revisa tu vehículo y contacta a soporte si tienes algún problema en ruta.',
         position: isMobile ? 'bottom' : 'right'
@@ -148,6 +149,15 @@ export const DriverView: React.FC = () => {
   ];
 
   const showTour = !user.completedTours?.includes('driver-onboarding') && driverViewState === 'DELIVERIES' && user.isApprovedDriver;
+  
+  useEffect(() => {
+      console.log('DriverView tour check:', {
+          notCompleted: !user.completedTours?.includes('driver-onboarding'),
+          isDeliveries: driverViewState === 'DELIVERIES',
+          isApproved: user.isApprovedDriver,
+          showTour
+      });
+  }, [user.completedTours, driverViewState, user.isApprovedDriver, showTour]);
 
   const [wasPending, setWasPending] = useState(!user.isApprovedDriver);
 
@@ -333,12 +343,14 @@ export const DriverView: React.FC = () => {
                 Billetera
             </button>
             <button 
+                id="history-tab"
                 onClick={() => setDriverViewState('HISTORY')}
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'HISTORY' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
                 Historial
             </button>
             <button 
+                id="settings-tab"
                 onClick={() => setDriverViewState('PROFILE')}
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'PROFILE' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >

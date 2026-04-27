@@ -482,40 +482,40 @@ export const AdminView: React.FC = () => {
 
   const adminTourSteps: TourStep[] = [
     {
-        targetId: isMobile ? 'admin-stats' : 'dashboard-tab',
+        targetId: 'dashboard-tab',
         title: 'Métricas del Negocio',
         description: 'Visualiza las ventas totales, pedidos activos y el rendimiento general de la plataforma en tiempo real.',
-        position: isMobile ? 'bottom' : 'right'
+        position: 'bottom'
     },
     {
-        targetId: isMobile ? 'stores-tab-mobile' : 'stores-tab',
+        targetId: 'stores-tab',
         title: 'Gestión de Comercios',
         description: 'Administra todos los locales, revisa sus productos, ajusta comisiones y aprueba nuevos registros.',
-        position: isMobile ? 'bottom' : 'right'
+        position: 'bottom'
     },
     {
-        targetId: isMobile ? 'users-tab-mobile' : 'users-tab',
+        targetId: 'users-tab',
         title: 'Control de Usuarios',
         description: 'Gestiona los roles de Clientes, Merchants, Drivers y otros Administradores. Bloquea o desbloquea cuentas.',
-        position: isMobile ? 'bottom' : 'right'
+        position: 'bottom'
     },
     {
-        targetId: isMobile ? 'fleet-tab-mobile' : 'fleet-tab',
+        targetId: 'fleet-tab',
         title: 'Logística y Flota',
         description: 'Supervisa a los repartidores, asigna pedidos manualmente si es necesario y monitorea su ubicación.',
-        position: isMobile ? 'bottom' : 'right'
+        position: 'bottom'
     },
     {
-        targetId: isMobile ? 'disputes-tab-mobile' : 'disputes-tab',
+        targetId: 'disputes-tab',
         title: 'Resolución de Reclamos',
         description: 'Atiende disputas entre clientes, comercios y repartidores. Reembolsa o compensa según sea necesario.',
-        position: isMobile ? 'bottom' : 'right'
+        position: 'bottom'
     },
     {
-        targetId: isMobile ? 'config-tab-mobile' : 'config-tab',
+        targetId: 'settings-tab',
         title: 'Configuración Global',
         description: 'Ajusta comisiones, tarifas de envío y el modo de mantenimiento de la app.',
-        position: isMobile ? 'bottom' : 'right'
+        position: 'bottom'
     }
   ];
 
@@ -1454,6 +1454,7 @@ export const AdminView: React.FC = () => {
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
+                                    id={`${tab.id.toLowerCase()}-tab`}
                                     onClick={() => setAdminViewState(tab.id as any)}
                                     className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap relative ${adminViewState === tab.id ? 'bg-white dark:bg-stone-900 text-stone-950 dark:text-white shadow-xl' : 'text-stone-500 hover:text-white'}`}
                                 >

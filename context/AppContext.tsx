@@ -782,7 +782,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [merchantViewState, setMerchantViewState] = useState<MerchantViewState>('ORDERS');
-  const [driverViewState, setDriverViewState] = useState<DriverViewState>('MAP');
+  const [driverViewState, setDriverViewState] = useState<DriverViewState>('DELIVERIES');
   const [adminViewState, setAdminViewState] = useState<AdminViewState>('DASHBOARD');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -1292,12 +1292,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         throw new Error('Order not found');
       }
       const orderData = orderDoc.data() as Order;
+      console.log('Order data fetched:', orderId, 'driverId:', orderData.driverId, 'status:', orderData.status);
       
       const updateData: Partial<Order> = { status };
       
       if (status === OrderStatus.DRIVER_ASSIGNED && driverDetails) {
           updateData.driverId = driverDetails.driverId;
           updateData.driverName = driverDetails.driverName;
+          console.log('Assigning driver:', driverDetails);
       }
       
       if (status === OrderStatus.DELIVERED) {

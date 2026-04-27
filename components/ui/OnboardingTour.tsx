@@ -31,19 +31,27 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
         }
 
         const element = document.getElementById(step.targetId);
+        console.log('OnboardingTour tour check:', { targetId: step.targetId, found: !!element });
         if (element) {
             setTargetRect(element.getBoundingClientRect());
             setIsVisible(true);
         } else {
+            // If not found, try again in a bit, in case it's rendering
             setIsVisible(false);
         }
     }, [currentStep, steps]);
 
     useEffect(() => {
+        console.log('OnboardingTour mounted with steps:', steps);
         updateTargetRect();
+        
+        // Retry mechanism
+        const interval = setInterval(updateTargetRect, 500); 
+        
         window.addEventListener('resize', updateTargetRect);
         window.addEventListener('scroll', updateTargetRect, true);
         return () => {
+            clearInterval(interval);
             window.removeEventListener('resize', updateTargetRect);
             window.removeEventListener('scroll', updateTargetRect, true);
         };

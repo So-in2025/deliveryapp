@@ -172,10 +172,21 @@ export const ClientView: React.FC = () => {
                      selectedStore ? <StoreDetail key="store-detail" /> : (
                         <div key="browse" className="h-full flex flex-col">
                             <div className="flex-1 overflow-y-auto pb-24 scrollbar-hide">
-                                <StoreList />
+                                <div id="location-selector" onClick={() => setShowLocationSelector(true)} className="cursor-pointer mb-5">
+                                    <StoreList />
+                                </div>
                                 <BannerCarousel banners={banners} />
-                                <div className="mt-8">
+                                <div id="category-pills" className="mt-8">
                                     <CategoryPills categories={config.categories} selected={selectedCategory} onSelect={setSelectedCategory} />
+                                </div>
+                                
+                                <div id="search-bar" className="mt-8 px-6">
+                                    <input 
+                                        className="w-full bg-stone-100 dark:bg-stone-800 p-4 rounded-2xl text-stone-950 dark:text-white"
+                                        placeholder="Buscar..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
                                 </div>
                                 
                                 <div className="space-y-16 mt-8">

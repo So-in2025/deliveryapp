@@ -330,6 +330,7 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
   const { showToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const smartInputRef = useRef<HTMLInputElement>(null);
+  const aiInputRef = useRef<HTMLInputElement>(null);
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([
@@ -382,6 +383,7 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
         } finally {
           setIsUploading(false);
           if (smartInputRef.current) smartInputRef.current.value = '';
+          if (aiInputRef.current) aiInputRef.current.value = '';
         }
       };
       reader.readAsBinaryString(file);
@@ -408,6 +410,7 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
       } finally {
         setIsUploading(false);
         if (smartInputRef.current) smartInputRef.current.value = '';
+        if (aiInputRef.current) aiInputRef.current.value = '';
       }
     } else {
       showToast('Formato no soportado', 'error');
@@ -422,16 +425,23 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
       
       <div className="relative z-10">
         <h3 className="text-white font-black text-xl mb-1 flex items-center gap-3">
-          <Upload className="text-brand-500" /> Carga Inteligente
+          <Upload className="text-brand-500" /> Importar Catálogo
         </h3>
-        <p className="text-stone-400 text-xs font-medium mb-6">Sube tu menú (Excel, Foto o PDF) y nuestra IA hará el resto.</p>
+        <p className="text-stone-400 text-xs font-medium mb-6">Sube tu Excel o usa IA para escanear una foto/PDF de tu menú.</p>
         
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
           <input 
             type="file" 
             ref={smartInputRef} 
             onChange={handleSmartFile} 
-            accept=".xlsx, .xls, .csv, image/*, application/pdf" 
+            accept=".xlsx, .xls, .csv" 
+            className="hidden" 
+          />
+          <input 
+            type="file" 
+            ref={aiInputRef} 
+            onChange={handleSmartFile} 
+            accept="image/*, application/pdf" 
             className="hidden" 
           />
           <button 
@@ -447,12 +457,36 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
               </div>
             ) : (
               <>
-                <div className="w-12 h-12 bg-brand-500/10 rounded-2xl flex items-center justify-center">
-                    <LayoutDashboard className="text-brand-500" />
+                <div className="w-12 h-12 bg-stone-100 dark:bg-stone-700/50 rounded-2xl flex items-center justify-center">
+                    <LayoutDashboard className="text-stone-500" />
                 </div>
                 <div className="text-left">
-                    <span className="block text-lg leading-tight">Carga Inteligente</span>
-                    <span className="block text-[10px] text-stone-400 uppercase tracking-widest leading-none mt-1">Excel, PDF o Fotos</span>
+                    <span className="block text-base leading-tight">Archivo Excel / CSV</span>
+                    <span className="block text-[10px] text-stone-400 uppercase tracking-widest leading-none mt-1">Sin conexión a IA</span>
+                </div>
+              </>
+            )}
+          </button>
+
+          <button 
+            id="btn-ai-upload"
+            onClick={() => aiInputRef.current?.click()}
+            disabled={isUploading}
+            className="flex-1 min-w-[200px] h-20 bg-brand-500 rounded-3xl flex items-center justify-center gap-4 font-black text-stone-900 shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale border-2 border-transparent"
+          >
+            {isUploading ? (
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 border-4 border-stone-900 border-t-transparent rounded-full animate-spin" />
+                <span className="uppercase tracking-widest text-sm text-stone-900">IA Procesando...</span>
+              </div>
+            ) : (
+              <>
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <Upload className="text-stone-900" />
+                </div>
+                <div className="text-left">
+                    <span className="block text-base leading-tight font-black">Escanear Menú</span>
+                    <span className="block text-[10px] text-stone-900/80 uppercase tracking-widest leading-none mt-1 font-bold">PDF, Foto (Con IA)</span>
                 </div>
               </>
             )}
@@ -461,10 +495,10 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
           <button 
             id="btn-download-template"
             onClick={downloadTemplate}
-            className="px-6 h-14 bg-stone-800 dark:bg-stone-700 rounded-2xl flex items-center justify-center gap-3 font-bold text-stone-400 hover:text-white transition-colors"
+            className="px-6 h-20 bg-stone-800 dark:bg-stone-700 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-stone-400 hover:text-white transition-colors"
           >
             <Download size={18} />
-            <span className="hidden sm:inline text-xs uppercase tracking-widest">Plantilla</span>
+            <span className="text-[10px] uppercase tracking-widest">Plantilla</span>
           </button>
         </div>
       </div>
@@ -571,10 +605,10 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
     <div className="pb-24">
       <BulkProductUpload storeId={myStore.id} />
       <div className="flex justify-between items-center mb-8 px-2">
-        <p className="text-stone-400 dark:text-stone-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+        <div className="text-stone-400 dark:text-stone-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
             Catálogo: {myStore.products.length} productos
-        </p>
+        </div>
         <Button id="btn-new-product" size="sm" onClick={() => handleOpenEdit()} className="!rounded-xl px-6 font-black tracking-widest text-[10px]">
           <Plus size={16} className="mr-1.5" /> AÑADIR PRODUCTO
         </Button>
@@ -1126,28 +1160,28 @@ export const MerchantView: React.FC = () => {
         position: 'bottom'
     },
     {
-        targetId: isMobile ? 'orders-tab-mobile' : 'orders-tab',
+        targetId: 'orders-tab',
         title: 'Gestión de Pedidos',
         description: 'Aquí verás todos los pedidos entrantes. Podrás aceptarlos, marcarlos en preparación y listos para entregar.',
-        position: isMobile ? 'top' : 'right'
+        position: 'bottom'
     },
     {
-        targetId: isMobile ? 'menu-tab-mobile' : 'menu-tab',
+        targetId: 'menu-tab',
         title: 'Tu Menú Digital',
         description: 'Carga tus productos, añade fotos y descripciones. ¡Incluso puedes usar nuestra IA para escanear tu carta física!',
-        position: isMobile ? 'top' : 'right'
+        position: 'bottom'
     },
     {
-        targetId: isMobile ? 'coupons-tab-mobile' : 'coupons-tab',
+        targetId: 'coupons-tab',
         title: 'Cupones de Descuento',
         description: 'Atrae más clientes creando cupones promocionales. Tú decides el descuento y las condiciones.',
-        position: isMobile ? 'top' : 'right'
+        position: 'bottom'
     },
     {
-        targetId: isMobile ? 'history-tab-mobile' : 'history-tab',
+        targetId: 'history-tab',
         title: 'Historial de Ventas',
         description: 'Revisa tus ventas pasadas, analiza tus ingresos y mantén un control total de tu negocio.',
-        position: isMobile ? 'top' : 'right'
+        position: 'bottom'
     },
     {
         targetId: isMobile ? 'settings-tab-mobile' : 'settings-tab',
@@ -1287,12 +1321,14 @@ export const MerchantView: React.FC = () => {
                 <UtensilsCrossed size={16} /> Menú
               </button>
               <button
+                id="coupons-tab"
                 onClick={() => setMerchantViewState('COUPONS')}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${merchantViewState === 'COUPONS' ? 'bg-white dark:bg-stone-800 shadow-xl text-stone-950 dark:text-white' : 'text-stone-500 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white'}`}
               >
                 <Ticket size={16} /> Cupones
               </button>
               <button
+                id="history-tab"
                 onClick={() => setMerchantViewState('HISTORY')}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${merchantViewState === 'HISTORY' ? 'bg-white dark:bg-stone-800 shadow-xl text-stone-950 dark:text-white' : 'text-stone-500 dark:text-stone-400 hover:text-stone-950 dark:hover:text-white'}`}
               >
