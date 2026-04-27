@@ -22,73 +22,76 @@ export const StoreDetail: React.FC = () => {
         return (now.getTime() - created.getTime()) < (7 * 24 * 60 * 60 * 1000);
     };
 
-    const displayRating = (isNew(selectedStore.createdAt) && selectedStore.reviewsCount === 0) ? 5.0 : selectedStore.rating;
+    const displayRating = (isNew(selectedStore.createdAt || '') && (selectedStore.reviewsCount === 0 || !selectedStore.reviewsCount)) ? 5.0 : (selectedStore.rating || 0);
 
     return (
-        <div className="w-full h-full overflow-y-auto bg-stone-50 dark:bg-stone-950 animate-fade-in relative pb-16">
-            {/* Header / Banner */}
-            <div className="relative h-72 lg:h-96 w-full overflow-hidden shrink-0">
-                <LazyImage src={selectedStore.image} alt={selectedStore.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-50 dark:from-stone-950 via-stone-900/40 to-stone-900/20"></div>
-                
-                <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
-                    <button 
-                        onClick={() => setSelectedStore(null)}
-                        className="w-14 h-14 bg-white/90 dark:bg-stone-950/80 backdrop-blur-2xl border-2 border-white dark:border-white/10 rounded-[1.5rem] flex items-center justify-center text-stone-950 dark:text-white shadow-2xl hover:scale-110 transition-all active:scale-90"
-                    >
-                        <ArrowLeft size={28} />
-                    </button>
-                    <div className="flex gap-4">
+            <div className="w-full h-full overflow-y-auto bg-stone-50 dark:bg-stone-950 animate-fade-in relative pb-16">
+                {/* Header / Banner */}
+                <div className="relative min-h-[22rem] md:min-h-[26rem] lg:min-h-[30rem] w-full shrink-0 flex flex-col justify-between pb-6 md:pb-8 lg:pb-14">
+                    <div className="absolute inset-0 overflow-hidden">
+                        <LazyImage src={selectedStore.image} alt={selectedStore.name} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/80 to-stone-950/20"></div>
+                    </div>
+                    
+                    <div className="relative top-0 w-full px-4 pt-4 md:px-6 md:pt-6 flex justify-between items-start z-20">
                         <button 
-                            onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedStore.id); }}
-                            className={`w-14 h-14 backdrop-blur-2xl border-2 rounded-[1.5rem] flex items-center justify-center transition-all active:scale-90 ${isFavorite ? 'bg-red-500 border-red-400 text-white shadow-xl shadow-red-500/30' : 'bg-white/90 dark:bg-stone-950/80 border-white dark:border-white/10 text-stone-950 dark:text-white'}`}
+                            onClick={() => setSelectedStore(null)}
+                            className="w-12 h-12 md:w-14 md:h-14 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl hover:bg-white/20 transition-all active:scale-95 shrink-0"
                         >
-                            <Heart size={24} fill={isFavorite ? 'currentColor' : 'none'} />
+                            <ArrowLeft size={24} className="md:w-7 md:h-7" />
                         </button>
-                        <button 
-                            onClick={(e) => handleShareStore(e, selectedStore)}
-                            className="w-14 h-14 bg-white/90 dark:bg-stone-950/80 backdrop-blur-2xl border-2 border-white dark:border-white/10 rounded-[1.5rem] flex items-center justify-center text-stone-950 dark:text-white hover:scale-110 transition-all active:scale-90"
-                        >
-                            <Share2 size={24} />
-                        </button>
+                        <div className="flex flex-wrap justify-end gap-2 md:gap-4 ml-4">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); toggleFavorite(selectedStore.id); }}
+                                className={`w-12 h-12 md:w-14 md:h-14 backdrop-blur-3xl border rounded-2xl md:rounded-[1.5rem] flex items-center justify-center transition-all active:scale-95 shrink-0 ${isFavorite ? 'bg-red-500 border-red-400 text-white shadow-lg' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}
+                            >
+                                <Heart size={24} className="md:w-6 md:h-6" fill={isFavorite ? 'currentColor' : 'none'} />
+                            </button>
+                            <button 
+                                onClick={(e) => handleShareStore(e, selectedStore)}
+                                className="w-12 h-12 md:w-14 md:h-14 bg-white/10 backdrop-blur-3xl border border-white/20 rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-white hover:bg-white/20 transition-all active:scale-95 shrink-0"
+                            >
+                                <Share2 size={24} className="md:w-6 md:h-6" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="relative w-full px-6 md:px-8 lg:px-14 z-10 mt-12">
+                        <div className="animate-slide-up">
+                            <div className="flex items-center flex-wrap gap-2 mb-3">
+                                <span className="bg-brand-500 text-brand-950 text-[10px] sm:text-xs font-black px-3 py-1 rounded-lg uppercase tracking-widest shadow-xl border border-brand-400">
+                                    {selectedStore.category}
+                                </span>
+                                {isNew(selectedStore.createdAt) && (
+                                    <span className="bg-white/90 text-stone-950 text-[10px] sm:text-xs font-black px-3 py-1 rounded-lg uppercase tracking-widest border border-stone-200">Nuevo</span>
+                                )}
+                            </div>
+                            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white tracking-tighter leading-none mb-4 italic uppercase break-words">
+                                {selectedStore.name}
+                            </h1>
+                            
+                            <div className="flex items-center flex-wrap gap-y-2 gap-x-4 md:gap-x-6 bg-white/10 backdrop-blur-2xl w-fit p-3 md:p-4 rounded-2xl border border-white/20 shadow-lg">
+                                <div className="flex items-center gap-1.5 md:gap-2 font-black text-white shrink-0">
+                                    <Star size={18} className="md:w-6 md:h-6" fill={accentColor} color={accentColor} />
+                                    <span className="text-lg md:text-2xl tracking-tighter leading-none">{displayRating.toFixed(1)}</span>
+                                    <span className="text-xs md:text-sm text-stone-300 font-bold ml-0.5 leading-none">({selectedStore.reviewsCount || 0})</span>
+                                </div>
+                                <div className="w-[2px] h-5 md:h-6 bg-white/20 rounded-full shrink-0" />
+                                <div className="flex items-center gap-1.5 md:gap-2 font-black text-white shrink-0">
+                                    <Clock size={18} className="md:w-6 md:h-6 text-stone-300" />
+                                    <span className="text-lg md:text-2xl tracking-tighter leading-none">{selectedStore.deliveryTimeMin}-{selectedStore.deliveryTimeMax}<span className="text-[10px] md:text-xs ml-0.5 uppercase tracking-wide opacity-60">min</span></span>
+                                </div>
+                                <div className="w-[2px] h-5 md:h-6 bg-white/20 rounded-full hidden sm:block shrink-0" />
+                                <div className="hidden sm:flex items-center gap-1.5 md:gap-2 font-black text-white shrink-0">
+                                    <Bike size={18} className="md:w-6 md:h-6 text-brand-500" />
+                                    <span className="text-lg md:text-2xl tracking-tighter leading-none">{formatCurrency(selectedStore.deliveryFee || 0)}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full p-8 lg:p-14">
-                    <div className="animate-slide-up">
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className="bg-brand-500 text-brand-950 text-[10px] font-black px-4 py-1.5 rounded-xl uppercase tracking-widest shadow-2xl border border-brand-400">
-                                {selectedStore.category}
-                            </span>
-                            {isNew(selectedStore.createdAt) && (
-                                <span className="bg-white/90 text-stone-950 text-[10px] font-black px-4 py-1.5 rounded-xl uppercase tracking-widest border border-stone-200">Nuevo</span>
-                            )}
-                        </div>
-                        <h1 className="text-5xl lg:text-7xl font-black text-stone-950 dark:text-white tracking-tighter leading-none mb-6 italic uppercase">
-                            {selectedStore.name}
-                        </h1>
-                        <div className="flex items-center gap-8 bg-white/10 dark:bg-black/10 backdrop-blur-md w-fit p-4 rounded-3xl border border-white/20">
-                            <div className="flex items-center gap-2 font-black text-stone-950 dark:text-white">
-                                <Star size={24} fill={accentColor} color={accentColor} />
-                                <span className="text-2xl tracking-tighter">{displayRating.toFixed(1)}</span>
-                                <span className="text-sm text-stone-950/60 dark:text-stone-500 font-bold ml-1">({selectedStore.reviewsCount || 0})</span>
-                            </div>
-                            <div className="w-px h-8 bg-white/20" />
-                            <div className="flex items-center gap-2 font-black text-stone-950 dark:text-white">
-                                <Clock size={24} className="text-stone-950 dark:text-white" />
-                                <span className="text-2xl tracking-tighter">{selectedStore.deliveryTimeMin}-{selectedStore.deliveryTimeMax} min</span>
-                            </div>
-                            <div className="w-px h-8 bg-white/20" />
-                            <div className="flex items-center gap-2 font-black text-stone-950 dark:text-white">
-                                <Bike size={24} className="text-brand-500" />
-                                <span className="text-2xl tracking-tighter">{formatCurrency(selectedStore.deliveryFee || 0)}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Sticky Info Bar / Búsqueda */}
+                {/* Sticky Info Bar / Búsqueda */}
             <div className="bg-white dark:bg-stone-900 border-y border-stone-200 dark:border-white/5 px-6 py-4 flex items-center justify-between z-30 shrink-0 sticky top-0 shadow-lg shadow-black/[0.02]">
                 <div className="flex-1 max-w-2xl mx-auto relative group">
                     <Search size={22} className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-300 group-focus-within:text-brand-500 transition-colors" />
@@ -102,7 +105,7 @@ export const StoreDetail: React.FC = () => {
             {/* Menu List */}
             <div className="w-full p-6 lg:p-14">
                 <div className="max-w-7xl mx-auto space-y-16">
-                    {[...new Set(selectedStore.products.map(p => p.category || 'Destacados'))].map(category => (
+                    {[...new Set((selectedStore.products || []).map(p => p.category || 'Destacados'))].map(category => (
                         <div key={category} className="space-y-8">
                             <div className="flex items-center gap-4">
                                 <div className="w-2 h-10 bg-brand-500 rounded-full shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
@@ -111,7 +114,7 @@ export const StoreDetail: React.FC = () => {
                                 </h2>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {selectedStore.products
+                                {(selectedStore.products || [])
                                     .filter(p => (p.category || 'Destacados') === category)
                                     .map(product => (
                                         <div 

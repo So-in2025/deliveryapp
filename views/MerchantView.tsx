@@ -6,7 +6,7 @@ import { OrderStatus, Order, PaymentMethod, OrderType, Product, ModifierGroup, M
 import { Button } from '../components/ui/Button';
 import { Badge, PaymentBadge } from '../components/ui/Badge';
 import { LazyImage } from '../components/ui/LazyImage';
-import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight, Upload, Download, FileText, Image as ImageIcon } from 'lucide-react';
+import { CheckCircle, Clock, Bike, User, CreditCard, Banknote, StickyNote, Store as StoreIcon, ShoppingBag, Plus, Pencil, Trash2, X, UtensilsCrossed, LayoutDashboard, Ticket, ToggleLeft, ToggleRight, Upload, Download, FileText, Image as ImageIcon, MessageSquare } from 'lucide-react';
 import { formatCurrency } from '../constants';
 import { extractProductsFromMenu } from '../services/geminiService';
 import * as XLSX from 'xlsx';
