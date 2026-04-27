@@ -60,11 +60,19 @@ export const extractProductsFromMenu = async (base64Image: string): Promise<Prod
     const ai = getAiInstance();
     const mimeType = base64Image.split(';')[0].split(':')[1] || 'image/jpeg';
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash", // Using stable version
       contents: [
         {
           parts: [
-            { text: "Analiza esta imagen o documento de un menú de restaurante o catálogo de productos. Extrae todos los productos, sus descripciones y sus precios. Devuelve el resultado como un array de objetos JSON con los campos: name (string), description (string), price (number). Si no hay descripción, deja el campo vacío. Asegúrate de que el precio sea un número puro." },
+            { text: `Analiza esta imagen o documento de un menú de restaurante o catálogo de productos. 
+            Extrae TODOS los productos individuales.
+            Para cada producto identifica:
+            - name: Nombre claro del producto.
+            - description: Descripción si existe (sino inventa una breve basada en el nombre).
+            - price: Precio numérico (extrae solo el número, ignora símbolos de moneda).
+            - category: Intenta clasificarlo (ej: Bebidas, Platos Principales, Postres, etc).
+            
+            IMPORTANTE: Devuelve un array JSON puro. Sé extremadamente preciso con los precios.` },
             {
               inlineData: {
                 mimeType: mimeType,
@@ -83,7 +91,8 @@ export const extractProductsFromMenu = async (base64Image: string): Promise<Prod
             properties: {
               name: { type: Type.STRING },
               description: { type: Type.STRING },
-              price: { type: Type.NUMBER }
+              price: { type: Type.NUMBER },
+              category: { type: Type.STRING }
             },
             required: ["name", "price"]
           }
@@ -92,10 +101,11 @@ export const extractProductsFromMenu = async (base64Image: string): Promise<Prod
     });
 
     const products = JSON.parse(response.text);
-    return products.map((p: { name: string, description: string, price: number, category: string }) => ({
+    return products.map((p: any) => ({
       ...p,
-      id: Math.random().toString(36).substr(2, 9),
-      image: 'https://picsum.photos/seed/food/400/300' // Placeholder image
+      id: `prod-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      image: `https://images.unsplash.com/featured/?${encodeURIComponent(p.category || 'food')},${encodeURIComponent(p.name)}`,
+      modifierGroups: []
     }));
   } catch (error) {
     console.error('Error extracting products:', error);

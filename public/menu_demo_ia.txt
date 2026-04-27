@@ -1,0 +1,30 @@
+======= RISTORANTE OMEGA - MENÚ DEL GIORNO =======
+
+--- ENTRADAS ---
+- Bruschetta Toscana (3 unidades) ........... $950
+  Pan de campo, tomates cherry, ajo y albahaca.
+- Burrata con Rúcula y Jamón Ibérico ........ $1800
+  Corazón cremoso con reducción de balsámico.
+
+--- PLATOS PRINCIPALES ---
+- Lasagna de la Casa (Bolognesa) ............ $2200
+  Capas de pasta fresca con mucho queso y salsa tradicional.
+- Risotto de Hongos Silvestres .............. $2400
+  Arroz carnaroli con mixtura de setas y trufa negra.
+- Salmón en Crosta de Hierbas ............... $3100
+  Acompañado de vegetales salteados y puré de limón.
+
+--- POSTRES ---
+- Volcán de Chocolate ....................... $1100
+  Con centro líquido y helado de crema americana.
+- Cheesecake de Frutos Rojos ................ $1050
+  Base de galleta artesanal y frutos del bosque frescos.
+
+--- BEBIDAS ---
+- Cerveza Artesanal IPA (Pinta) ............. $900
+- Vino Malbec Premium (Copa) ................ $850
+- Agua Mineral con/sin Gas .................. $500
+
+==================================================
+Propina no incluida. Todos los precios en Pesos.
+==================================================

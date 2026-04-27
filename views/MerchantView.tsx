@@ -255,17 +255,53 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
   const { bulkAddProducts } = useApp();
   const { showToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [reviewProducts, setReviewProducts] = useState<Product[] | null>(null);
   const smartInputRef = useRef<HTMLInputElement>(null);
   const aiInputRef = useRef<HTMLInputElement>(null);
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.json_to_sheet([
-      { Nombre: 'Hamburguesa Clásica', Descripcion: 'Carne, queso, lechuga', Precio: 1200, ImagenURL: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd' },
-      { Nombre: 'Papas Fritas', Descripcion: 'Porción grande', Precio: 600, ImagenURL: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877' }
+      { Nombre: 'Hamburguesa Clásica', Descripcion: 'Carne, queso, lechuga', Precio: 1200, Categoria: 'Hamburguesas', ImagenURL: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd' },
+      { Nombre: 'Papas Fritas', Descripcion: 'Porción grande', Precio: 600, Categoria: 'Acompañamientos', ImagenURL: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877' }
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Productos");
     XLSX.writeFile(wb, "plantilla_productos.xlsx");
+  };
+
+  const smartMapExcel = (data: any[]): Product[] => {
+    // Mapeo inteligente de encabezados
+    const mappings = {
+      name: ['nombre', 'name', 'producto', 'item', 'artículo', 'product', 'designacion'],
+      description: ['descripcion', 'description', 'detalle', 'pormenores', 'info'],
+      price: ['precio', 'price', 'costo', 'valor', 'amount', 'p.unitario', 'prec'],
+      category: ['categoria', 'category', 'rubro', 'grupo', 'seccion', 'tipo'],
+      image: ['imagen', 'image', 'imagenurl', 'url', 'foto', 'pic']
+    };
+
+    return data.map(item => {
+      const keys = Object.keys(item).map(k => k.toLowerCase().trim());
+      const findVal = (list: string[]) => {
+        const key = Object.keys(item).find(k => list.includes(k.toLowerCase().trim()));
+        return key ? item[key] : null;
+      };
+
+      const name = findVal(mappings.name);
+      const price = findVal(mappings.price);
+      
+      if (!name || isNaN(Number(price))) return null;
+
+      return {
+        id: `prod-bulk-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        name: String(name),
+        description: String(findVal(mappings.description) || ''),
+        price: Number(price),
+        category: String(findVal(mappings.category) || 'General'),
+        image: String(findVal(mappings.image) || `https://images.unsplash.com/featured/?${encodeURIComponent(String(name))}`),
+        modifierGroups: [],
+        isAvailable: true
+      };
+    }).filter(Boolean) as Product[];
   };
 
   const handleSmartFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,51 +309,33 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
     if (!file) return;
 
     const extension = file.name.split('.').pop()?.toLowerCase();
+    setIsUploading(true);
     
-    if (['xlsx', 'xls', 'csv'].includes(extension || '')) {
-      // Excel Path
-      setIsUploading(true);
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        try {
-          const bstr = evt.target?.result;
-          const wb = XLSX.read(bstr, { type: 'binary' });
-          const wsname = wb.SheetNames[0];
-          const ws = wb.Sheets[wsname];
-          const data = XLSX.utils.sheet_to_json(ws) as Record<string, unknown>[];
-
-          const newProducts: Product[] = [];
-          data.forEach(item => {
-            if (item.Nombre && item.Precio) {
-              newProducts.push({
-                id: `prod-bulk-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                name: String(item.Nombre),
-                description: String(item.Descripcion || ''),
-                price: Number(item.Precio),
-                image: String(item.ImagenURL || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c'),
-                modifierGroups: []
-              });
+    try {
+      if (['xlsx', 'xls', 'csv'].includes(extension || '')) {
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          try {
+            const bstr = evt.target?.result;
+            const wb = XLSX.read(bstr, { type: 'binary' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const data = XLSX.utils.sheet_to_json(ws);
+            const products = smartMapExcel(data);
+            
+            if (products.length > 0) {
+              setReviewProducts(products);
+            } else {
+              showToast('No se encontraron productos válidos en el archivo', 'error');
             }
-          });
-
-          if (newProducts.length > 0) {
-            await bulkAddProducts(storeId, newProducts);
-            showToast(`${newProducts.length} productos cargados con éxito`, 'success');
+          } catch (err) {
+            showToast('Error al procesar el Excel', 'error');
+          } finally {
+            setIsUploading(false);
           }
-        } catch (err) {
-          showToast('Error al procesar el Excel', 'error');
-        } finally {
-          setIsUploading(false);
-          if (smartInputRef.current) smartInputRef.current.value = '';
-          if (aiInputRef.current) aiInputRef.current.value = '';
-        }
-      };
-      reader.readAsBinaryString(file);
-    } else if (['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(extension || '')) {
-      // AI Scan Path
-      setIsUploading(true);
-      showToast('Analizando con IA...', 'info');
-      try {
+        };
+        reader.readAsBinaryString(file);
+      } else if (['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(extension || '')) {
+        showToast('Iniciando escaneo con IA de alto nivel...', 'info');
         const reader = new FileReader();
         const base64Promise = new Promise<string>((resolve) => {
           reader.onload = () => resolve(reader.result as string);
@@ -328,34 +346,59 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
         const products = await extractProductsFromMenu(base64Data);
 
         if (products && products.length > 0) {
-          await bulkAddProducts(storeId, products);
-          showToast(`${products.length} productos extraídos con IA`, 'success');
+          setReviewProducts(products);
+        } else {
+          showToast('La IA no pudo identificar productos claros', 'warning');
         }
-      } catch (err) {
-        showToast('Error al escanear archivo', 'error');
-      } finally {
-        setIsUploading(false);
-        if (smartInputRef.current) smartInputRef.current.value = '';
-        if (aiInputRef.current) aiInputRef.current.value = '';
+      } else {
+        showToast('Formato no soportado (Usa Excel, PDF o Imagen)', 'error');
       }
-    } else {
-      showToast('Formato no soportado', 'error');
+    } catch (err) {
+      showToast('Error de procesamiento crítico', 'error');
+    } finally {
+      setIsUploading(false);
+      if (smartInputRef.current) smartInputRef.current.value = '';
+      if (aiInputRef.current) aiInputRef.current.value = '';
+    }
+  };
+
+  const handleConfirmImport = async (products: Product[]) => {
+    try {
+      setIsUploading(true);
+      await bulkAddProducts(storeId, products);
+      showToast(`${products.length} productos integrados exitosamente`, 'success');
+      setReviewProducts(null);
+    } catch (err) {
+      showToast('Error al guardar en el servidor', 'error');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
-    <div className="bg-stone-900 dark:bg-stone-900 border border-white/5 p-6 rounded-[2rem] mb-8 shadow-2xl relative overflow-hidden group">
-      <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-        <UtensilsCrossed size={80} className="text-white" />
-      </div>
+    <div className="bg-stone-900 border border-white/10 p-8 rounded-[2.5rem] mb-12 shadow-2xl relative overflow-hidden">
+      <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
       
       <div className="relative z-10">
-        <h3 className="text-white font-black text-xl mb-1 flex items-center gap-3">
-          <Upload className="text-brand-500" /> Importar Catálogo
-        </h3>
-        <p className="text-stone-400 text-xs font-medium mb-6">Sube tu Excel o usa IA para escanear una foto/PDF de tu menú.</p>
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h3 className="text-white font-black text-2xl mb-1 flex items-center gap-3 tracking-tighter uppercase">
+              <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center text-brand-950 shadow-lg shadow-brand-500/20">
+                <Upload size={20} strokeWidth={3} />
+              </div>
+              Importación Inteligente
+            </h3>
+            <p className="text-stone-400 text-sm font-medium">Escanea menús físicos o importa inventarios digitales en segundos.</p>
+          </div>
+          <button 
+            onClick={downloadTemplate}
+            className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-stone-300 px-4 py-2 rounded-xl text-xs font-bold transition-all border border-white/5"
+          >
+            <Download size={14} /> Plantilla
+          </button>
+        </div>
         
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input 
             type="file" 
             ref={smartInputRef} 
@@ -370,62 +413,150 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
             accept="image/*, application/pdf" 
             className="hidden" 
           />
+          
           <button 
-            id="btn-smart-upload"
             onClick={() => smartInputRef.current?.click()}
             disabled={isUploading}
-            className="flex-1 min-w-[200px] h-20 bg-white dark:bg-stone-800 rounded-3xl flex items-center justify-center gap-4 font-black text-stone-900 dark:text-white shadow-2xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale border-2 border-black/5 dark:border-white/10"
+            className="group h-24 bg-stone-800/50 hover:bg-stone-800 rounded-3xl flex items-center px-6 gap-5 transition-all border border-white/5 disabled:opacity-50"
           >
-            {isUploading ? (
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
-                <span className="uppercase tracking-widest text-sm text-stone-400">Procesando...</span>
-              </div>
-            ) : (
-              <>
-                <div className="w-12 h-12 bg-stone-100 dark:bg-stone-700/50 rounded-2xl flex items-center justify-center">
-                    <LayoutDashboard className="text-stone-500" />
-                </div>
-                <div className="text-left">
-                    <span className="block text-base leading-tight">Archivo Excel / CSV</span>
-                    <span className="block text-[10px] text-stone-400 uppercase tracking-widest leading-none mt-1">Sin conexión a IA</span>
-                </div>
-              </>
-            )}
+            <div className="w-12 h-12 bg-stone-700 rounded-2xl flex items-center justify-center text-stone-400 group-hover:text-white transition-colors">
+              <FileText size={24} />
+            </div>
+            <div className="text-left">
+              <span className="block text-white font-black text-base leading-none">Excel / CSV</span>
+              <span className="block text-[10px] text-stone-500 uppercase tracking-widest mt-2">Mapeo Automático de Columnas</span>
+            </div>
           </button>
 
           <button 
-            id="btn-ai-upload"
             onClick={() => aiInputRef.current?.click()}
             disabled={isUploading}
-            className="flex-1 min-w-[200px] h-20 bg-brand-500 rounded-3xl flex items-center justify-center gap-4 font-black text-stone-900 shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale border-2 border-transparent"
+            className="group h-24 bg-brand-500 rounded-3xl flex items-center px-6 gap-5 transition-all shadow-xl shadow-brand-500/10 hover:translate-y-[-2px] disabled:opacity-50"
           >
-            {isUploading ? (
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 border-4 border-stone-900 border-t-transparent rounded-full animate-spin" />
-                <span className="uppercase tracking-widest text-sm text-stone-900">IA Procesando...</span>
+            <div className="w-12 h-12 bg-brand-600/50 rounded-2xl flex items-center justify-center text-brand-950">
+              <ImageIcon size={24} />
+            </div>
+            <div className="text-left text-brand-950">
+              <span className="block font-black text-base leading-none">Escanear con IA</span>
+              <span className="block text-[10px] text-brand-900/60 uppercase tracking-widest mt-2 font-bold italic">Sube Foto de tu Menú</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Demo Assets Helper */}
+        <div className="mt-8 pt-8 border-t border-white/5 flex flex-wrap gap-6 items-center">
+            <span className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em]">Kit de Media para Demo:</span>
+            <a href="/demo_productos.csv" download className="text-[11px] font-bold text-stone-400 hover:text-white transition-colors flex items-center gap-2">
+                <Download size={14} /> CSV de Prueba
+            </a>
+            <a href="/menu_demo_ia.txt" target="_blank" className="text-[11px] font-bold text-stone-400 hover:text-white transition-colors flex items-center gap-2">
+                <FileText size={14} /> Menú para IA (.txt)
+            </a>
+        </div>
+      </div>
+
+      {isUploading && (
+        <div className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+            <div className="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-white font-black uppercase tracking-[0.3em] text-xs">Analizando Datos...</p>
+        </div>
+      )}
+
+      {reviewProducts && (
+        <ImportReviewModal 
+          products={reviewProducts} 
+          onCancel={() => setReviewProducts(null)} 
+          onConfirm={handleConfirmImport} 
+        />
+      )}
+    </div>
+  );
+};
+
+const ImportReviewModal: React.FC<{ 
+  products: Product[], 
+  onCancel: () => void, 
+  onConfirm: (products: Product[]) => void 
+}> = ({ products, onCancel, onConfirm }) => {
+  const [data, setData] = useState<Product[]>(products);
+
+  const handleDelete = (id: string) => {
+    setData(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleUpdate = (id: string, field: keyof Product, value: any) => {
+    setData(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-stone-950/90 backdrop-blur-2xl flex items-center justify-center p-4 lg:p-12">
+      <div className="w-full max-w-5xl bg-white dark:bg-stone-900 rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-white/10">
+        <div className="p-8 border-b border-stone-100 dark:border-white/5 flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-black text-stone-900 dark:text-white tracking-tighter uppercase">Revisar Importación</h2>
+            <p className="text-stone-400 font-bold uppercase text-[10px] tracking-widest mt-1">Verifica y edita los productos antes de integrarlos</p>
+          </div>
+          <button onClick={onCancel} className="w-12 h-12 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-stone-500 tracking-widest font-black text-[10px] hover:bg-stone-200 transition-colors">CERRAR</button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide">
+          {data.map((prod, idx) => (
+            <div key={prod.id} className="group bg-stone-50 dark:bg-black/20 p-5 rounded-[2rem] border border-transparent hover:border-brand-500/20 transition-all flex flex-col md:flex-row gap-6 items-center">
+              <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg shrink-0 border-2 border-white dark:border-stone-700">
+                <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" />
               </div>
-            ) : (
-              <>
-                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                    <Upload className="text-stone-900" />
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                <div className="md:col-span-1">
+                  <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1">Nombre</label>
+                  <input 
+                    value={prod.name} 
+                    onChange={e => handleUpdate(prod.id, 'name', e.target.value)}
+                    className="w-full bg-white dark:bg-stone-800 border-none rounded-xl px-4 py-2 font-bold text-stone-900 dark:text-white focus:ring-2 ring-brand-500/50"
+                  />
                 </div>
-                <div className="text-left">
-                    <span className="block text-base leading-tight font-black">Escanear Menú</span>
-                    <span className="block text-[10px] text-stone-900/80 uppercase tracking-widest leading-none mt-1 font-bold">PDF, Foto (Con IA)</span>
+                <div className="md:col-span-1">
+                  <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1">Precio</label>
+                  <input 
+                    type="number"
+                    value={prod.price} 
+                    onChange={e => handleUpdate(prod.id, 'price', Number(e.target.value))}
+                    className="w-full bg-white dark:bg-stone-800 border-none rounded-xl px-4 py-2 font-black text-brand-600 dark:text-brand-500 focus:ring-2 ring-brand-500/50"
+                  />
                 </div>
-              </>
-            )}
-          </button>
-          
-          <button 
-            id="btn-download-template"
-            onClick={downloadTemplate}
-            className="px-6 h-20 bg-stone-800 dark:bg-stone-700 rounded-3xl flex flex-col items-center justify-center gap-1 font-bold text-stone-400 hover:text-white transition-colors"
-          >
-            <Download size={18} />
-            <span className="text-[10px] uppercase tracking-widest">Plantilla</span>
-          </button>
+                <div className="md:col-span-1">
+                   <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1">Categoría</label>
+                   <input 
+                    value={prod.category || 'General'} 
+                    onChange={e => handleUpdate(prod.id, 'category', e.target.value)}
+                    className="w-full bg-white dark:bg-stone-800 border-none rounded-xl px-4 py-2 font-bold text-stone-500 focus:ring-2 ring-brand-500/50"
+                  />
+                </div>
+              </div>
+              <button 
+                onClick={() => handleDelete(prod.id)}
+                className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shrink-0"
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="p-8 border-t border-stone-100 dark:border-white/5 bg-stone-50 dark:bg-stone-800/30">
+          <div className="flex gap-4">
+            <button 
+              onClick={onCancel}
+              className="px-8 h-14 rounded-2xl border border-stone-200 dark:border-white/10 text-stone-500 font-black uppercase tracking-widest text-xs hover:bg-stone-100 dark:hover:bg-stone-800 transition-all"
+            >
+              Descartar Todo
+            </button>
+            <button 
+              onClick={() => onConfirm(data)}
+              className="flex-1 h-14 bg-brand-500 text-brand-950 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-brand-500/20 hover:scale-[1.01] transition-all"
+            >
+              Confirmar e Integrar {data.length} Productos
+            </button>
+          </div>
         </div>
       </div>
     </div>
