@@ -1,47 +1,35 @@
 
 /**
- * Compresses an image and returns it as a Base64 data URL.
- * This bypasses Firebase Storage CORS and missing presets issues.
+ * Carga una imagen a Cloudinary de forma no firmada (unsigned)
+ * y devuelve la URL de la imagen cargada.
  */
-export const uploadImageToCloudinary = (file: File | Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        const MAX_HEIGHT = 800;
-        let width = img.width;
-        let height = img.height;
+export const uploadImageToCloudinary = async (file: File | Blob): Promise<string> => {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
+  if (!cloudName || !uploadPreset) {
+    throw new Error('Debes configurar VITE_CLOUDINARY_UPLOAD_PRESET en Settings (Variables de entorno) o el código fallará.');
+  }
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        // Compress aggressively to stay well under Firestore 1MB limit
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-        resolve(dataUrl);
-      };
-      img.onerror = (error) => reject(error);
-    };
-    reader.onerror = (error) => reject(error);
-  });
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    {
+      method: 'POST',
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Error en Cloudinary: ${errorData.message || response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.secure_url;
 };
 
 /**

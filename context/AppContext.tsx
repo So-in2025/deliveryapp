@@ -284,7 +284,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales'],
     maxDeliveryRadiusKm: 10, // Default 10km
     centerCoordinates: { lat: -34.6037, lng: -58.3816 }, // Default center
-    referralRewardAmount: 500, // $500 reward
+    referralRewardAmount: 0, // $0 reward
     referralDiscountPct: 0.05, // 5% off for the new user
     firstPurchaseDiscountPct: 0.20, // 20% off
     adminEmails: [], // Managed via Firestore Console
@@ -727,7 +727,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           supportEmail: 'soporte@telollevo.com',
           maintenanceMode: false,
           paymentMode: 'CENTRALIZED',
-          referralRewardAmount: 500,
+          referralRewardAmount: 0,
           referralDiscountPct: 0.05,
           firstPurchaseDiscountPct: 0.20,
           adminEmails: ADMIN_EMAILS, // Sync with constant

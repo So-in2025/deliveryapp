@@ -133,9 +133,9 @@ export const SettingsOverlay: React.FC = () => {
               const url = await uploadImageToCloudinary(e.target.files[0]);
               updateUser({ avatar: url });
               showToast('Foto de perfil actualizada', 'success');
-          } catch (error) {
+          } catch (error: any) {
               console.error('Error uploading avatar:', error);
-              showToast('Error al subir la foto', 'error');
+              showToast(error.message || 'Error al subir la foto', 'error');
           } finally {
               setIsUploadingAvatar(false);
           }

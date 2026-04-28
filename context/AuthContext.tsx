@@ -206,6 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let msg = 'Error al iniciar sesión';
       if (error.code === 'auth/user-not-found') msg = 'Usuario no encontrado';
       if (error.code === 'auth/wrong-password') msg = 'Contraseña incorrecta';
+      if (error.code === 'auth/invalid-credential') msg = 'Correo o contraseña incorrectos';
       showToast(msg, 'error');
       throw error;
     }

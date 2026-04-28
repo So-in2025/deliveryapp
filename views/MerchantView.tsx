@@ -794,8 +794,9 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
                                         const url = await uploadImageToCloudinary(e.target.files[0]);
                                         setFormData({...formData, image: url});
                                         showToast('Imagen actualizada', 'success');
-                                    } catch {
-                                        showToast('Error al subir imagen', 'error');
+                                    } catch (error: any) {
+                                        console.error('Image upload error:', error);
+                                        showToast(error.message || 'Error al subir imagen', 'error');
                                     } finally {
                                         setIsUploadingImage(false);
                                     }
@@ -1030,8 +1031,9 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
                                     const url = await uploadImageToCloudinary(e.target.files[0]);
                                     setStoreImage(url);
                                     showToast('Logo actualizado', 'success');
-                                } catch {
-                                    showToast('Error al subir logo', 'error');
+                                } catch (error: any) {
+                                    console.error('Image upload failed:', error);
+                                    showToast(error.message || 'Error al subir logo', 'error');
                                 } finally {
                                     setIsUploadingImage(false);
                                 }
