@@ -239,21 +239,21 @@ export const AuthView: React.FC = () => {
       const tAddress = storeAddress.trim();
       const tPhone = storePhone.trim();
 
-      if (!tName || !tTaxId || !tClabe || !storeBankName || !tAddress || !tPhone) {
-          showToast('Por favor completa todos los campos obligatorios', 'error');
+      if (!tName || !tAddress || !tPhone) {
+          showToast('Por favor completa los campos obligatorios (Nombre, Dirección, Teléfono)', 'error');
           return;
       }
       
       // RFC Validation (13 chars: 4 letters, 6 numbers, 3 homoclave)
       const rfcRegex = /^[A-Z]{4}[0-9]{6}[A-Z0-9]{3}$/i;
-      if (!rfcRegex.test(tTaxId)) {
+      if (tTaxId && !rfcRegex.test(tTaxId)) {
           showToast('RFC inválido. Debe tener 13 caracteres (4 letras, 6 números, 3 homoclave)', 'error');
           return;
       }
 
       // CLABE Validation (18 digits)
       const clabeRegex = /^[0-9]{18}$/;
-      if (!clabeRegex.test(tClabe)) {
+      if (tClabe && !clabeRegex.test(tClabe)) {
           showToast('CLABE inválida. Debe tener 18 dígitos numéricos', 'error');
           return;
       }
@@ -273,10 +273,10 @@ export const AuthView: React.FC = () => {
           products: [],
           createdAt: new Date().toISOString(),
           ownerId: authUser?.uid || 'guest',
-          taxId: tTaxId,
-          bankName: storeBankName,
-          bankAccount: storeBankAccount.trim(),
-          clabe: tClabe,
+          taxId: tTaxId || undefined,
+          bankName: storeBankName || undefined,
+          bankAccount: storeBankAccount.trim() || undefined,
+          clabe: tClabe || undefined,
           address: tAddress,
           phone: tPhone,
           isActive: false,
@@ -307,7 +307,6 @@ export const AuthView: React.FC = () => {
           setIsLoggingIn(false);
       }
   };
-
   const handleRegisterDriver = () => {
       const phoneRegex = /^[0-9]{7,15}$/;
       if (!phoneNumber || !phoneRegex.test(phoneNumber)) {
@@ -731,7 +730,7 @@ export const AuthView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 dark:text-stone-400">RFC (13 caracteres) *</label>
+                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 dark:text-stone-400">RFC (13 caracteres)</label>
                                  <input 
                                      type="text" 
                                      value={storeTaxId}
@@ -742,7 +741,7 @@ export const AuthView: React.FC = () => {
                                  />
                              </div>
                              <div>
-                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Banco *</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Banco</label>
                                  <select 
                                      value={storeBankName}
                                      onChange={(e) => setStoreBankName(e.target.value)}
@@ -755,7 +754,7 @@ export const AuthView: React.FC = () => {
                                  </select>
                              </div>
                              <div>
-                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria (18 dígitos) *</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria (18 dígitos)</label>
                                  <input 
                                      type="text" 
                                      inputMode="numeric"

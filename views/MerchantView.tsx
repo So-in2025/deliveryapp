@@ -76,20 +76,20 @@ import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
             </div>
 
             {/* Customer & Address */}
-            <div className="flex justify-between items-end mb-6">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-3">
+              <div className="flex-1 min-w-0 w-full">
                 <div className="flex items-center gap-2 text-stone-950 dark:text-white">
-                    <User size={14} className="text-stone-400" />
+                    <User size={14} className="text-stone-400 shrink-0" />
                     <h4 className="text-xl font-black uppercase tracking-tight truncate leading-none">{order.customerName}</h4>
                 </div>
                 {order.type === OrderType.DELIVERY && (
                     <div className="flex items-center gap-1 text-[10px] text-stone-400 font-bold mt-1.5">
-                        <MapPin size={12} className="text-brand-500" />
-                        <span className="truncate max-w-[200px]">{order.customerAddress ? order.customerAddress.split(',')[0] : 'Sin dirección'}</span>
+                        <MapPin size={12} className="text-brand-500 shrink-0" />
+                        <span className="truncate">{order.customerAddress ? order.customerAddress.split(',')[0] : 'Sin dirección'}</span>
                     </div>
                 )}
               </div>
-              <div className="text-right">
+              <div className="text-left sm:text-right shrink-0">
                  <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest leading-none mb-1">Total</p>
                  <p className="text-2xl font-black text-stone-950 dark:text-brand-500 tracking-tighter leading-none">{formatCurrency(order.total)}</p>
               </div>

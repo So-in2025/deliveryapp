@@ -36,11 +36,15 @@ service cloud.firestore {
     // Dynamic Admin Check: Fetched from the database instead of hardcoded strings
     function isAdmin() {
       let isDev = request.auth.token.email in ['soinsoluciones2025@gmail.com', 'daniel.acevedo3134@gmail.com'];
-      let configDoc = get(/databases/$(database)/documents/config/global).data;
-      let hasAdminItem = request.auth.token.email in configDoc.adminEmails;
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
       
-      return isVerified() && (isDev || hasAdminItem || userDoc.role == 'ADMIN');
+      let configExists = exists(/databases/$(database)/documents/config/global);
+      let configDoc = configExists ? get(/databases/$(database)/documents/config/global).data : {};
+      let hasAdminItem = configExists && ('adminEmails' in configDoc) && request.auth.token.email in configDoc.adminEmails;
+      
+      let userExists = exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      let userDoc = userExists ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : {};
+      
+      return isVerified() && (isDev || hasAdminItem || (userExists && 'role' in userDoc && userDoc.role == 'ADMIN'));
     }
 
     function incoming() { return request.resource.data; }
