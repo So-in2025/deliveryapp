@@ -83,6 +83,8 @@ export const SettingsOverlay: React.FC = () => {
     }
   };
 
+  const [isSubmittingStore, setIsSubmittingStore] = useState(false);
+
   if (!isSettingsOpen) return null;
 
   const handleLogout = async () => {
@@ -196,41 +198,49 @@ export const SettingsOverlay: React.FC = () => {
             return;
         }
 
-        const storeId = `store-${user.uid || Date.now()}`;
-        
-        await createStore({
-            id: storeId,
-            name: tName,
-            category: merchantReg.category,
-            address: tAddress,
-            rating: 5,
-            reviewsCount: 0,
-            deliveryTimeMin: Number(merchantReg.time),
-            deliveryTimeMax: Number(merchantReg.time) + 15,
-            deliveryFee: 45,
-            image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
-            products: [],
-            createdAt: new Date().toISOString(),
-            ownerId: user.uid,
-            taxId: tTaxId,
-            bankName: merchantReg.bankName,
-            bankAccount: merchantReg.bankAccount.trim(),
-            clabe: tClabe,
-            phone: tPhone,
-            isActive: false,
-            isOpen: false
-        } as any);
+        try {
+            setIsSubmittingStore(true);
+            const storeId = `store-${user.uid || Date.now()}`;
+            
+            await createStore({
+                id: storeId,
+                name: tName,
+                category: merchantReg.category,
+                address: tAddress,
+                rating: 5,
+                reviewsCount: 0,
+                deliveryTimeMin: Number(merchantReg.time),
+                deliveryTimeMax: Number(merchantReg.time) + 15,
+                deliveryFee: 45,
+                image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
+                products: [],
+                createdAt: new Date().toISOString(),
+                ownerId: user.uid,
+                taxId: tTaxId,
+                bankName: merchantReg.bankName,
+                bankAccount: merchantReg.bankAccount.trim(),
+                clabe: tClabe,
+                phone: tPhone,
+                isActive: false,
+                isOpen: false
+            } as any);
 
-        await updateUser({ 
-            ownedStoreId: storeId, 
-            role: UserRole.MERCHANT 
-        });
+            await updateUser({ 
+                ownedStoreId: storeId, 
+                role: UserRole.MERCHANT 
+            });
 
-        // Switch to MERCHANT view immediately
-        setRole(UserRole.MERCHANT);
-        setCurrentView('MAIN');
-        toggleSettings();
-        showToast('¡Tienda registrada con éxito!', 'success');
+            // Switch to MERCHANT view immediately
+            setRole(UserRole.MERCHANT);
+            setCurrentView('MAIN');
+            toggleSettings();
+            showToast('¡Tienda registrada con éxito!', 'success');
+        } catch (error: any) {
+            console.error("Create Store Error: ", error);
+            showToast(error.message || 'Error al intentar crear la tienda', 'error');
+        } finally {
+            setIsSubmittingStore(false);
+        }
     };
 
     const handleDriverRequest = () => {
@@ -360,7 +370,9 @@ export const SettingsOverlay: React.FC = () => {
                         </select>
                     </div>
                 </div>
-                <Button fullWidth onClick={handleCreateStoreRequest} className="mt-4">Enviar Solicitud</Button>
+                <Button fullWidth onClick={handleCreateStoreRequest} isLoading={isSubmittingStore} className="mt-4">
+                    {isSubmittingStore ? 'Enviando...' : 'Enviar Solicitud'}
+                </Button>
             </div>
 
             <p className="text-[10px] text-center text-stone-400 font-bold uppercase tracking-wider">Tu solicitud será revisada por el equipo administrativo.</p>

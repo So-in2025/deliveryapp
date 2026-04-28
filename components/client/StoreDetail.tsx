@@ -2,7 +2,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { formatCurrency } from '../../constants';
-import { ArrowLeft, Star, Clock, Heart, Share2, Search, Bike, Info, Plus, MapPin } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Heart, Share2, Search, Bike, Info, Plus, MapPin, ShoppingBag } from 'lucide-react';
 import { LazyImage } from '../ui/LazyImage';
 import { motion } from 'motion/react';
 
