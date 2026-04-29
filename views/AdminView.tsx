@@ -639,6 +639,7 @@ export const AdminView: React.FC = () => {
   // Local settings state for the form
   const [localConfig, setLocalConfig] = useState(config);
   const [mpCredentials, setMpCredentials] = useState({ mpAccessToken: '', mpPublicKey: '' });
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -1652,8 +1653,11 @@ export const AdminView: React.FC = () => {
                                 </div>
                                 
                                 <div className="flex items-center gap-2">
-                                    <div className="relative group/role">
-                                        <button className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all cursor-pointer">
+                                    <div className="relative">
+                                        <button 
+                                            onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                                            className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all cursor-pointer"
+                                        >
                                             <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-brand-950 text-xs font-black">
                                                 {(user.name || 'A').charAt(0).toUpperCase()}
                                             </div>
@@ -1661,30 +1665,32 @@ export const AdminView: React.FC = () => {
                                                 <p className="text-[9px] font-black text-stone-500 uppercase tracking-widest leading-none">Cuenta Activa</p>
                                                 <p className="text-xs font-black text-white leading-tight">Administrador</p>
                                             </div>
-                                            <ChevronDown size={14} className="text-stone-500 group-hover/role:rotate-180 transition-transform" />
+                                            <ChevronDown size={14} className={`text-stone-500 transition-transform ${isRoleDropdownOpen ? 'rotate-180' : ''}`} />
                                         </button>
                                         
-                                        <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-stone-900 rounded-2xl shadow-2xl border border-black/5 dark:border-white/5 opacity-0 group-hover/role:opacity-100 pointer-events-none group-hover/role:pointer-events-auto transition-all translate-y-2 group-hover/role:translate-y-0 overflow-hidden z-50">
-                                            <div className="p-4 border-b border-stone-100 dark:border-white/5 bg-stone-50 dark:bg-stone-800/50">
-                                                <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1">Cambiar de Vista</p>
-                                                <p className="text-xs font-black text-stone-900 dark:text-white truncate">{user.email}</p>
+                                        {isRoleDropdownOpen && (
+                                            <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-stone-900 rounded-2xl shadow-2xl border border-black/5 dark:border-white/5 transition-all overflow-hidden z-50">
+                                                <div className="p-4 border-b border-stone-100 dark:border-white/5 bg-stone-50 dark:bg-stone-800/50">
+                                                    <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest mb-1">Cambiar de Vista</p>
+                                                    <p className="text-xs font-black text-stone-900 dark:text-white truncate">{user.email}</p>
+                                                </div>
+                                                <div className="p-2 space-y-1">
+                                                    <button onClick={() => { setRole(UserRole.CLIENT); setIsRoleDropdownOpen(false); }} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
+                                                        <Search size={14} /> Vista Cliente
+                                                    </button>
+                                                    <button onClick={() => { setRole(UserRole.MERCHANT); setIsRoleDropdownOpen(false); }} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
+                                                        <StoreIcon size={14} /> Vista Comercio
+                                                    </button>
+                                                    <button onClick={() => { setRole(UserRole.DRIVER); setIsRoleDropdownOpen(false); }} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
+                                                        <Truck size={14} /> Vista Repartidor
+                                                    </button>
+                                                    <div className="h-px bg-stone-100 dark:bg-white/5 my-1" />
+                                                    <button onClick={() => { signOut(); setIsRoleDropdownOpen(false); }} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                                                        <LogOut size={14} /> Cerrar Sesión
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="p-2 space-y-1">
-                                                <button onClick={() => setRole(UserRole.CLIENT)} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
-                                                    <Search size={14} /> Vista Cliente
-                                                </button>
-                                                <button onClick={() => setRole(UserRole.MERCHANT)} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
-                                                    <StoreIcon size={14} /> Vista Comercio
-                                                </button>
-                                                <button onClick={() => setRole(UserRole.DRIVER)} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
-                                                    <Truck size={14} /> Vista Repartidor
-                                                </button>
-                                                <div className="h-px bg-stone-100 dark:bg-white/5 my-1" />
-                                                <button onClick={signOut} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
-                                                    <LogOut size={14} /> Cerrar Sesión
-                                                </button>
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

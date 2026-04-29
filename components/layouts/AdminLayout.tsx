@@ -130,6 +130,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                         <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-600 rounded-full" />
                     )}
                 </button>
+                <button 
+                    onClick={toggleSettings}
+                    className="p-2 rounded bg-white/5 text-stone-400 hover:text-white transition-colors"
+                    title="Configuración"
+                >
+                    <Settings size={16} />
+                </button>
             </div>
           </header>
 

@@ -183,8 +183,8 @@ export const SettingsOverlay: React.FC = () => {
         const tAddress = merchantReg.address.trim();
         const tPhone = merchantReg.phone.trim();
 
-        if (!tName || !tClabe || !merchantReg.bankName || !tAddress || !tPhone) {
-            showToast('Por favor completa todos los campos obligatorios', 'error');
+        if (!tName || !tAddress || !tPhone) {
+            showToast('Por favor completa los campos obligatorios (Nombre, Dirección, Teléfono)', 'error');
             return;
         }
 
@@ -197,11 +197,13 @@ export const SettingsOverlay: React.FC = () => {
             }
         }
 
-        // CLABE Validation (18 digits)
-        const clabeRegex = /^[0-9]{18}$/;
-        if (!clabeRegex.test(tClabe)) {
-            showToast('CLABE inválida. Debe tener 18 dígitos numéricos', 'error');
-            return;
+        // CLABE Validation (18 digits) ONLY if provided
+        if (tClabe.length > 0) {
+            const clabeRegex = /^[0-9]{18}$/;
+            if (!clabeRegex.test(tClabe)) {
+                showToast('CLABE inválida. Debe tener 18 dígitos numéricos', 'error');
+                return;
+            }
         }
 
         try {
