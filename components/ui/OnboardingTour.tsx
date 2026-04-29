@@ -42,6 +42,12 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
     }, [currentStep, steps]);
 
     useEffect(() => {
+        // Disable on mobile
+        if (window.innerWidth < 768) {
+            setIsVisible(false);
+            return;
+        }
+
         console.log('OnboardingTour mounted with steps:', steps);
         updateTargetRect();
         

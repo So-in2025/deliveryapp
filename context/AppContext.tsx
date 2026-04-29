@@ -568,6 +568,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               // Non-admins: check if savedRole is permitted
               let roleAllowed = false;
               if (savedRole === UserRole.CLIENT) roleAllowed = true;
+              else if (savedRole === UserRole.NONE) roleAllowed = true;
               else if (savedRole === UserRole.DRIVER && authProfile.isDriver) roleAllowed = true;
               else if (savedRole === UserRole.MERCHANT && authProfile.ownedStoreId) roleAllowed = true;
               else if (savedRole === authenticatedRole) roleAllowed = true;
