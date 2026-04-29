@@ -33,7 +33,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isVerified() && (
-        request.auth.token.email in ["daniel.acevedo3134@gmail.com", "ofeliaacevedo41@gmail.com"] ||
+        request.auth.token.email in ["soinsoluciones2025@gmail.com", "daniel.acevedo3134@gmail.com", "telollevo1389@gmail.com", "Espaciovacio@gmail.com", "ofeliaacevedo41@gmail.com"] ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN')
       );
@@ -92,8 +92,16 @@ service cloud.firestore {
                     (!('createdAt' in incoming()) || isRecent(incoming().createdAt));
 
       allow update: if isVerified() && (
-        (isOwner(userId) && incoming().role == existing().role && 
-         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline'])) ||
+        (isOwner(userId) && (
+          // Standard profile update
+          (incoming().role == existing().role && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline'])) ||
+          // Promote to Merchant
+          (incoming().role == 'MERCHANT' && incoming().diff(existing()).affectedKeys().hasOnly(['ownedStoreId', 'role'])) ||
+          // Update Store ID (if role is already MERCHANT)
+          (existing().role == 'MERCHANT' && incoming().role == 'MERCHANT' && incoming().diff(existing()).affectedKeys().hasOnly(['ownedStoreId'])) ||
+          // Register as Driver
+          (incoming().role == existing().role && incoming().diff(existing()).affectedKeys().hasOnly(['ineUrl', 'selfieUrl', 'vehicleType']))
+        )) ||
         isAdmin()
       );
     }

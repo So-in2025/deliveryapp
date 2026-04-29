@@ -11,7 +11,9 @@ import { io, Socket } from 'socket.io-client';
 
 const ADMIN_EMAILS = [
   'soinsoluciones2025@gmail.com',
-  'daniel.acevedo3134@gmail.com'
+  'daniel.acevedo3134@gmail.com',
+  'telollevo1389@gmail.com',
+  'Espaciovacio@gmail.com'
 ];
 
 export const calculateDynamicDeliveryDetails = (distanceKm: number | null, fallbackFee: number, fallbackCommissionPct: number, rates?: DeliveryRatesConfig) => {
@@ -587,7 +589,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             products: Array.isArray(data.products) ? data.products : []
           };
         }) as Store[];
-        setStores(storesData.filter(s => s.isActive !== false)); 
+        setStores(storesData);
     }, (error) => {
         if (error.code === 'permission-denied') {
           console.warn('Stores permission denied');

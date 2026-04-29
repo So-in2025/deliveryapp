@@ -1366,6 +1366,17 @@ export const MerchantView: React.FC = () => {
       {/* Merchant Header with Tabs */}
       <div className="bg-white/90 dark:bg-stone-900/95 sticky top-0 z-10 border-b border-stone-100 dark:border-white/5 backdrop-blur-md">
         <div className="w-full">
+            {!myStore.isActive && !myStore.pendingName && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 mx-4 lg:mx-12 mt-4 p-4 rounded-2xl border border-amber-200 dark:border-amber-700/30 flex items-start gap-4 shadow-sm animate-fade-in text-left">
+                    <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-full shrink-0">
+                        <Clock className="text-amber-600 dark:text-amber-400" size={20} />
+                    </div>
+                    <div>
+                        <p className="text-amber-900 dark:text-amber-100 font-bold text-sm">Comercio en revisión</p>
+                        <p className="text-amber-700 dark:text-amber-300/80 text-xs mt-1 leading-relaxed">Tu tienda está siendo revisada por un administrador. Los clientes no podrán verla hasta que sea aprobada. Mientras tanto, puedes configurar tu menú.</p>
+                    </div>
+                </div>
+            )}
             <div className="px-4 py-4 lg:px-12 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-white/10 overflow-hidden shadow-sm shrink-0">
