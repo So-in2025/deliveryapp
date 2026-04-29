@@ -298,7 +298,7 @@ export const SettingsOverlay: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Banco *</label>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Banco (opcional)</label>
                     <select 
                         className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-900 dark:text-white outline-none focus:border-brand-500"
                         value={merchantReg.bankName}
@@ -311,7 +311,7 @@ export const SettingsOverlay: React.FC = () => {
                     </select>
                 </div>
                 <div>
-                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria *</label>
+                    <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria (opcional)</label>
                     <input 
                         placeholder="18 dígitos numéricos" 
                         maxLength={18}

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { UserRole, Store } from '../types';
-import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, User as UserIcon, Globe, Download, ArrowLeft, Mail, Lock, User, X, Zap } from 'lucide-react';
+import { ShoppingBag, Store as StoreIcon, Bike, ArrowRight, Shield, User as UserIcon, Globe, Download, ArrowLeft, Mail, Lock, User, X } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { APP_CONFIG } from '../constants';
@@ -419,10 +419,7 @@ export const AuthView: React.FC = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
                 >
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 text-[10px] font-bold uppercase tracking-widest mb-6">
-                        <Zap size={12} />
-                        <span>Trato Cercano</span>
-                    </div>
+                    {/* Removed Trato Cercano badge */}
                     <h2 className="text-8xl font-black text-white leading-[0.85] tracking-tighter uppercase italic">
                         LO MEJOR DE<br/>NUESTRO<br/><span className="text-brand-500">PUEBLO.</span>
                     </h2>
@@ -442,8 +439,7 @@ export const AuthView: React.FC = () => {
                         <div className="text-xs text-stone-500 font-bold uppercase tracking-widest dark:text-stone-400">Locales</div>
                     </div>
                     <div className="space-y-2">
-                        <div className="text-3xl font-black text-white tracking-tighter uppercase italic">Trato</div>
-                        <div className="text-xs text-stone-500 font-bold uppercase tracking-widest dark:text-stone-400">Cercano</div>
+                        {/* Removed Trato Cercano */}
                     </div>
                 </motion.div>
             </div>
@@ -730,7 +726,7 @@ export const AuthView: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                 <label className="block text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 dark:text-stone-400">RFC (13 caracteres)</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">RFC (13 caracteres) (opcional)</label>
                                  <input 
                                      type="text" 
                                      value={storeTaxId}
@@ -741,7 +737,7 @@ export const AuthView: React.FC = () => {
                                  />
                              </div>
                              <div>
-                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Banco</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Banco (opcional)</label>
                                  <select 
                                      value={storeBankName}
                                      onChange={(e) => setStoreBankName(e.target.value)}
@@ -754,21 +750,21 @@ export const AuthView: React.FC = () => {
                                  </select>
                              </div>
                              <div>
-                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria (18 dígitos)</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria (18 dígitos) (opcional)</label>
                                  <input 
                                      type="text" 
                                      inputMode="numeric"
                                      pattern="[0-9]*"
                                      value={storeClabe}
                                      onChange={(e) => setStoreClabe(e.target.value.replace(/\D/g, ''))}
-                                     placeholder="18 dígitos numéricos"
+                                     placeholder="18 dígitos (si aplica)"
                                      maxLength={18}
                                      autoComplete="off"
                                      className="w-full bg-stone-50 dark:bg-stone-900 border border-amber-300 dark:border-stone-800 rounded-xl px-4 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                  />
                              </div>
                              <div>
-                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Número de Cuenta (Opcional)</label>
+                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Número de Cuenta (opcional)</label>
                                  <input 
                                      type="text" 
                                      value={storeBankAccount}

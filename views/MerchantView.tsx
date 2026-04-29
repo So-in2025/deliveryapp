@@ -443,16 +443,8 @@ const BulkProductUpload: React.FC<{ storeId: string }> = ({ storeId }) => {
           </button>
         </div>
 
-        {/* Demo Assets Helper */}
-        <div className="mt-8 pt-8 border-t border-white/5 flex flex-wrap gap-6 items-center">
-            <span className="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em]">Kit de Media para Demo:</span>
-            <a href="/demo_productos.csv" download className="text-[11px] font-bold text-stone-400 hover:text-white transition-colors flex items-center gap-2">
-                <Download size={14} /> CSV de Prueba
-            </a>
-            <a href="/menu_demo_ia.txt" target="_blank" className="text-[11px] font-bold text-stone-400 hover:text-white transition-colors flex items-center gap-2">
-                <FileText size={14} /> Menú para IA (.txt)
-            </a>
-        </div>
+        {/* Demo Assets Helper - Removed */}
+
       </div>
 
       {isUploading && (

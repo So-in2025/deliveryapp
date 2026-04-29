@@ -11,10 +11,10 @@ import { LazyImage } from '../components/ui/LazyImage';
 import { Button } from '../components/ui/Button';
 import { 
   TrendingUp, Users, Store as StoreIcon, Activity, HelpCircle,
-  DollarSign, Shield, Search, 
+  DollarSign, Shield, Search, LayoutDashboard, Bike, ClipboardList, Megaphone, Banknote,
   AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail, ChevronDown, Settings, LogOut,
   BarChart3, PieChart as PieChartIcon, Filter, Tag as TagIcon, X, Plus, Trash2, AlertCircle,
-  Compass, Sun, Moon, Zap
+  Compass, Sun, Moon, Zap, MoreHorizontal,
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -639,6 +639,7 @@ export const AdminView: React.FC = () => {
   // Local settings state for the form
   const [localConfig, setLocalConfig] = useState(config);
   const [mpCredentials, setMpCredentials] = useState({ mpAccessToken: '', mpPublicKey: '' });
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   useEffect(() => {
     setLocalConfig(config);
@@ -1678,6 +1679,10 @@ export const AdminView: React.FC = () => {
                                                 <button onClick={() => setRole(UserRole.DRIVER)} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-white/5 transition-colors">
                                                     <Truck size={14} /> Vista Repartidor
                                                 </button>
+                                                <div className="h-px bg-stone-100 dark:bg-white/5 my-1" />
+                                                <button onClick={signOut} className="w-full flex items-center gap-3 p-2.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                                                    <LogOut size={14} /> Cerrar Sesión
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -1685,42 +1690,60 @@ export const AdminView: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="flex bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 overflow-x-auto lg:hidden">
+                        <div className="flex bg-white/5 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 overflow-x-auto lg:hidden no-scrollbar shadow-2xl mt-4">
                             {[
-                                { id: 'DASHBOARD', label: 'Resumen', icon: <BarChart3 size={16} /> },
-                                { id: 'FLEET', label: 'Logística', icon: <Truck size={16} /> },
-                                { id: 'ORDERS', label: 'Pedidos', icon: <Activity size={16} /> },
-                                { id: 'BANNERS', label: 'Promociones', icon: <TagIcon size={16} /> },
-                                { id: 'SETTLEMENTS', label: 'Liquidaciones', icon: <DollarSign size={16} /> },
-                                { id: 'SETTINGS', label: 'Ajustes', icon: <Settings size={16} /> },
-                                { id: 'LOGOUT', label: 'Salir', icon: <LogOut size={16} /> },
-                                { id: 'STORES', label: 'Comercios', icon: <StoreIcon size={16} /> },
-                                { id: 'USERS', label: 'Usuarios', icon: <Users size={16} /> },
-                                { id: 'DISPUTES', label: 'Reclamos', icon: <AlertTriangle size={16} /> }
+                                { id: 'DASHBOARD', label: 'Tablero', icon: <LayoutDashboard size={18} /> },
+                                { id: 'ORDERS', label: 'Pedidos', icon: <ClipboardList size={18} /> },
+                                { id: 'STORES', label: 'Comercios', icon: <StoreIcon size={18} /> },
+                                { id: 'FLEET', label: 'Flota', icon: <Bike size={18} /> },
+                                { id: 'MORE', label: 'Más', icon: <MoreHorizontal size={18} /> }
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
                                     id={`${tab.id.toLowerCase()}-tab`}
                                     onClick={() => {
-                                        if (tab.id === 'LOGOUT') {
-                                            signOut();
+                                        if (tab.id === 'MORE') {
+                                            setIsMoreMenuOpen(!isMoreMenuOpen);
                                         } else {
                                             setAdminViewState(tab.id as any);
+                                            setIsMoreMenuOpen(false);
                                         }
                                     }}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap relative ${adminViewState === tab.id ? 'bg-white dark:bg-stone-900 text-stone-950 dark:text-white shadow-xl' : 'text-stone-500 hover:text-white'}`}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap relative ${adminViewState === tab.id ? 'bg-brand-500 text-brand-950 shadow-lg shadow-brand-500/20' : 'text-stone-500 hover:text-white hover:bg-white/5'}`}
                                 >
-                                    {tab.icon}
-                                    <span className="hidden md:inline">{tab.label}</span>
-                                    {tab.id === 'DISPUTES' && orders.some(o => o.status === OrderStatus.DISPUTED && o.claimStatus === 'PENDING') && (
-                                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-50 dark:bg-red-900/200"></span>
-                                        </span>
-                                    )}
+                                    <span className={`${adminViewState === tab.id ? 'scale-110' : 'scale-100'} transition-transform`}>
+                                        {tab.icon}
+                                    </span>
                                 </button>
                             ))}
                         </div>
+                        {isMoreMenuOpen && (
+                            <div className="fixed inset-0 z-50 flex items-end justify-center">
+                                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsMoreMenuOpen(false)}></div>
+                                <div className="relative w-full max-w-lg bg-stone-900 border-t border-white/10 p-6 rounded-t-3xl shadow-2xl">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-xl font-black text-white uppercase tracking-tighter">Más Opciones</h3>
+                                        <button onClick={() => setIsMoreMenuOpen(false)} className="p-2 bg-white/10 rounded-full text-white">
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {[
+                                            { id: 'USERS', label: 'Usuarios', icon: <Users size={20} /> },
+                                            { id: 'BANNERS', label: 'Promos', icon: <Megaphone size={20} /> },
+                                            { id: 'SETTLEMENTS', label: 'Pagos', icon: <Banknote size={20} /> },
+                                            { id: 'DISPUTES', label: 'Reclamos', icon: <AlertTriangle size={20} /> },
+                                            { id: 'SETTINGS', label: 'Ajustes', icon: <Settings size={20} /> }
+                                        ].map(item => (
+                                            <button key={item.id} onClick={() => { setAdminViewState(item.id as any); setIsMoreMenuOpen(false); }} className="flex flex-col items-center justify-center p-4 bg-white/5 border border-white/10 rounded-2xl text-white gap-2 hover:bg-brand-500 hover:text-brand-950 transition-colors">
+                                                {item.icon}
+                                                <span className="text-xs font-bold uppercase">{item.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
