@@ -565,8 +565,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               // Admins can be in ANY role they saved
               setRoleState(savedRole);
           } else {
-              // Non-admins are forced to their assigned role or CLIENT
-              const finalRole = authenticatedRole || UserRole.CLIENT;
+              // Non-admins: check if savedRole is permitted
+              let roleAllowed = false;
+              if (savedRole === UserRole.CLIENT) roleAllowed = true;
+              else if (savedRole === UserRole.DRIVER && authProfile.isDriver) roleAllowed = true;
+              else if (savedRole === UserRole.MERCHANT && authProfile.ownedStoreId) roleAllowed = true;
+              else if (savedRole === authenticatedRole) roleAllowed = true;
+
+              const finalRole = roleAllowed ? (savedRole || authenticatedRole || UserRole.CLIENT) : (authenticatedRole || UserRole.CLIENT);
               setRoleState(finalRole);
               localStorage.setItem('codex_user_role', finalRole);
           }
