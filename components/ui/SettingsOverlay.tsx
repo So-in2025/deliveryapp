@@ -6,7 +6,7 @@ import { resetAppData } from '../../services/dataService';
 import { UserRole, Store } from '../../types';
 import { Button } from './Button';
 import { uploadImageToCloudinary } from '../../services/cloudinaryService';
-import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText, Image as ImageIcon, Zap } from 'lucide-react';
+import { X, User, Bell, Moon, LogOut, ChevronRight, Shield, HelpCircle, RefreshCcw, Store as StoreIcon, Bike, ArrowLeft, Camera, Check, MapPin, Clock, Download, ChefHat, ShoppingBag, FileText, Image as ImageIcon, Zap, Mail } from 'lucide-react';
 
 // Internal navigation state for the overlay
 type SettingsView = 'MAIN' | 'EDIT_PROFILE' | 'PRIVACY' | 'TERMS' | 'HELP' | 'REGISTER_MERCHANT' | 'REGISTER_DRIVER';
@@ -17,6 +17,12 @@ export const SettingsOverlay: React.FC = () => {
   const { showToast } = useToast();
   const [currentView, setCurrentView] = useState<SettingsView>('MAIN');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const [supportForm, setSupportForm] = useState({
+      subject: 'General',
+      message: ''
+  });
+  const [isSendingSupport, setIsSendingSupport] = useState(false);
 
   // Listen for custom event to open help directly
   useEffect(() => {
@@ -816,6 +822,33 @@ export const SettingsOverlay: React.FC = () => {
     </div>
 );
 
+  const handleSendSupport = () => {
+      if (!supportForm.message.trim()) {
+          showToast('Por favor describe tu consulta', 'error');
+          return;
+      }
+
+      setIsSendingSupport(true);
+      
+      // Simulate sending or opening mailto
+      const body = `HOLA TÉCNICO,\n\nROL: ${role}\nUSUARIO: ${user.name} (${user.email})\nASUNTO: ${supportForm.subject}\n\nMENSAJE:\n${supportForm.message}\n\n-- Enviado desde Te lo Llevo App --`;
+      const mailto = `mailto:${config.supportEmail}?subject=Soporte Te lo Llevo: ${supportForm.subject}&body=${encodeURIComponent(body)}`;
+      
+      window.location.href = mailto;
+      
+      setTimeout(() => {
+          setIsSendingSupport(false);
+          setSupportForm({ ...supportForm, message: '' });
+          showToast('Abriendo gestor de correo...', 'success');
+      }, 800);
+  };
+
+  const handleWhatsAppSupport = () => {
+      const cleanPhone = (config.supportPhone || '5213312345678').replace(/\D/g, '');
+      const text = `Hola! Soy ${user.name}, necesito asistencia con mi cuenta de ${role === UserRole.CLIENT ? 'Cliente' : role === UserRole.MERCHANT ? 'Comercio' : 'Repartidor'}.`;
+      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
   const renderHelpView = () => {
     const helpContent = {
       [UserRole.CLIENT]: (
@@ -917,12 +950,55 @@ export const SettingsOverlay: React.FC = () => {
           {helpContent[role as UserRole] || helpContent[UserRole.CLIENT]}
         </div>
 
-        <div className="mt-8 p-4 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-amber-200 dark:border-stone-800">
-          <p className="text-xs font-bold text-stone-400 uppercase mb-2">¿Necesitas más ayuda?</p>
-          <p className="text-sm text-stone-600 dark:text-stone-400 mb-4">Consulta el manual completo en formato PDF o contacta a soporte técnico.</p>
-          <button className="w-full py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
-            <Download size={14} /> Descargar Manual Completo
-          </button>
+        <div className="mt-8 space-y-4">
+          <div className="p-5 bg-stone-900 dark:bg-black rounded-[2rem] border border-white/5 shadow-2xl">
+            <p className="text-[10px] font-black text-brand-500 uppercase tracking-[0.2em] mb-4 italic">Asistencia Inteligente</p>
+            
+            <div className="space-y-3">
+                <select 
+                    value={supportForm.subject}
+                    onChange={(e) => setSupportForm({...supportForm, subject: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-brand-500 transition-all font-bold"
+                >
+                    <option value="General">Consulta General</option>
+                    <option value="Pedido">Problema con Pedido</option>
+                    <option value="Pago">Duda sobre Pagos</option>
+                    <option value="App">Error en la Aplicación</option>
+                    <option value="Sugerencia">Sugerencia de Mejora</option>
+                </select>
+
+                <textarea 
+                    placeholder="Describe tu situación con detalle..."
+                    value={supportForm.message}
+                    onChange={(e) => setSupportForm({...supportForm, message: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-white outline-none focus:border-brand-500 transition-all min-h-[100px] resize-none"
+                />
+
+                <Button fullWidth onClick={handleSendSupport} isLoading={isSendingSupport} className="!h-12 !rounded-xl !text-[10px] font-black uppercase tracking-widest">
+                    Enviar Ticket vía Email
+                </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+                onClick={handleWhatsAppSupport}
+                className="flex items-center justify-center gap-2 p-4 bg-[#25D366] hover:bg-[#20ba59] text-white rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-green-500/20"
+            >
+                <Zap size={16} fill="white" />
+                <span className="text-[10px] font-black uppercase tracking-widest">WhatsApp</span>
+            </button>
+            <button 
+                onClick={() => window.location.href = `mailto:${config.supportEmail}`}
+                className="flex items-center justify-center gap-2 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20"
+            >
+                <Mail size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Email</span>
+            </button>
+          </div>
+          <p className="text-[9px] text-center text-stone-400 font-bold uppercase tracking-widest leading-tight px-4 mt-2">
+            Tiempo de respuesta estimado: <span className="text-brand-500">Menos de 15 minutos</span> en horario comercial.
+          </p>
         </div>
       </div>
     );

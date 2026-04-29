@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { OrderStatus, Store, OrderType, UserRole, Order } from '../types';
 import { formatCurrency } from '../constants';
@@ -10,8 +12,9 @@ import { Button } from '../components/ui/Button';
 import { 
   TrendingUp, Users, Store as StoreIcon, Activity, HelpCircle,
   DollarSign, Shield, Search, 
-  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail, ChevronDown,
-  BarChart3, PieChart as PieChartIcon, Filter, Tag, X, Plus, Trash2, AlertCircle
+  AlertTriangle, ChevronRight, Truck, MapPin, ArrowLeft, Mail, ChevronDown, Settings, LogOut,
+  BarChart3, PieChart as PieChartIcon, Filter, Tag as TagIcon, X, Plus, Trash2, AlertCircle,
+  Compass, Sun, Moon, Zap
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -19,6 +22,9 @@ import {
 } from 'recharts';
 import { format, subDays, startOfDay, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { collection, getDocs, getDoc, deleteDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { setupDemoStore } from '../src/services/seedService';
 
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
 
@@ -290,6 +296,7 @@ const BannersManagementTab = ({
     const [isAdding, setIsAdding] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [newBanner, setNewBanner] = useState({
         title: '',
         subtitle: '',
@@ -322,10 +329,32 @@ const BannersManagementTab = ({
 
     const handleAdd = () => {
         if (!newBanner.title || !newBanner.image) return;
-        addBanner(newBanner);
+        if (editingId) {
+            updateBanner(editingId, newBanner);
+            setEditingId(null);
+            showToast('Banner actualizado', 'success');
+        } else {
+            addBanner(newBanner);
+            showToast('Banner creado', 'success');
+        }
         setIsAdding(false);
         setNewBanner({ title: '', subtitle: '', image: '', badge: 'PROMO', isActive: true, priority: 0, link: '' });
         setAiPrompt('');
+    };
+
+    const startEdit = (banner: any) => {
+        setEditingId(banner.id);
+        setNewBanner({
+            title: banner.title,
+            subtitle: banner.subtitle,
+            image: banner.image,
+            badge: banner.badge,
+            isActive: banner.isActive,
+            priority: banner.priority,
+            link: banner.link || ''
+        });
+        setIsAdding(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
@@ -336,7 +365,7 @@ const BannersManagementTab = ({
                     <p className="text-xs text-stone-500 font-medium dark:text-stone-400">Gestiona los banners de la pantalla principal</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => setIsAdding(!isAdding)} variant={isAdding ? 'secondary' : 'primary'}>
+                    <Button onClick={() => { setIsAdding(!isAdding); if(isAdding) setEditingId(null); }} variant={isAdding ? 'secondary' : 'primary'}>
                         {isAdding ? <X size={20} /> : <div className="flex items-center gap-2"><Plus size={20} /> <span className="hidden sm:inline">Nueva Promo</span></div>}
                     </Button>
                 </div>
@@ -344,24 +373,35 @@ const BannersManagementTab = ({
 
             {isAdding && (
                 <div className="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-brand-500/30 shadow-2xl animate-slide-in-bottom space-y-6">
-                    <div className="p-4 bg-brand-50 dark:bg-brand-900/10 rounded-xl border border-brand-200 dark:border-brand-500/20 flex flex-col gap-3">
-                        <label className="text-xs font-black text-brand-700 dark:text-brand-400 uppercase tracking-widest flex items-center gap-2">
-                            ✨ Magic AI (0 Fricción)
-                        </label>
-                        <div className="flex gap-2">
-                            <input 
-                                className="flex-1 p-3 rounded-lg border border-brand-200 dark:border-stone-700 bg-white dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all font-bold text-sm"
-                                placeholder="Ej: 50% de descuento en sushi esta semana"
-                                value={aiPrompt}
-                                onChange={e => setAiPrompt(e.target.value)}
-                            />
-                            <Button onClick={handleGenerateAI} disabled={isGenerating || !aiPrompt} className="px-6 relative overflow-hidden">
-                                {isGenerating ? (
-                                    <div className="w-5 h-5 border-2 border-brand-950 border-t-transparent rounded-full animate-spin" />
-                                ) : 'Generar'}
-                            </Button>
-                        </div>
+                    <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-widest italic">
+                            {editingId ? 'Editando Banner Existente' : 'Crear Nueva Promoción Inteligente'}
+                        </h4>
+                        {editingId && (
+                            <button onClick={() => { setEditingId(null); setIsAdding(false); }} className="text-[10px] font-black text-red-500 uppercase tracking-widest border border-red-500/20 px-3 py-1 rounded-lg">Cancelar Edición</button>
+                        )}
                     </div>
+                    
+                    {!editingId && (
+                        <div className="p-4 bg-brand-50 dark:bg-brand-900/10 rounded-xl border border-brand-200 dark:border-brand-500/20 flex flex-col gap-3">
+                            <label className="text-xs font-black text-brand-700 dark:text-brand-400 uppercase tracking-widest flex items-center gap-2">
+                                ✨ Magic AI (0 Fricción)
+                            </label>
+                            <div className="flex gap-2">
+                                <input 
+                                    className="flex-1 p-3 rounded-lg border border-brand-200 dark:border-stone-700 bg-white dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all font-bold text-sm"
+                                    placeholder="Ej: 50% de descuento en sushi esta semana"
+                                    value={aiPrompt}
+                                    onChange={e => setAiPrompt(e.target.value)}
+                                />
+                                <Button onClick={handleGenerateAI} disabled={isGenerating || !aiPrompt} className="px-6 relative overflow-hidden">
+                                    {isGenerating ? (
+                                        <div className="w-5 h-5 border-2 border-brand-950 border-t-transparent rounded-full animate-spin" />
+                                    ) : 'Generar'}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -391,26 +431,93 @@ const BannersManagementTab = ({
                                 onChange={e => setNewBanner({...newBanner, image: e.target.value})}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Badge / Etiqueta</label>
-                            <input 
-                                className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all font-mono"
-                                placeholder="PROMO, NUEVO, HOT"
-                                value={newBanner.badge}
-                                onChange={e => setNewBanner({...newBanner, badge: e.target.value.toUpperCase()})}
-                            />
+                        <div className="space-y-2 flex gap-4">
+                            <div className="flex-1">
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Badge</label>
+                                <input 
+                                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all font-mono"
+                                    placeholder="PROMO"
+                                    value={newBanner.badge}
+                                    onChange={e => setNewBanner({...newBanner, badge: e.target.value.toUpperCase()})}
+                                />
+                            </div>
+                            <div className="w-24">
+                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Prioridad</label>
+                                <input 
+                                    type="number"
+                                    className="w-full p-4 rounded-xl border dark:border-stone-800 dark:bg-stone-950 dark:text-white outline-none focus:border-brand-500 transition-all font-mono"
+                                    value={newBanner.priority}
+                                    onChange={e => setNewBanner({...newBanner, priority: parseInt(e.target.value)})}
+                                />
+                            </div>
                         </div>
                     </div>
-                    {newBanner.image && newBanner.title && (
-                        <div className="p-4 bg-stone-50 dark:bg-stone-950 rounded-xl relative overflow-hidden flex flex-col items-start justify-end h-32 border border-black/5 dark:border-white/5">
-                            <img src={newBanner.image} className="absolute inset-0 w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                            <span className="relative z-10 bg-brand-500 text-brand-950 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest mb-1 shadow-xl">{newBanner.badge}</span>
-                            <h4 className="relative z-10 text-white font-black text-xl leading-none drop-shadow-md">{newBanner.title}</h4>
-                            <p className="relative z-10 text-white/90 text-xs font-medium drop-shadow-md">{newBanner.subtitle}</p>
+                    <div className="space-y-6">
+                        <label className="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest italic flex items-center gap-2">
+                            🔍 Vista Previa en Vivo (Full Surface)
+                        </label>
+                        <div className="relative group/preview overflow-hidden rounded-[2.5rem] border-4 border-stone-100 dark:border-white/5 shadow-2xl bg-stone-100 dark:bg-stone-950">
+                            <div className="p-8 aspect-[16/7] relative overflow-hidden flex flex-col items-start justify-end group-hover/preview:scale-[1.01] transition-transform duration-700">
+                                {newBanner.image ? (
+                                    <img 
+                                        src={newBanner.image} 
+                                        className="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-luminosity dark:mix-blend-normal group-hover/preview:scale-110 transition-transform duration-[5s] ease-out" 
+                                        alt="Preview"
+                                    />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-stone-200 dark:bg-stone-900">
+                                        <Plus size={48} className="text-stone-400 animate-pulse" />
+                                    </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
+                                
+                                <div className="relative z-20 space-y-3">
+                                    <div className="bg-brand-500 text-brand-950 px-4 py-1 rounded-full text-[10px] font-black tracking-[0.2em] inline-block shadow-2xl animate-bounce-slow">
+                                        {newBanner.badge || 'PROMO'}
+                                    </div>
+                                    <h4 className="text-white font-black text-3xl lg:text-4xl tracking-tighter uppercase leading-none italic drop-shadow-2xl">
+                                        {newBanner.title || 'Título de Oro'}
+                                    </h4>
+                                    <p className="text-white/70 text-xs lg:text-sm font-medium tracking-tight max-w-sm drop-shadow-md leading-relaxed">
+                                        {newBanner.subtitle || 'Define un pitch de venta agresivo para incrementar el CTR.'}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                    <Button fullWidth onClick={handleAdd} className="h-14 text-lg" disabled={!newBanner.title || !newBanner.image}>Guardar Promoción</Button>
+                        <Button 
+                            fullWidth 
+                            onClick={handleAdd} 
+                            disabled={!newBanner.title || !newBanner.image}
+                            className="!h-16 !text-[11px] !bg-stone-950 dark:!bg-white text-white dark:text-stone-950 shadow-2xl !rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] font-black tracking-widest uppercase italic border border-white/10"
+                        >
+                            {editingId ? 'ACTUALIZAR PROMOCIÓN' : 'CONFIRMAR Y PUBLICAR'}
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {banners.length === 0 && !isAdding && (
+                <div className="border hover:border-brand-500/50 transition-colors border-dashed border-stone-300 dark:border-white/10 rounded-[3rem] flex flex-col items-center justify-center p-12 py-20 text-center gap-6 group mt-6 bg-stone-50/50 dark:bg-stone-900/50 cursor-pointer"
+                     onClick={() => {
+                        addBanner({
+                            title: 'LO MEJOR DE \nLA CIUDAD.',
+                            subtitle: 'Lo mejor de tu comunidad local en la puerta de tu casa.',
+                            image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=1920',
+                            badge: 'PREMIUM',
+                            isActive: true,
+                            priority: 10,
+                            link: ''
+                        });
+                        showToast('Banner Clásico Recuperado', 'success');
+                     }}
+                >
+                    <div className="w-20 h-20 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <TagIcon size={32} />
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-stone-900 dark:text-white uppercase tracking-tighter">Sin Promociones</h3>
+                        <p className="text-sm font-medium text-stone-500 mt-2 max-w-sm mx-auto">Toca aquí para cargar el banner de bienvenida inmersivo y edítalo.</p>
+                    </div>
                 </div>
             )}
 
@@ -425,6 +532,12 @@ const BannersManagementTab = ({
                                 <p className="text-stone-300 text-xs">{banner.subtitle}</p>
                             </div>
                             <div className="absolute top-4 right-4 flex gap-2">
+                                <button 
+                                    onClick={() => startEdit(banner)}
+                                    className="p-2 bg-white/20 text-white rounded-xl backdrop-blur-md hover:bg-white/40 transition-all border border-white/10"
+                                >
+                                    <Settings size={16} />
+                                </button>
                                 <button 
                                     onClick={() => updateBanner(banner.id, { isActive: !banner.isActive })}
                                     className={`p-2 rounded-xl backdrop-blur-md transition-all ${banner.isActive ? 'bg-green-500 text-white shadow-green-500/40' : 'bg-red-50 dark:bg-red-900/200 text-white shadow-red-500/40'}`}
@@ -460,7 +573,7 @@ const BannersManagementTab = ({
                 ))}
                 {banners.length === 0 && (
                     <div className="col-span-full py-20 text-center bg-stone-50 dark:bg-stone-900/40 rounded-3xl border-2 border-dashed border-amber-300 dark:border-stone-800">
-                        <Tag size={48} className="mx-auto text-stone-300 mb-4" />
+                        <TagIcon size={48} className="mx-auto text-stone-300 mb-4" />
                         <h4 className="text-stone-900 dark:text-white font-black text-xl">Sin Promociones Activas</h4>
                         <p className="text-stone-500 dark:text-stone-400">Haz clic en el botón "+" para crear tu primer banner promocional.</p>
                     </div>
@@ -477,6 +590,7 @@ export const AdminView: React.FC = () => {
     config, updateConfig, user, completeTour, settleMerchantOrder, 
     settleDriverOrder, banners, addBanner, updateBanner, deleteBanner, setRole
   } = useApp();
+  const { signOut } = useAuth();
   const { showToast } = useToast();
 
   const isMobile = window.innerWidth < 1024;
@@ -549,6 +663,12 @@ export const AdminView: React.FC = () => {
   const [storeSearch, setStoreSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'ALL'>('ALL');
+
+  // Close overlays when tab changes
+  useEffect(() => {
+    setSelectedStore(null);
+    setSelectedUser(null);
+  }, [adminViewState]);
 
   // --- ANALYTICS LOGIC ---
   const chartData = useMemo(() => {
@@ -896,167 +1016,205 @@ export const AdminView: React.FC = () => {
                    ))}
                    </div>
                )}
-          </div>
-      );
-  };
+           </div>
+       );
+   };
 
-  const renderStoreDetail = () => {
+   const renderStoreDetail = () => {
       if(!selectedStore) return null;
       const storeStats = orders.filter(o => o.storeId === selectedStore.id);
       const totalRevenue = storeStats.reduce((sum, o) => sum + o.total, 0);
 
       return (
-          <div className="bg-stone-50 h-full animate-slide-in-right flex flex-col dark:bg-stone-900">
-              <div className="bg-white p-4 border-b border-amber-200 flex gap-3 items-center sticky top-0 z-10 dark:bg-stone-900 dark:border-stone-800">
-                  <button onClick={() => setSelectedStore(null)} className="p-2 -ml-2 hover:bg-stone-50 dark:hover:bg-stone-800/30 rounded-full"><ArrowLeft size={20} /></button>
-                  <h2 className="font-bold text-lg">{selectedStore.name}</h2>
+          <div className="flex-1 flex flex-col h-full animate-fade-in bg-stone-50 dark:bg-stone-900 overflow-y-auto">
+              <div className="bg-white/80 dark:bg-stone-950/80 p-6 border-b border-stone-200/50 dark:border-white/5 flex gap-4 items-center sticky top-0 z-20 backdrop-blur-md">
+                  <button 
+                    onClick={() => setSelectedStore(null)} 
+                    className="w-12 h-12 flex items-center justify-center bg-stone-100 dark:bg-white/5 hover:bg-stone-200 dark:hover:bg-white/10 rounded-2xl transition-all border border-stone-200 dark:border-white/10"
+                  >
+                    <ArrowLeft size={20} className="dark:text-white" />
+                  </button>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic">{selectedStore.name}</h2>
+                    <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest leading-tight">Gestión Profesional de Comercio</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <StoreBadge isActive={selectedStore.isActive} />
+                  </div>
               </div>
-              <div className="p-4 space-y-6 overflow-y-auto">
-                  <div className="flex gap-4 items-center bg-white p-4 rounded-xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
-                      <div className="w-16 h-16 bg-stone-100 rounded-lg overflow-hidden dark:bg-stone-800">
-                          <LazyImage src={selectedStore.image} alt={selectedStore.name} className="w-full h-full" />
-                      </div>
-                      <div>
-                          <p className="text-stone-500 text-sm dark:text-stone-400">{selectedStore.category}</p>
-                          <div className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-white">
-                              <StoreIcon size={14} /> ID: {selectedStore.id}
+              <div className="flex-1 overflow-y-auto p-4 lg:p-12">
+                  <div className="max-w-6xl mx-auto space-y-8">
+                      {/* Header Section */}
+                      <div className="flex flex-col md:flex-row gap-8 items-start">
+                          <div className="w-full md:w-1/3 aspect-square bg-stone-100 dark:bg-white/5 rounded-[3rem] overflow-hidden shadow-2xl border border-stone-200 dark:border-white/10 shrink-0">
+                              <LazyImage src={selectedStore.image} alt={selectedStore.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 space-y-6 w-full">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div className="bg-white dark:bg-black/20 p-6 rounded-[2rem] border border-stone-200/50 dark:border-white/[0.05] shadow-xl backdrop-blur-md">
+                                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <TrendingUp size={12} className="text-brand-500" /> Rendimiento de Ventas
+                                      </p>
+                                      <p className="text-4xl font-black text-stone-950 dark:text-white tracking-tighter">{formatCurrency(totalRevenue)}</p>
+                                      <p className="text-[10px] font-black text-green-500 uppercase tracking-widest mt-2">Venta Bruta Histórica</p>
+                                  </div>
+                                  <div className="bg-white dark:bg-black/20 p-6 rounded-[2rem] border border-stone-200/50 dark:border-white/[0.05] shadow-xl backdrop-blur-md">
+                                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <Activity size={12} className="text-brand-500" /> Volumen Operativo
+                                      </p>
+                                      <p className="text-4xl font-black text-stone-950 dark:text-white tracking-tighter">{storeStats.length}</p>
+                                      <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mt-2">Órdenes Procesadas</p>
+                                  </div>
+                              </div>
+
+                              <div className="bg-white dark:bg-black/20 p-8 rounded-[2.5rem] border border-stone-200/50 dark:border-white/[0.05] shadow-xl backdrop-blur-md space-y-6">
+                                  <div className="flex items-center justify-between">
+                                      <h3 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-tighter italic">Configuración de Comisiones</h3>
+                                      <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-white/5 flex items-center justify-center">
+                                          <DollarSign size={18} className="text-brand-500" />
+                                      </div>
+                                  </div>
+                                  <div className="space-y-4">
+                                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                          <div className="flex-1">
+                                              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Comisión Personalizada</p>
+                                              <div className="flex gap-2 group">
+                                                  <input 
+                                                    type="number" 
+                                                    defaultValue={(selectedStore.commissionPct || config.platformCommissionPct) * 100}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value) / 100;
+                                                        updateStore(selectedStore.id, { commissionPct: val });
+                                                    }}
+                                                    className="flex-1 p-4 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-white/5 rounded-2xl text-xl font-black focus:border-brand-500 outline-none transition-all"
+                                                  />
+                                                  <div className="bg-stone-100 dark:bg-stone-800 px-6 flex items-center rounded-2xl font-black text-stone-400 border border-stone-200 dark:border-white/5">%</div>
+                                              </div>
+                                          </div>
+                                          <div className="sm:w-1/3 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 self-end">
+                                              <p className="text-[9px] text-amber-600 dark:text-amber-400 font-bold leading-tight italic">
+                                                * Sobrescribe la comisión global del {(config.platformCommissionPct * 100).toFixed(0)}% para este comercio específico.
+                                              </p>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
                           </div>
                       </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white p-4 rounded-xl border border-amber-200 text-center dark:bg-stone-900 dark:border-stone-800">
-                          <p className="text-xs font-bold text-stone-400 uppercase">Ventas Totales</p>
-                          <p className="text-xl font-bold text-stone-900 dark:text-white">{formatCurrency(totalRevenue)}</p>
-                      </div>
-                      <div className="bg-white p-4 rounded-xl border border-amber-200 text-center dark:bg-stone-900 dark:border-stone-800">
-                          <p className="text-xs font-bold text-stone-400 uppercase">Pedidos</p>
-                          <p className="text-xl font-bold text-stone-900 dark:text-white">{storeStats.length}</p>
-                      </div>
-                  </div>
+                      {/* Store Controls */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="bg-white dark:bg-stone-900 p-8 rounded-[2.5rem] border border-stone-200 dark:border-white/10 shadow-xl space-y-6">
+                              <h3 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-tighter italic">Control de Estado</h3>
+                              
+                              {selectedStore.pendingName && (
+                                  <div className="p-6 bg-amber-500/10 rounded-[2rem] border border-amber-500/20 mb-4 animate-pulse">
+                                      <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-3">Solicitud de Cambio de Nombre</p>
+                                      <p className="text-2xl font-black text-stone-950 dark:text-white mb-6 italic tracking-tighter">"{selectedStore.pendingName}"</p>
+                                      <div className="flex gap-3">
+                                          <Button 
+                                              variant="secondary" 
+                                              className="flex-1 !bg-white dark:!bg-stone-800 !text-red-500 !rounded-2xl"
+                                              onClick={() => {
+                                                  updateStore(selectedStore.id, { pendingName: null });
+                                                  showToast('Cambio de nombre rechazado', 'info');
+                                              }}
+                                          >
+                                              RECHAZAR
+                                          </Button>
+                                          <Button 
+                                              className="flex-1 !bg-brand-500 !text-brand-950 !rounded-2xl shadow-lg shadow-brand-500/20"
+                                              onClick={() => {
+                                                  updateStore(selectedStore.id, { name: selectedStore.pendingName, pendingName: null });
+                                                  showToast('Nuevo nombre aprobado', 'success');
+                                              }}
+                                          >
+                                              APROBAR
+                                          </Button>
+                                      </div>
+                                  </div>
+                              )}
 
-                  <div className="bg-white p-4 rounded-xl border border-amber-200 space-y-3 dark:bg-stone-900 dark:border-stone-800">
-                      <h3 className="font-bold text-stone-900 text-sm dark:text-white">Configuración de Comisiones</h3>
-                      <div className="space-y-4">
-                          <div>
-                              <p className="text-xs font-bold text-stone-400 uppercase mb-1">Comisión Personalizada (%)</p>
-                              <div className="flex gap-2">
-                                  <input 
-                                    type="number" 
-                                    defaultValue={(selectedStore.commissionPct || config.platformCommissionPct) * 100}
-                                    onChange={(e) => {
-                                        const val = parseFloat(e.target.value) / 100;
-                                        updateStore(selectedStore.id, { commissionPct: val });
+                              <div className="flex gap-4">
+                                  <Button 
+                                    variant="secondary" 
+                                    fullWidth 
+                                    size="lg"
+                                    className="!bg-red-50 dark:!bg-red-900/10 !text-red-600 !rounded-2xl !border-red-100 dark:!border-red-900/20"
+                                    onClick={() => {
+                                        updateStore(selectedStore.id, { isActive: false });
+                                        showToast('Comercio Suspendido', 'info');
                                     }}
-                                    className="flex-1 p-2 bg-stone-50 border border-amber-300 rounded-lg text-sm dark:bg-stone-900 dark:border-stone-800"
-                                  />
-                                  <div className="bg-stone-100 px-3 flex items-center rounded-lg font-bold text-stone-500 dark:bg-stone-800 dark:text-stone-400">%</div>
-                              </div>
-                              <p className="text-[10px] text-stone-400 mt-1 italic">* Sobrescribe la comisión global del {(config.platformCommissionPct * 100).toFixed(0)}%</p>
-                          </div>
-                      </div>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-xl border border-amber-200 space-y-3 dark:bg-stone-900 dark:border-stone-800">
-                      <h3 className="font-bold text-stone-900 text-sm dark:text-white">Estado del Comercio</h3>
-                      
-                      {selectedStore.pendingName && (
-                          <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-900/30 mb-4 animate-pulse">
-                              <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Solicitud de Nuevo Nombre</p>
-                              <p className="text-sm font-bold text-stone-900 dark:text-white mb-3">"{selectedStore.pendingName}"</p>
-                              <div className="flex gap-2">
-                                  <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      className="flex-1 bg-red-500/10 text-red-500 border-red-500/20"
-                                      onClick={() => {
-                                          updateStore(selectedStore.id, { pendingName: null });
-                                          showToast('Cambio de nombre rechazado', 'info');
-                                      }}
                                   >
-                                      Rechazar
+                                      SUSPENDER
                                   </Button>
                                   <Button 
-                                      size="sm" 
-                                      className="flex-1 bg-green-500 text-white"
-                                      onClick={() => {
-                                          updateStore(selectedStore.id, { name: selectedStore.pendingName, pendingName: null });
-                                          showToast('Nuevo nombre aprobado', 'success');
-                                      }}
+                                    fullWidth 
+                                    size="lg"
+                                    className="!bg-brand-500 !text-brand-950 !rounded-2xl shadow-xl shadow-brand-500/20"
+                                    onClick={() => {
+                                        updateStore(selectedStore.id, { isActive: true });
+                                        showToast('Comercio Aprobado', 'success');
+                                    }}
                                   >
-                                      Aprobar
+                                      APROBAR
                                   </Button>
                               </div>
-                          </div>
-                      )}
 
-                      <div className="flex gap-2 mb-2">
-                          <Button 
-                            variant="secondary" 
-                            fullWidth 
-                            className="bg-red-50 text-red-600 border-red-100"
-                            onClick={() => {
-                                updateStore(selectedStore.id, { isActive: false });
-                                showToast('Comercio Suspendido', 'info');
-                            }}
-                          >
-                              Suspender
-                          </Button>
-                          <Button 
-                            fullWidth 
-                            className="bg-brand-500 text-brand-950"
-                            onClick={() => {
-                                updateStore(selectedStore.id, { isActive: true });
-                                showToast('Comercio Aprobado', 'success');
-                            }}
-                          >
-                              Aprobar
-                          </Button>
-                      </div>
-
-                      <div className="pt-2 border-t border-stone-100 dark:border-white/5">
-                          <Button 
-                            variant="outline" 
-                            fullWidth 
-                            className="text-red-500 border-red-500/30 hover:bg-red-500 hover:text-white transition-all uppercase tracking-widest font-black text-[10px]"
-                            onClick={() => {
-                                if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente "${selectedStore.name}"? Esta acción no se puede deshacer.`)) {
-                                    deleteStore(selectedStore.id);
-                                    setSelectedStore(null);
-                                }
-                            }}
-                          >
-                              Eliminar Tienda Definitivamente
-                          </Button>
-                      </div>
-                  </div>
-
-                  <div>
-                      <h3 className="font-bold text-stone-900 mb-2 dark:text-white uppercase tracking-tight text-xs">Productos ({selectedStore.products.length})</h3>
-                      <div className="bg-white rounded-xl border border-amber-200 divide-y divide-stone-50 overflow-hidden dark:bg-stone-900 dark:border-stone-800">
-                          {selectedStore.products.map(p => (
-                              <div key={p.id} className="p-3 flex justify-between items-center group/prod hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors">
-                                  <div className="flex flex-col">
-                                    <span className="text-sm font-black text-stone-700 dark:text-stone-300">{p.name}</span>
-                                    <span className="text-[10px] text-stone-400 font-bold uppercase">{p.category}</span>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-sm font-black text-brand-600">{formatCurrency(p.price)}</span>
-                                    <button 
-                                      onClick={() => {
-                                        if (window.confirm(`¿Eliminar "${p.name}"?`)) {
-                                          const updatedProducts = selectedStore.products.filter(item => item.id !== p.id);
-                                          updateStore(selectedStore.id, { products: updatedProducts });
-                                          setSelectedStore({ ...selectedStore, products: updatedProducts });
+                              <div className="pt-6 border-t border-stone-100 dark:border-white/5">
+                                  <Button 
+                                    variant="outline" 
+                                    fullWidth 
+                                    className="!text-red-500 !border-red-500/30 hover:!bg-red-500 hover:!text-white transition-all !rounded-2xl uppercase tracking-widest font-black text-xs h-14"
+                                    onClick={() => {
+                                        if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente "${selectedStore.name}"? Esta acción no se puede deshacer.`)) {
+                                            deleteStore(selectedStore.id);
+                                            setSelectedStore(null);
                                         }
-                                      }}
-                                      className="p-1.5 text-stone-300 hover:text-red-500 opacity-0 group-hover/prod:opacity-100 transition-all"
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
-                                  </div>
+                                    }}
+                                  >
+                                      ELIMINAR DEFINITIVAMENTE
+                                  </Button>
                               </div>
-                          ))}
+                          </div>
+
+                          <div className="bg-white dark:bg-stone-900 p-8 rounded-[2.5rem] border border-stone-200 dark:border-white/10 shadow-xl">
+                              <div className="flex justify-between items-center mb-6">
+                                  <h3 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-tighter italic">Catálogo de Productos</h3>
+                                  <span className="text-[10px] font-black text-stone-400 bg-stone-50 dark:bg-white/5 px-2 py-1 rounded">Total: {selectedStore.products.length}</span>
+                              </div>
+                              <div className="max-h-[400px] overflow-y-auto no-scrollbar space-y-3">
+                                  {selectedStore.products.map(p => (
+                                      <div key={p.id} className="p-4 bg-stone-50 dark:bg-black/20 rounded-2xl border border-stone-100 dark:border-white/5 flex justify-between items-center group/prod hover:border-brand-500/30 transition-all">
+                                          <div className="flex flex-col">
+                                            <span className="text-sm font-black text-stone-950 dark:text-stone-100 tracking-tight leading-none mb-1">{p.name}</span>
+                                            <span className="text-[9px] text-stone-400 font-black uppercase tracking-widest">{p.category}</span>
+                                          </div>
+                                          <div className="flex items-center gap-4">
+                                            <span className="text-sm font-black text-brand-600 italic tracking-tighter">{formatCurrency(p.price)}</span>
+                                            <button 
+                                              onClick={() => {
+                                                if (window.confirm(`¿Eliminar "${p.name}"?`)) {
+                                                  const updatedProducts = selectedStore.products.filter(item => item.id !== p.id);
+                                                  updateStore(selectedStore.id, { products: updatedProducts });
+                                                  setSelectedStore({ ...selectedStore, products: updatedProducts });
+                                                }
+                                              }}
+                                              className="p-2 text-stone-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                            >
+                                              <Trash2 size={16} />
+                                            </button>
+                                          </div>
+                                      </div>
+                                  ))}
+                                  {selectedStore.products.length === 0 && (
+                                      <div className="py-12 text-center opacity-30">
+                                          <TagIcon size={48} className="mx-auto mb-4" />
+                                          <p className="text-xs font-black uppercase tracking-widest">Sin productos activos</p>
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
                       </div>
                   </div>
               </div>
@@ -1162,123 +1320,162 @@ export const AdminView: React.FC = () => {
       const userOrders = orders.filter(o => o.customerName === selectedUser || o.uid === selectedUser);
       const totalSpent = userOrders.reduce((acc, o) => acc + o.total, 0);
 
+      const userInitials = (userProfile?.name || selectedUser).split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
       return (
-          <div className="bg-stone-50 h-full animate-slide-in-right flex flex-col dark:bg-stone-900">
-               <div className="bg-white p-4 border-b border-amber-200 flex gap-3 items-center sticky top-0 z-10 dark:bg-stone-900 dark:border-stone-800">
-                  <button onClick={() => setSelectedUser(null)} className="p-2 -ml-2 hover:bg-stone-50 dark:hover:bg-stone-800/30 rounded-full"><ArrowLeft size={20} /></button>
-                  <h2 className="font-bold text-lg">Perfil de Usuario</h2>
+          <div className="flex-1 flex flex-col h-full animate-fade-in bg-stone-50 dark:bg-stone-900 overflow-y-auto">
+               <div className="bg-white/80 dark:bg-stone-950/80 p-6 border-b border-stone-200/50 dark:border-white/5 flex gap-4 items-center sticky top-0 z-20 backdrop-blur-md">
+                  <button 
+                    onClick={() => setSelectedUser(null)} 
+                    className="w-12 h-12 flex items-center justify-center bg-stone-100 dark:bg-white/5 hover:bg-stone-200 dark:hover:bg-white/10 rounded-2xl transition-all border border-stone-200 dark:border-white/10"
+                  >
+                    <ArrowLeft size={20} className="dark:text-white" />
+                  </button>
+                  <div className="flex-1 text-left">
+                    <h2 className="text-2xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic">Perfil Operativo</h2>
+                    <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest leading-tight">Gestión Profesional de Entidad</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="px-4 py-1.5 bg-stone-950 dark:bg-white text-white dark:text-stone-950 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg">#{userProfile?.uid?.slice(-6).toUpperCase() || 'ID_DEMO'}</span>
+                  </div>
               </div>
-              <div className="p-4 space-y-6 overflow-y-auto">
-                  <div className="text-center py-6 bg-white rounded-2xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
-                      <div className="w-20 h-20 bg-stone-200 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-stone-500 dark:bg-stone-800 dark:text-stone-400">
-                          {userProfile?.name?.charAt(0) || selectedUser.charAt(0)}
-                      </div>
-                      <h2 className="text-xl font-bold text-stone-900 dark:text-white">{userProfile?.name || selectedUser}</h2>
-                      <div className="flex items-center justify-center gap-2 mt-2 text-sm text-stone-500 dark:text-stone-400">
-                          <Mail size={14} /> <span>{userProfile?.email || 'usuario@demo.com'}</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-4 mt-4">
-                          <div className="text-center">
-                              <p className="text-xl font-bold text-stone-900 dark:text-white">{userOrders.length}</p>
-                              <p className="text-[10px] uppercase font-bold text-stone-400">Pedidos</p>
-                          </div>
-                           <div className="text-center">
-                              <p className="text-xl font-bold text-stone-900 dark:text-white">{formatCurrency(totalSpent)}</p>
-                              <p className="text-[10px] uppercase font-bold text-stone-400">Total Gastado</p>
+
+              <div className="flex-1 overflow-y-auto p-4 lg:p-12">
+                  <div className="max-w-4xl mx-auto space-y-8">
+                      {/* Identity Card */}
+                      <div className="bg-white dark:bg-black/20 p-10 rounded-[3.5rem] border border-stone-200/50 dark:border-white/[0.05] shadow-2xl backdrop-blur-md relative overflow-hidden group">
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-brand-500/20 transition-all duration-1000" />
+                          
+                          <div className="relative z-10 flex flex-col items-center text-center">
+                              <div className="w-32 h-32 bg-stone-950 dark:bg-white rounded-[2.5rem] mb-6 flex items-center justify-center text-4xl font-black text-brand-500 dark:text-brand-950 shadow-2xl border-4 border-white/10 dark:border-black/10 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                                  {userInitials}
+                              </div>
+                              <h2 className="text-4xl font-black text-stone-950 dark:text-white tracking-tighter italic uppercase">{userProfile?.name || selectedUser}</h2>
+                              <div className="flex items-center justify-center gap-2 mt-3 p-2 px-4 bg-stone-100/50 dark:bg-white/5 rounded-full border border-stone-100 dark:border-white/5">
+                                  <Mail size={14} className="text-stone-400" /> 
+                                  <span className="text-sm font-bold text-stone-500 dark:text-stone-400">{userProfile?.email || 'usuario@demo.com'}</span>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-12 mt-12 w-full max-w-md border-t border-stone-100 dark:border-white/5 pt-8">
+                                  <div className="text-center group/kpi">
+                                      <p className="text-[10px] uppercase font-black text-stone-400 tracking-[0.2em] mb-2 group-hover/kpi:text-brand-500 transition-colors">Volumen</p>
+                                      <p className="text-4xl font-black text-stone-900 dark:text-white tracking-tighter italic">{userOrders.length}</p>
+                                      <p className="text-[10px] font-black text-stone-300 dark:text-stone-600 uppercase tracking-widest mt-1">Órdenes Totales</p>
+                                  </div>
+                                  <div className="text-center group/kpi">
+                                      <p className="text-[10px] uppercase font-black text-stone-400 tracking-[0.2em] mb-2 group-hover/kpi:text-brand-500 transition-colors">LTV (Ventas)</p>
+                                      <p className="text-4xl font-black text-stone-900 dark:text-white tracking-tighter italic">{formatCurrency(totalSpent)}</p>
+                                      <p className="text-[10px] font-black text-stone-300 dark:text-stone-600 uppercase tracking-widest mt-1">Inversión Bruta</p>
+                                  </div>
+                              </div>
                           </div>
                       </div>
                       
-                      {userProfile && (
-                        <div className="mt-6 pt-6 border-t border-amber-200 dark:border-stone-800">
-                          <p className="text-xs font-bold text-stone-400 uppercase mb-3">Gestión de Rol</p>
-                          <div className="flex flex-wrap justify-center gap-2">
-                            {Object.values(UserRole).map(role => (
-                        <button
-                          key={role}
-                          onClick={() => {
-                            updateAnyUser(userProfile.uid, { role });
-                            showToast(`Rol actualizado a ${roleLabels[role]}`, 'success');
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all border ${userProfile.role === role ? 'bg-stone-900 text-white border-stone-900' : 'bg-white dark:bg-stone-900 text-stone-500 dark:text-stone-400 border-amber-300 hover:border-stone-400'} dark:text-stone-400 dark:border-stone-800`}
-                        >
-                          {roleLabels[role]}
-                        </button>
-                      ))}
-                          </div>
-                        </div>
-                      )}
-
-                      { (userProfile?.role === UserRole.DRIVER || userProfile?.isDriver) && (
-                        <div className="mt-4 pt-4 border-t border-amber-200 dark:border-stone-800">
-                          <p className="text-xs font-bold text-stone-400 uppercase mb-3">Seguridad Repartidor</p>
-                          <div className="flex flex-col gap-3 text-left">
-                             <div className="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-amber-200 dark:bg-stone-900 dark:border-stone-800">
-                                <div>
-                                   <p className="text-xs font-bold text-stone-700 dark:text-stone-300">Estado de Aprobación</p>
-                                   <p className="text-[10px] text-stone-500 dark:text-stone-400">{userProfile.isApprovedDriver ? 'Aprobado para trabajar' : 'Pendiente de revisión'}</p>
-                                </div>
-                                <Button 
-                                  size="sm"
-                                  variant={userProfile.isApprovedDriver ? 'outline' : 'primary'}
-                                  onClick={() => {
-                                    updateAnyUser(userProfile.uid, { isApprovedDriver: !userProfile.isApprovedDriver });
-                                    showToast(userProfile.isApprovedDriver ? 'Acceso revocado' : 'Repartidor aprobado', 'success');
-                                  }}
-                                >
-                                  {userProfile.isApprovedDriver ? 'Revocar' : 'Aprobar'}
-                                </Button>
-                             </div>
-                             
-                             <div className="grid grid-cols-2 gap-2">
-                                <div className="p-2 bg-stone-50 rounded-lg dark:bg-stone-900">
-                                   <p className="text-[8px] uppercase font-bold text-stone-400">Dirección M.</p>
-                                   <p className="text-xs font-bold text-stone-800 dark:text-stone-100">{userProfile.driverAddress || 'N/A'}</p>
-                                </div>
-                                <div className="p-2 bg-stone-50 rounded-lg dark:bg-stone-900">
-                                   <p className="text-[8px] uppercase font-bold text-stone-400">Referencia Per.</p>
-                                   <p className="text-xs font-bold text-stone-800 dark:text-stone-100">{userProfile.driverPersonalReference || 'N/A'}</p>
-                                </div>
-                                <div className="p-2 bg-stone-50 rounded-lg dark:bg-stone-900">
-                                   <p className="text-[8px] uppercase font-bold text-stone-400">T. Vehículo</p>
-                                   <p className="text-xs font-bold text-stone-800 dark:text-stone-100">{userProfile.vehicleType || 'N/A'}</p>
-                                </div>
-                                <div className="p-2 bg-stone-50 rounded-lg dark:bg-stone-900">
-                                   <p className="text-[8px] uppercase font-bold text-stone-400">Teléfono</p>
-                                   <p className="text-xs font-bold text-stone-800 dark:text-stone-100">{userProfile.phone || 'N/A'}</p>
-                                </div>
-                             </div>
-
-                             <div className="grid grid-cols-2 gap-2 mt-2">
-                                {userProfile.driverIneUrl && (
-                                    <div className="relative group cursor-pointer" onClick={() => window.open(userProfile.driverIneUrl, '_blank')}>
-                                        <p className="text-[10px] uppercase font-bold text-stone-400 mb-1">INE</p>
-                                        <img src={userProfile.driverIneUrl} alt="INE" className="w-full h-24 object-cover rounded-xl border border-amber-300 dark:border-stone-800" />
-                                    </div>
-                                )}
-                                {userProfile.driverSelfieUrl && (
-                                    <div className="relative group cursor-pointer" onClick={() => window.open(userProfile.driverSelfieUrl, '_blank')}>
-                                        <p className="text-[10px] uppercase font-bold text-stone-400 mb-1">Selfie</p>
-                                        <img src={userProfile.driverSelfieUrl} alt="Selfie" className="w-full h-24 object-cover rounded-xl border border-amber-300 dark:border-stone-800" />
-                                    </div>
-                                )}
-                             </div>
-                          </div>
-                        </div>
-                      )}
-                  </div>
-
-                  <div>
-                      <h3 className="font-bold text-stone-900 mb-3 ml-1 dark:text-white">Historial de Pedidos</h3>
-                      <div className="space-y-3">
-                          {userOrders.map(order => (
-                              <div key={order.id} className="bg-white p-3 rounded-xl border border-amber-200 flex justify-between items-center dark:bg-stone-900 dark:border-stone-800">
-                                  <div>
-                                      <p className="font-bold text-sm text-stone-900 dark:text-white">{order.storeName}</p>
-                                      <p className="text-xs text-stone-500 dark:text-stone-400">{new Date(order.createdAt).toLocaleDateString()} • {formatCurrency(order.total)}</p>
-                                  </div>
-                                  <Badge status={order.status} />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          {/* Role Management */}
+                          <div className="bg-white dark:bg-stone-900 p-8 rounded-[2.5rem] border border-stone-200 dark:border-white/10 shadow-xl space-y-8">
+                              <div className="flex items-center justify-between">
+                                  <h3 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-tighter italic">Privilegios & Roles</h3>
+                                  <Shield size={20} className="text-stone-400" />
                               </div>
-                          ))}
+                              <div className="grid grid-cols-2 gap-3">
+                                {Object.values(UserRole).map(role => (
+                                    <button
+                                      key={role}
+                                      onClick={() => {
+                                        if (userProfile) {
+                                            updateAnyUser(userProfile.uid, { role });
+                                            showToast(`Rol actualizado a ${roleLabels[role]}`, 'success');
+                                        }
+                                      }}
+                                      className={`px-4 py-4 rounded-3xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${userProfile?.role === role ? 'bg-stone-950 text-white border-stone-950 dark:bg-white dark:text-stone-950 dark:border-white shadow-xl scale-105 z-10' : 'bg-stone-50 dark:bg-black/20 text-stone-400 border-transparent hover:border-brand-500/30'}`}
+                                    >
+                                      {roleLabels[role]}
+                                    </button>
+                                  ))}
+                              </div>
+
+                              {(userProfile?.role === UserRole.DRIVER || userProfile?.isDriver) && (
+                                <div className="pt-8 border-t border-stone-100 dark:border-white/5">
+                                  <p className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-6">Credenciales de Flota</p>
+                                  <div className="space-y-4">
+                                     <div className="flex justify-between items-center bg-stone-950 dark:bg-white p-5 rounded-[2rem] shadow-2xl">
+                                        <div className="text-left">
+                                           <p className="text-[10px] font-black text-white/50 dark:text-black/50 uppercase tracking-widest mb-1">Estatus Profesional</p>
+                                           <p className="text-sm font-black text-white dark:text-stone-950 italic tracking-tight">{userProfile.isApprovedDriver ? 'APROBADO' : 'PENDIENTE'}</p>
+                                        </div>
+                                        <Button 
+                                          size="sm"
+                                          className={`!rounded-2xl !px-6 !h-12 !font-black !tracking-widest !text-[10px] ${userProfile.isApprovedDriver ? '!bg-transparent !text-brand-500 !border-brand-500/50 !border-2' : '!bg-brand-500 !text-brand-950'}`}
+                                          onClick={() => {
+                                            updateAnyUser(userProfile.uid, { isApprovedDriver: !userProfile.isApprovedDriver });
+                                            showToast(userProfile.isApprovedDriver ? 'Acceso revocado' : 'Repartidor aprobado', 'success');
+                                          }}
+                                        >
+                                          {userProfile.isApprovedDriver ? 'REVOCAR' : 'APROBAR'}
+                                        </Button>
+                                     </div>
+                                     
+                                     <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-5 bg-stone-50 dark:bg-black/20 rounded-[1.5rem] border border-stone-100 dark:border-white/5">
+                                           <p className="text-[8px] uppercase font-black text-stone-400 tracking-widest mb-2">Vehículo Operativo</p>
+                                           <p className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight">{userProfile.vehicleType || 'S/E'}</p>
+                                        </div>
+                                        <div className="p-5 bg-stone-50 dark:bg-black/20 rounded-[1.5rem] border border-stone-100 dark:border-white/5">
+                                           <p className="text-[8px] uppercase font-black text-stone-400 tracking-widest mb-2">Contacto Directo</p>
+                                           <p className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight">{userProfile.phone || 'S/E'}</p>
+                                        </div>
+                                     </div>
+
+                                     <div className="grid grid-cols-2 gap-4 mt-4">
+                                        {userProfile.driverIneUrl && (
+                                            <div className="group cursor-pointer space-y-2" onClick={() => window.open(userProfile.driverIneUrl, '_blank')}>
+                                                <p className="text-[10px] uppercase font-black text-stone-400 tracking-widest">Documento ID (INE)</p>
+                                                <div className="relative h-32 overflow-hidden rounded-[1.5rem] border-2 border-stone-100 dark:border-white/5 group-hover:border-brand-500 transition-all">
+                                                    <img src={userProfile.driverIneUrl} alt="INE" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                                    <div className="absolute inset-0 bg-brand-950/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </div>
+                                            </div>
+                                        )}
+                                        {userProfile.driverSelfieUrl && (
+                                            <div className="group cursor-pointer space-y-2" onClick={() => window.open(userProfile.driverSelfieUrl, '_blank')}>
+                                                <p className="text-[10px] uppercase font-black text-stone-400 tracking-widest">Verificación Facial</p>
+                                                <div className="relative h-32 overflow-hidden rounded-[1.5rem] border-2 border-stone-100 dark:border-white/5 group-hover:border-brand-500 transition-all">
+                                                    <img src={userProfile.driverSelfieUrl} alt="Selfie" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                                    <div className="absolute inset-0 bg-brand-950/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </div>
+                                            </div>
+                                        )}
+                                     </div>
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+
+                          {/* Historical Activity */}
+                          <div className="bg-white dark:bg-stone-900 p-8 rounded-[2.5rem] border border-stone-200 dark:border-white/10 shadow-xl flex flex-col">
+                              <div className="flex justify-between items-center mb-8 shrink-0">
+                                  <h3 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-tighter italic">Log de Actividad</h3>
+                                  <Activity size={20} className="text-stone-400" />
+                              </div>
+                              <div className="flex-1 overflow-y-auto no-scrollbar space-y-4">
+                                  {userOrders.map(order => (
+                                      <div key={order.id} className="p-5 bg-stone-50 dark:bg-black/20 rounded-3xl border border-stone-100 dark:border-white/5 flex justify-between items-center hover:border-brand-500/30 transition-all group/order">
+                                          <div className="text-left">
+                                              <p className="font-black text-sm text-stone-900 dark:text-white italic tracking-tighter leading-none mb-1">{order.storeName}</p>
+                                              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{format(new Date(order.createdAt), 'dd MMM, yyyy')} • {formatCurrency(order.total)}</p>
+                                          </div>
+                                          <Badge status={order.status} />
+                                      </div>
+                                  ))}
+                                  {userOrders.length === 0 && (
+                                      <div className="h-full flex flex-col items-center justify-center opacity-30 py-20">
+                                          <Activity size={48} className="mb-4" />
+                                          <p className="text-xs font-black uppercase tracking-widest text-center">No hay registros de transacciones</p>
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
                       </div>
                   </div>
               </div>
@@ -1408,12 +1605,31 @@ export const AdminView: React.FC = () => {
   };
 
   return (
-    <div className="h-full bg-stone-50 flex flex-col dark:bg-stone-900">
-       {/* Drill-down Views */}
-       {selectedStore ? renderStoreDetail() :
-        selectedUser ? renderUserDetail() : (
-            <>
-                <div className="bg-stone-950 text-white p-6 pt-safe-pt shadow-2xl z-10 sticky top-0 border-b border-white/5">
+    <div className="h-full bg-stone-50 flex flex-col dark:bg-stone-900 overflow-hidden relative">
+        <AnimatePresence>
+            {selectedStore && (
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="absolute inset-0 z-50 bg-stone-50 dark:bg-stone-900 overflow-y-auto"
+                >
+                    {renderStoreDetail()}
+                </motion.div>
+            )}
+            {selectedUser && (
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="absolute inset-0 z-50 bg-stone-50 dark:bg-stone-900 overflow-y-auto"
+                >
+                    {renderUserDetail()}
+                </motion.div>
+            )}
+        </AnimatePresence>
+
+        <div className="bg-stone-950 text-white p-6 pt-safe-pt shadow-2xl z-10 sticky top-0 border-b border-white/5 shrink-0">
                     <div className="lg:w-full lg:px-8">
                         <div className="flex justify-between items-center mb-6">
                             <div>
@@ -1441,8 +1657,8 @@ export const AdminView: React.FC = () => {
                                                 {(user.name || 'A').charAt(0).toUpperCase()}
                                             </div>
                                             <div className="text-left hidden md:block">
-                                                <p className="text-[9px] font-black text-stone-500 uppercase tracking-widest leading-none">Cerrar Sesión</p>
-                                                <p className="text-xs font-black text-white leading-tight">Admin</p>
+                                                <p className="text-[9px] font-black text-stone-500 uppercase tracking-widest leading-none">Cuenta Activa</p>
+                                                <p className="text-xs font-black text-white leading-tight">Administrador</p>
                                             </div>
                                             <ChevronDown size={14} className="text-stone-500 group-hover/role:rotate-180 transition-transform" />
                                         </button>
@@ -1474,17 +1690,24 @@ export const AdminView: React.FC = () => {
                                 { id: 'DASHBOARD', label: 'Resumen', icon: <BarChart3 size={16} /> },
                                 { id: 'FLEET', label: 'Logística', icon: <Truck size={16} /> },
                                 { id: 'ORDERS', label: 'Pedidos', icon: <Activity size={16} /> },
-                                { id: 'BANNERS', label: 'Promos', icon: <Tag size={16} /> },
+                                { id: 'BANNERS', label: 'Promociones', icon: <TagIcon size={16} /> },
                                 { id: 'SETTLEMENTS', label: 'Liquidaciones', icon: <DollarSign size={16} /> },
+                                { id: 'SETTINGS', label: 'Ajustes', icon: <Settings size={16} /> },
+                                { id: 'LOGOUT', label: 'Salir', icon: <LogOut size={16} /> },
                                 { id: 'STORES', label: 'Comercios', icon: <StoreIcon size={16} /> },
                                 { id: 'USERS', label: 'Usuarios', icon: <Users size={16} /> },
-                                { id: 'DISPUTES', label: 'Reclamos', icon: <AlertTriangle size={16} /> },
-                                { id: 'SETTINGS', label: 'Ajustes', icon: <Tag size={16} /> }
+                                { id: 'DISPUTES', label: 'Reclamos', icon: <AlertTriangle size={16} /> }
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
                                     id={`${tab.id.toLowerCase()}-tab`}
-                                    onClick={() => setAdminViewState(tab.id as any)}
+                                    onClick={() => {
+                                        if (tab.id === 'LOGOUT') {
+                                            signOut();
+                                        } else {
+                                            setAdminViewState(tab.id as any);
+                                        }
+                                    }}
                                     className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap relative ${adminViewState === tab.id ? 'bg-white dark:bg-stone-900 text-stone-950 dark:text-white shadow-xl' : 'text-stone-500 hover:text-white'}`}
                                 >
                                     {tab.icon}
@@ -1512,179 +1735,213 @@ export const AdminView: React.FC = () => {
                         {adminViewState === 'USERS' && renderUsersTab()}
                         {adminViewState === 'DISPUTES' && renderDisputesTab()}
                         {adminViewState === 'SETTINGS' && (
-                            <div className="p-6 space-y-8 animate-fade-in lg:w-full lg:px-8">
-
-                            <div className="bg-white rounded-2xl shadow-sm border border-amber-200 overflow-hidden divide-y divide-stone-50 dark:bg-stone-900 dark:border-stone-800">
-                                <div className="p-4">
-                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 dark:text-white">
-                                        <DollarSign size={18} className="text-brand-800" /> Parámetros Financieros
-                                    </h3>
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Comisión de Plataforma</p>
-                                                <p className="text-xs text-stone-500 dark:text-stone-400">Porcentaje cobrado a los comercios (0.15 = 15%)</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <input 
-                                                    type="number" 
-                                                    step="0.01"
-                                                    value={localConfig.platformCommissionPct} 
-                                                    onChange={(e) => setLocalConfig({...localConfig, platformCommissionPct: Number(e.target.value)})}
-                                                    className="w-16 p-2 bg-stone-50 border border-amber-300 rounded-lg text-center font-bold dark:bg-stone-900 dark:border-stone-800" 
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Comisión de Driver</p>
-                                                <p className="text-xs text-stone-500 dark:text-stone-400">Porcentaje del envío para el driver (0.80 = 80%)</p>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <input 
-                                                    type="number" 
-                                                    step="0.01"
-                                                    value={localConfig.driverCommissionPct} 
-                                                    onChange={(e) => setLocalConfig({...localConfig, driverCommissionPct: Number(e.target.value)})}
-                                                    className="w-16 p-2 bg-stone-50 border border-amber-300 rounded-lg text-center font-bold dark:bg-stone-900 dark:border-stone-800" 
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex justify-between items-center pt-4 border-t border-stone-50 dark:border-white/5">
-                                            <div>
-                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Tienda de Prueba</p>
-                                                <p className="text-xs text-stone-500 dark:text-stone-400">Configura la tienda completa para soinsoluciones2025@gmail.com</p>
-                                            </div>
-                                            <Button 
-                                                size="sm" 
-                                                className="bg-brand-500 text-brand-950 font-black uppercase tracking-widest text-[10px]"
-                                                onClick={() => setupDemoStore(showToast, user.email)}
-                                            >
-                                                Habilitar Demo
-                                            </Button>
-                                        </div>
+                            <div className="p-4 lg:p-12 space-y-12 animate-fade-in max-w-7xl mx-auto">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                    <div className="space-y-1">
+                                        <h2 className="text-4xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic">Ajustes del Sistema</h2>
+                                        <p className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] leading-tight">Configuración general de la plataforma</p>
                                     </div>
                                 </div>
 
-                                {/* MOTOR DINÁMICO DE TARIFAS */}
-                                {localConfig.deliveryRates && (
-                                <div className="p-4 border-b border-amber-200 dark:border-stone-800">
-                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 dark:text-white">
-                                        <MapPin size={18} className="text-brand-800" /> Motor Dinámico de Tarifas
-                                    </h3>
-                                    
-                                    <div className="space-y-6">
-                                        <div className="bg-stone-50 p-4 rounded-xl space-y-4 border border-amber-300 dark:bg-stone-900 dark:border-stone-800">
-                                            <h4 className="font-bold text-xs text-stone-500 uppercase tracking-widest border-b pb-2 dark:text-stone-400">Zonificación</h4>
-                                            
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300">Radio Local (km)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.localRadiusKm} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localRadiusKm: Number(e.target.value)}})} className="w-full p-2 bg-white border border-amber-300 rounded-lg text-sm font-bold dark:bg-stone-900 dark:border-stone-800" />
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                                    {/* SECCIÓN FINANCIERA */}
+                                    <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] p-8 border border-stone-200 dark:border-white/10 shadow-2xl space-y-8 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                                        
+                                        <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/5 pb-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-stone-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-brand-500 shadow-inner">
+                                                    <DollarSign size={24} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300">KM Base (Sin Extra)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.baseDistanceKm} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, baseDistanceKm: Number(e.target.value)}})} className="w-full p-2 bg-white border border-amber-300 rounded-lg text-sm font-bold dark:bg-stone-900 dark:border-stone-800" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300">Plataforma Com. Local ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.platformFeeLocal} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, platformFeeLocal: Number(e.target.value)}})} className="w-full p-2 bg-white border border-amber-300 rounded-lg text-sm font-bold dark:bg-stone-900 dark:border-stone-800" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300">Com. Foránea ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.platformFeeForaneo} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, platformFeeForaneo: Number(e.target.value)}})} className="w-full p-2 bg-white border border-amber-300 rounded-lg text-sm font-bold dark:bg-stone-900 dark:border-stone-800" />
+                                                    <h3 className="text-xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic">Ganancias y Comisiones</h3>
+                                                    <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Cómo se reparte el dinero</p>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="bg-blue-50 p-4 rounded-xl space-y-4 border border-blue-100">
-                                            <h4 className="font-bold text-xs text-blue-500 uppercase tracking-widest border-b border-blue-200 pb-2">Tarifa Día (Normal)</h4>
-                                            
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-blue-700">Base Local ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.localBaseDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localBaseDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold dark:bg-stone-900" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-blue-700">Base Foráneo ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.foraneoBaseDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoBaseDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold dark:bg-stone-900" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-blue-700">+ Extra / 100m Local</p>
-                                                    <input type="number" value={localConfig.deliveryRates.localExtraPer100mDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localExtraPer100mDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold dark:bg-stone-900" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-blue-700">+ Extra / 1km Foráneo</p>
-                                                    <input type="number" value={localConfig.deliveryRates.foraneoExtraPerKmDay} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoExtraPerKmDay: Number(e.target.value)}})} className="w-full p-2 bg-white border border-blue-200 rounded-lg text-sm font-bold dark:bg-stone-900" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-indigo-950 p-4 rounded-xl space-y-4 border border-indigo-900">
-                                            <h4 className="font-bold text-xs text-indigo-400 uppercase tracking-widest border-b border-indigo-800 pb-2">Tarifa Noche</h4>
-                                            
-                                            <div className="flex gap-4">
+                                        <div className="space-y-6">
+                                            <div className="flex justify-between items-center bg-stone-50 dark:bg-black/20 p-5 rounded-3xl border border-stone-100 dark:border-white/5 group/input hover:border-brand-500/30 transition-all">
                                                 <div className="flex-1">
-                                                    <p className="text-[10px] font-bold text-indigo-300">Inicia (Hr)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.nightStartHour} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, nightStartHour: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                                    <div className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight">Lo que cobra la aplicación</div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Porcentaje de cada venta (0.15 = 15%)</p>
                                                 </div>
+                                                <div className="relative group-hover/input:scale-105 transition-transform">
+                                                    <input 
+                                                        type="number" 
+                                                        step="0.01"
+                                                        value={localConfig.platformCommissionPct} 
+                                                        onChange={(e) => setLocalConfig({...localConfig, platformCommissionPct: Number(e.target.value)})}
+                                                        className="w-24 p-4 bg-white dark:bg-stone-950 border-2 border-stone-200 dark:border-white/10 rounded-2xl text-center text-xl font-black text-brand-600 outline-none focus:border-brand-500 transition-all" 
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-between items-center bg-stone-50 dark:bg-black/20 p-5 rounded-3xl border border-stone-100 dark:border-white/5 group/input hover:border-brand-500/30 transition-all">
                                                 <div className="flex-1">
-                                                    <p className="text-[10px] font-bold text-indigo-300">Termina (Hr)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.nightEndHour} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, nightEndHour: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                                    <div className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight">Ganancia del Repartidor</div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Lo que recibe el chofer (0.80 = 80%)</p>
+                                                </div>
+                                                <div className="relative group-hover/input:scale-105 transition-transform">
+                                                    <input 
+                                                        type="number" 
+                                                        step="0.01"
+                                                        value={localConfig.driverCommissionPct} 
+                                                        onChange={(e) => setLocalConfig({...localConfig, driverCommissionPct: Number(e.target.value)})}
+                                                        className="w-24 p-4 bg-white dark:bg-stone-950 border-2 border-stone-200 dark:border-white/10 rounded-2xl text-center text-xl font-black text-brand-600 outline-none focus:border-brand-500 transition-all" 
+                                                    />
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-indigo-300">Base Local Noche ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.localBaseNight} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localBaseNight: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
+                                            <div className="bg-brand-500/5 dark:bg-brand-500/10 p-6 rounded-[2rem] border border-brand-500/20 flex flex-col sm:flex-row items-center gap-4 justify-between">
+                                                <div className="text-center sm:text-left">
+                                                    <p className="text-xs font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest mb-1 italic">Entorno de Pruebas</p>
+                                                    <p className="text-[10px] font-bold text-stone-500 dark:text-stone-400 max-w-[200px] leading-tight">Configura o remueve instantáneamente un comercio demo para testeo.</p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-indigo-300">Base Foráneo Noche ($)</p>
-                                                    <input type="number" value={localConfig.deliveryRates.foraneoBaseNight} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoBaseNight: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-indigo-300">+ Extra / 100m Noche</p>
-                                                    <input type="number" value={localConfig.deliveryRates.localExtraPer100mNight} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, localExtraPer100mNight: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-indigo-300">+ Extra / 1km Noche</p>
-                                                    <input type="number" value={localConfig.deliveryRates.foraneoExtraPerKmNight} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, foraneoExtraPerKmNight: Number(e.target.value)}})} className="w-full p-2 bg-indigo-900 text-white border border-indigo-800 rounded-lg text-sm font-bold" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                )}
-
-                                <div className="p-4 border-b border-amber-200 dark:border-stone-800">
-                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 dark:text-white">
-                                        <Tag size={18} className="text-brand-800" /> Gestión de Categorías
-                                    </h3>
-                                    <div className="space-y-3">
-                                        <div className="flex flex-wrap gap-2">
-                                            {localConfig.categories.map((cat, idx) => (
-                                                <div key={idx} className="flex items-center gap-2 bg-stone-100 px-3 py-1.5 rounded-lg border border-amber-300 dark:bg-stone-800 dark:border-stone-800">
-                                                    <span className="text-xs font-bold text-stone-700 dark:text-stone-300">{cat}</span>
-                                                    <button 
-                                                        onClick={() => {
-                                                            const newCats = localConfig.categories.filter((_, i) => i !== idx);
-                                                            setLocalConfig({...localConfig, categories: newCats});
+                                                {stores.some(s => s.id?.includes('demo') || s.name?.toLowerCase().includes('demo')) ? (
+                                                    <Button 
+                                                        size="sm" 
+                                                        className="!bg-red-500 !text-white !rounded-xl font-black uppercase tracking-widest text-[9px] !h-12 !px-6 shadow-lg shadow-red-500/20"
+                                                        onClick={async () => {
+                                                            const demoStores = stores.filter(s => s.id?.includes('demo') || s.name?.toLowerCase().includes('demo'));
+                                                            try {
+                                                                for (const ds of demoStores) {
+                                                                    await deleteDoc(doc(db, 'stores', ds.id));
+                                                                }
+                                                                showToast('Entorno demo deshabilitado y purgado', 'success');
+                                                            } catch(error) {
+                                                                console.error(error);
+                                                                showToast('Error al deshabilitar', 'error');
+                                                            }
                                                         }}
+                                                    >
+                                                        DESHABILITAR DEMO
+                                                    </Button>
+                                                ) : (
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="secondary"
+                                                        className="!bg-brand-500 !text-brand-950 !rounded-xl font-black uppercase tracking-widest text-[9px] !h-12 !px-6 shadow-lg shadow-brand-500/20"
+                                                        onClick={() => setupDemoStore(showToast, user.email)}
+                                                    >
+                                                        HABILITAR DEMO
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* MOTOR DE TARIFAS - ZONIFICACIÓN */}
+                                    <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] p-8 border border-stone-200 dark:border-white/10 shadow-2xl space-y-8 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                                        
+                                        <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/5 pb-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-stone-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-emerald-500 shadow-inner">
+                                                    <MapPin size={24} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic">Área de Entrega y Envíos</h3>
+                                                    <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Control de distancias y costos</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {[
+                                                { label: 'Máxima Distancia', sub: 'Cobertura en KM', key: 'localRadiusKm', icon: <Compass size={12} /> },
+                                                { label: 'Km gratuitos', sub: 'Envío Gratis hasta', key: 'baseDistanceKm', icon: <Zap size={12} /> },
+                                                { label: 'Costo de Envío', sub: 'Tarifa básica $', key: 'platformFeeLocal', icon: <DollarSign size={12} /> },
+                                                { label: 'Recargo Lejos', sub: 'Extra por distancia', key: 'platformFeeForaneo', icon: <Plus size={12} /> }
+                                            ].map((param) => (
+                                                <div key={param.key} className="bg-stone-50 dark:bg-black/20 p-5 rounded-3xl border border-stone-100 dark:border-white/5 group/p transition-all hover:bg-white dark:hover:bg-white/5">
+                                                    <div className="flex items-center gap-2 mb-3 text-stone-400">
+                                                        {param.icon}
+                                                        <span className="text-[8px] font-black uppercase tracking-[0.2em]">{param.label}</span>
+                                                    </div>
+                                                    <div className="flex items-end justify-between">
+                                                        <input 
+                                                            type="number" 
+                                                            value={(localConfig.deliveryRates as any)[param.key]} 
+                                                            onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, [param.key]: Number(e.target.value)}})} 
+                                                            className="bg-transparent text-2xl font-black text-stone-950 dark:text-white outline-none w-full tracking-tighter"
+                                                        />
+                                                        <span className="text-[9px] font-black text-stone-400 uppercase">{param.sub}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* TARIFARIOS DINÁMICOS */}
+                                    <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] p-8 border border-stone-200 dark:border-white/10 shadow-2xl space-y-8 relative overflow-hidden group col-span-1 xl:col-span-2">
+                                        <div className="flex flex-col lg:flex-row gap-8 relative">
+                                            <div className="flex-1 space-y-6">
+                                                <div className="flex items-center gap-3 p-4 bg-brand-500/5 rounded-2xl border border-brand-500/10">
+                                                    <Sun size={20} className="text-brand-500" />
+                                                    <h4 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-widest italic">Horarios de Día (08:00 - 22:00)</h4>
+                                                </div>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    {[
+                                                        { label: 'Base Local', key: 'localBaseDay' },
+                                                        { label: 'Base Foráneo', key: 'foraneoBaseDay' },
+                                                        { label: 'Extra 100m', key: 'localExtraPer100mDay' },
+                                                        { label: 'Extra KM', key: 'foraneoExtraPerKmDay' }
+                                                    ].map(p => (
+                                                        <div key={p.key} className="bg-stone-50 dark:bg-black/20 p-4 rounded-2xl border border-stone-100 dark:border-white/5">
+                                                            <p className="text-[8px] font-black text-stone-400 uppercase tracking-widest mb-1">{p.label}</p>
+                                                            <input type="number" value={(localConfig.deliveryRates as any)[p.key]} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, [p.key]: Number(e.target.value)}})} className="bg-transparent text-xl font-black text-stone-900 dark:text-white outline-none w-full" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex-1 space-y-6">
+                                                <div className="flex items-center gap-3 p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
+                                                    <Moon size={20} className="text-indigo-500" />
+                                                    <h4 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-widest italic">Horarios de Noche (22:00 - 08:00)</h4>
+                                                </div>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    {[
+                                                        { label: 'Base Local', key: 'localBaseNight' },
+                                                        { label: 'Base Foráneo', key: 'foraneoBaseNight' },
+                                                        { label: 'Extra 100m', key: 'localExtraPer100mNight' },
+                                                        { label: 'Extra KM', key: 'foraneoExtraPerKmNight' }
+                                                    ].map(p => (
+                                                        <div key={p.key} className="bg-stone-50 dark:bg-black/20 p-4 rounded-2xl border border-stone-100 dark:border-white/5">
+                                                            <p className="text-[8px] font-black text-stone-400 uppercase tracking-widest mb-1">{p.label}</p>
+                                                            <input type="number" value={(localConfig.deliveryRates as any)[p.key]} onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, [p.key]: Number(e.target.value)}})} className="bg-transparent text-xl font-black text-stone-900 dark:text-white outline-none w-full" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* CATEGORÍAS */}
+                                    <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] p-8 border border-stone-200 dark:border-white/10 shadow-2xl space-y-6">
+                                        <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/5 pb-4">
+                                            <h3 className="text-xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic flex items-center gap-2"><TagIcon size={20} className="text-brand-500" /> Categorías Disponibles</h3>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 min-h-[100px] bg-stone-50 dark:bg-black/20 p-4 rounded-3xl border border-stone-100 dark:border-white/5">
+                                            {localConfig.categories.map((cat, idx) => (
+                                                <div key={idx} className="flex items-center gap-2 bg-white dark:bg-stone-800 px-4 py-2 rounded-xl border border-stone-200 dark:border-white/5 shadow-sm group">
+                                                    <span className="text-[10px] font-black text-stone-900 dark:text-white italic">{cat}</span>
+                                                    <button 
+                                                        onClick={() => setLocalConfig({...localConfig, categories: localConfig.categories.filter((_, i) => i !== idx)})}
                                                         className="text-stone-400 hover:text-red-500 transition-colors"
                                                     >
-                                                        <X size={14} />
+                                                        <X size={12} />
                                                     </button>
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-3">
                                             <input 
                                                 type="text" 
                                                 id="new-category-input"
-                                                placeholder="Nueva categoría..."
-                                                className="flex-1 p-2 bg-stone-50 border border-amber-300 rounded-lg text-sm outline-none focus:border-brand-500 dark:bg-stone-900 dark:border-stone-800"
+                                                placeholder="Nueva categoría estratégica..."
+                                                className="flex-1 p-5 bg-stone-100 dark:bg-stone-950 border-2 border-stone-100 dark:border-white/5 rounded-2xl text-sm font-black outline-none focus:border-brand-500 transition-all text-stone-900 dark:text-white"
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         const val = e.currentTarget.value.trim();
@@ -1695,146 +1952,230 @@ export const AdminView: React.FC = () => {
                                                     }
                                                 }}
                                             />
-                                            <Button 
-                                                size="sm" 
+                                            <button 
                                                 onClick={() => {
                                                     const input = document.getElementById('new-category-input') as HTMLInputElement;
                                                     const val = input.value.trim();
-                                                    if (val && !localConfig.categories.includes(val)) {
-                                                        setLocalConfig({...localConfig, categories: [...localConfig.categories, val]});
-                                                        input.value = '';
-                                                    }
+                                                    if (val) { setLocalConfig({...localConfig, categories: [...localConfig.categories, val]}); input.value = ''; }
+                                                }}
+                                                className="w-16 h-16 bg-stone-950 dark:bg-white text-white dark:text-stone-950 rounded-2xl flex items-center justify-center font-black hover:rotate-90 transition-all"
+                                            >
+                                                <Plus size={24} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* SEGURIDAD Y SOPORTE */}
+                                    <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] p-8 border border-stone-200 dark:border-white/10 shadow-2xl space-y-8 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-stone-950/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                                        
+                                        <div className="flex items-center justify-between border-b border-stone-100 dark:border-white/5 pb-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-stone-50 dark:bg-white/5 rounded-2xl flex items-center justify-center text-blue-500 shadow-inner">
+                                                    <Shield size={24} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-black text-stone-950 dark:text-white tracking-tighter uppercase italic">Ayuda y Mantenimiento</h3>
+                                                    <p className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Gestión de soporte al usuario</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <div className="flex justify-between items-center bg-stone-50 dark:bg-black/20 p-5 rounded-3xl border border-stone-100 dark:border-white/5 group/input hover:border-brand-500/30 transition-all">
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight">Email de Soporte</div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Canal Directo de Ayuda</p>
+                                                </div>
+                                                <input 
+                                                    type="email" 
+                                                    value={localConfig.supportEmail} 
+                                                    onChange={(e) => setLocalConfig({...localConfig, supportEmail: e.target.value})}
+                                                    className="w-48 p-4 bg-white dark:bg-stone-950 border-2 border-stone-200 dark:border-white/10 rounded-2xl text-center text-xs font-black text-brand-600 outline-none focus:border-brand-500 transition-all" 
+                                                />
+                                            </div>
+
+                                            <div className="flex justify-between items-center bg-stone-50 dark:bg-black/20 p-5 rounded-3xl border border-stone-100 dark:border-white/5 group/input hover:border-brand-500/30 transition-all">
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight">WhatsApp de Soporte</div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Atención Inmediata</p>
+                                                </div>
+                                                <input 
+                                                    type="text" 
+                                                    value={localConfig.supportPhone || ''} 
+                                                    onChange={(e) => setLocalConfig({...localConfig, supportPhone: e.target.value})}
+                                                    placeholder="+521..."
+                                                    className="w-48 p-4 bg-white dark:bg-stone-950 border-2 border-stone-200 dark:border-white/10 rounded-2xl text-center text-xs font-black text-green-600 outline-none focus:border-green-500 transition-all font-mono" 
+                                                />
+                                            </div>
+
+                                            <div className="flex justify-between items-center bg-stone-50 dark:bg-black/20 p-5 rounded-3xl border border-stone-100 dark:border-white/5">
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight flex items-center gap-2 group/tooltip relative cursor-help">
+                                                        Modo de Pago 
+                                                        <HelpCircle size={14} className="text-stone-400" />
+                                                        <div className="absolute bottom-full left-0 mb-4 w-72 bg-white dark:bg-stone-800 text-stone-950 dark:text-white text-[10px] p-6 rounded-3xl opacity-0 group-hover/tooltip:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl border border-black/5 dark:border-white/10 translate-y-2 group-hover/tooltip:translate-y-0 backdrop-blur-xl">
+                                                            <div className="font-black mb-1 border-b border-black/5 dark:border-white/5 pb-1 uppercase tracking-widest text-brand-600 italic">Centralizado:</div>
+                                                            <div className="mb-3 font-medium opacity-80 leading-relaxed">Liquidación automática vía APP (Tarjeta/MP).</div>
+                                                            <div className="font-black mb-1 border-b border-black/5 dark:border-white/5 pb-1 uppercase tracking-widest text-blue-500 italic">Descentralizado:</div>
+                                                            <div className="font-medium opacity-80 leading-relaxed">Pago directo al comercio (Efectivo/Transferencia).</div>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Arquitectura Financiera</p>
+                                                </div>
+                                                <div className="flex bg-stone-950 dark:bg-black p-1 rounded-2xl gap-1">
+                                                    {['CENTRALIZED', 'DECENTRALIZED'].map(mode => (
+                                                        <button 
+                                                            key={mode}
+                                                            onClick={() => setLocalConfig({...localConfig, paymentMode: mode as any})}
+                                                            className={`px-4 py-3 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${localConfig.paymentMode === mode ? 'bg-white text-stone-950 shadow-[0_0_20px_rgba(255,255,255,0.2)]' : 'text-stone-600 hover:text-white'}`}
+                                                        >
+                                                            {mode === 'CENTRALIZED' ? 'Auto' : 'Cash'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-between items-center bg-red-950/10 p-6 rounded-[2rem] border border-red-500/10">
+                                                <div>
+                                                    <p className="text-sm font-black text-red-600 dark:text-red-400 italic tracking-tight">Modo Mantenimiento</p>
+                                                    <p className="text-[10px] text-red-700/50 dark:text-red-400/30 font-black uppercase tracking-widest mt-1 italic">Bloqueo de Tráfico Global</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => setLocalConfig({...localConfig, maintenanceMode: !localConfig.maintenanceMode})}
+                                                    className={`w-16 h-8 rounded-full relative transition-all shadow-inner ${localConfig.maintenanceMode ? 'bg-red-500' : 'bg-stone-200 dark:bg-white/5'}`}
+                                                >
+                                                    <div className={`absolute top-1 w-6 h-6 bg-white dark:bg-stone-950 rounded-full transition-all shadow-md ${localConfig.maintenanceMode ? 'left-9' : 'left-1'}`}></div>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* PASARELA DE PAGOS */}
+                                    <div className="bg-stone-950 rounded-[2.5rem] p-8 border border-white/5 shadow-2xl space-y-8 col-span-1 xl:col-span-2 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                                        
+                                        <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-brand-500 shadow-inner">
+                                                    <Zap size={24} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-black text-white tracking-tighter uppercase italic leading-none">Pasarela de Pagos (Mercado Pago)</h3>
+                                                    <p className="text-[10px] font-black text-stone-500 uppercase tracking-widest mt-1">Conexión de Alta Seguridad</p>
+                                                </div>
+                                            </div>
+                                            <Button 
+                                                size="sm" 
+                                                className="!bg-brand-500 !text-brand-950 !rounded-xl font-black uppercase tracking-widest text-[9px] !h-12 !px-8"
+                                                onClick={async () => {
+                                                    try {
+                                                        await updateConfig(localConfig);
+                                                        await setDoc(doc(db, 'config', 'global', 'private', 'mercadoPago'), {
+                                                            mpAccessToken: mpCredentials.mpAccessToken,
+                                                            mpPublicKey: mpCredentials.mpPublicKey,
+                                                            updatedAt: serverTimestamp()
+                                                        }, { merge: true });
+                                                        showToast('Pasarela sincronizada', 'success');
+                                                    } catch (err) { showToast('Error en sincronización', 'error'); }
                                                 }}
                                             >
-                                                Agregar
+                                                ACTUALIZAR PASARELA
                                             </Button>
                                         </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[8px] font-black text-stone-500 uppercase tracking-[0.2em] ml-2">Access Token (Private)</label>
+                                                <input 
+                                                    type="password" 
+                                                    value={mpCredentials.mpAccessToken || ''} 
+                                                    onChange={(e) => setMpCredentials({...mpCredentials, mpAccessToken: e.target.value})}
+                                                    placeholder="APP_USR-..."
+                                                    className="w-full p-6 bg-white/5 border-2 border-transparent focus:border-brand-500 rounded-3xl text-xs font-mono text-white outline-none transition-all placeholder:text-stone-700" 
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[8px] font-black text-stone-500 uppercase tracking-[0.2em] ml-2">Public Key (Client Side)</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={mpCredentials.mpPublicKey || ''} 
+                                                    onChange={(e) => setMpCredentials({...mpCredentials, mpPublicKey: e.target.value})}
+                                                    placeholder="APP_USR-..."
+                                                    className="w-full p-6 bg-white/5 border-2 border-transparent focus:border-brand-500 rounded-3xl text-xs font-mono text-white outline-none transition-all placeholder:text-stone-700" 
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="p-4">
-                                    <h3 className="font-bold text-stone-900 mb-4 flex items-center gap-2 dark:text-white">
-                                        <Shield size={18} className="text-brand-800" /> Seguridad y Soporte
-                                    </h3>
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Email de Soporte</p>
-                                                <p className="text-xs text-stone-500 dark:text-stone-400">Para reclamos y ayuda</p>
+                                    {/* DANGER ZONE */}
+                                    <div className="bg-red-950/20 rounded-[2.5rem] p-10 border border-red-500/20 shadow-2xl col-span-1 xl:col-span-2 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-20" />
+                                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                                            <div className="text-center md:text-left">
+                                                <h4 className="text-red-500 font-black text-2xl tracking-tighter uppercase italic mb-2">Protocolo de Emergencia</h4>
+                                                <p className="text-red-400/50 text-[10px] font-black uppercase tracking-[0.2em]">Acciones críticas irreversibles de desestabilización de datos.</p>
                                             </div>
-                                            <input 
-                                                type="email" 
-                                                value={localConfig.supportEmail} 
-                                                onChange={(e) => setLocalConfig({...localConfig, supportEmail: e.target.value})}
-                                                className="w-48 p-2 bg-stone-50 border border-amber-300 rounded-lg text-right text-sm dark:bg-stone-900 dark:border-stone-800" 
-                                            />
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex-1 pr-4">
-                                                <div className="text-sm font-bold text-stone-800 dark:text-stone-100 flex items-center gap-2 group/tooltip relative cursor-help">
-                                                    Modo de Pago 
-                                                    <HelpCircle size={14} className="text-stone-400" />
-                                                    <div className="absolute bottom-full left-0 mb-2 w-72 bg-white dark:bg-stone-800 text-stone-950 dark:text-white text-[10px] p-4 rounded-2xl opacity-0 group-hover/tooltip:opacity-100 transition-all pointer-events-none z-50 shadow-2xl border border-black/5 dark:border-white/10 translate-y-2 group-hover/tooltip:translate-y-0">
-                                                        <p className="font-black mb-1 border-b border-black/5 dark:border-white/5 pb-1 uppercase tracking-widest text-brand-600">Centralizado:</p>
-                                                        <p className="mb-3 font-medium opacity-80">La App centraliza los fondos. El cliente paga a la plataforma (vía Tarjeta/MercadoPago) y la plataforma liquida posteriormente a los comercios descontando comisiones de forma automática.</p>
-                                                        <p className="font-black mb-1 border-b border-black/5 dark:border-white/5 pb-1 uppercase tracking-widest text-blue-500">Descentralizado:</p>
-                                                        <p className="font-medium opacity-80">El cliente paga directo al comercio o repartidor (Efectivo/Transferencia). La App solo registra la orden. Los comercios deben pagar su comisión a la App manualmente.</p>
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-stone-500 dark:text-stone-400">Define el flujo de dinero en la plataforma</p>
-                                            </div>
-                                            <div className="flex bg-stone-100 p-1 rounded-lg gap-1 dark:bg-stone-800">
+                                            <div className="flex flex-wrap justify-center gap-4">
                                                 <button 
-                                                    onClick={() => setLocalConfig({...localConfig, paymentMode: 'CENTRALIZED'})}
-                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'CENTRALIZED' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700 dark:text-stone-400'} `}
+                                                    onClick={async () => {
+                                                        if (window.confirm('¿EJECUTAR PURGA TOTAL DE ESTADÍSTICAS? Esta acción borrará el historial de rendimiento acumulado.')) {
+                                                            try {
+                                                                // Logic to clear stats collection (simulated/real for production)
+                                                                const statsRef = collection(db, 'stats');
+                                                                const snap = await getDocs(statsRef);
+                                                                await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+                                                                showToast('Purga de estadísticas completada', 'success');
+                                                            } catch (err) { showToast('Error en purga de datos', 'error'); }
+                                                        }
+                                                    }}
+                                                    className="px-8 h-14 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/30 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all hover:scale-105 active:scale-95"
                                                 >
-                                                    Centralizado
+                                                    Purga de Estadísticas
                                                 </button>
                                                 <button 
-                                                    onClick={() => setLocalConfig({...localConfig, paymentMode: 'DECENTRALIZED'})}
-                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${localConfig.paymentMode === 'DECENTRALIZED' ? 'bg-white dark:bg-stone-900 text-stone-900 dark:text-white shadow-sm' : 'text-stone-500 hover:text-stone-700 dark:text-stone-400'} `}
+                                                    onClick={() => {
+                                                        if (window.confirm('¿WIPE DE CACHÉ GLOBAL? Esto reseteará las configuraciones volátiles del sistema.')) {
+                                                            setLocalConfig({ ...config, updatedAt: serverTimestamp() });
+                                                            showToast('Caché global de configuración reseteada', 'success');
+                                                        }
+                                                    }}
+                                                    className="px-8 h-14 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/30 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all hover:scale-105 active:scale-95 text-nowrap"
                                                 >
-                                                    Descentralizado
+                                                    Wipe de Caché Global
                                                 </button>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm font-bold text-stone-800 dark:text-stone-100">Modo Mantenimiento</p>
-                                                <p className="text-xs text-stone-500 dark:text-stone-400">Desactiva pedidos temporalmente</p>
-                                            </div>
-                                            <div 
-                                                onClick={() => setLocalConfig({...localConfig, maintenanceMode: !localConfig.maintenanceMode})}
-                                                className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localConfig.maintenanceMode ? 'bg-red-50 dark:bg-red-900/200' : 'bg-stone-200'}`}
-                                            >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${localConfig.maintenanceMode ? 'left-7' : 'left-1'} dark:bg-stone-900`}></div>
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-4 border-t border-stone-50 dark:border-white/5 space-y-4">
-                                            <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                                                <Activity size={14} className="text-brand-800" /> Mercado Pago (Global/Centralizado)
-                                            </h4>
-                                            <div className="grid grid-cols-1 gap-4">
-                                                <div>
-                                                    <p className="text-[9px] font-bold text-stone-500 uppercase mb-1">Access Token</p>
-                                                    <input 
-                                                        type="password" 
-                                                        value={mpCredentials.mpAccessToken || ''} 
-                                                        onChange={(e) => setMpCredentials({...mpCredentials, mpAccessToken: e.target.value})}
-                                                        placeholder="APP_USR-..."
-                                                        className="w-full p-2 bg-stone-50 border border-amber-300 rounded-lg text-sm font-mono dark:bg-stone-900 dark:border-stone-800" 
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-bold text-stone-500 uppercase mb-1">Public Key</p>
-                                                    <input 
-                                                        type="text" 
-                                                        value={mpCredentials.mpPublicKey || ''} 
-                                                        onChange={(e) => setMpCredentials({...mpCredentials, mpPublicKey: e.target.value})}
-                                                        placeholder="APP_USR-..."
-                                                        className="w-full p-2 bg-stone-50 border border-amber-300 rounded-lg text-sm font-mono dark:bg-stone-900 dark:border-stone-800" 
-                                                    />
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-stone-50 dark:bg-stone-900">
-                                    <Button id="btn-save-global-config" fullWidth onClick={async () => {
-                                        try {
-                                            await updateConfig(localConfig);
-                                            // Handle secrets separately in a private subcollection
-                                            await setDoc(doc(db, 'config', 'global', 'private', 'mercadoPago'), {
-                                                mpAccessToken: mpCredentials.mpAccessToken,
-                                                mpPublicKey: mpCredentials.mpPublicKey,
-                                                updatedAt: serverTimestamp()
-                                            }, { merge: true });
-                                            showToast('Configuración y credenciales guardadas', 'success');
-                                        } catch (err) {
-                                            showToast('Error al guardar algunos parámetros', 'error');
-                                        }
-                                    }}>
-                                        Guardar Cambios Globales
-                                    </Button>
+                                {/* Botón Guardar Flotante Personalizado */}
+                                <div className="fixed bottom-8 left-0 right-0 z-[100] flex justify-center px-4 lg:left-64 pointer-events-none">
+                                    <motion.div 
+                                        initial={{ y: 50, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        className="pointer-events-auto"
+                                    >
+                                        <Button 
+                                            size="lg"
+                                            onClick={() => {
+                                                updateConfig(localConfig);
+                                                showToast('🎉 ¡Ajustes actualizados correctamente!', 'success');
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            className="!bg-stone-950 dark:!bg-white !text-white dark:!text-stone-950 !rounded-full !px-16 !h-16 font-black tracking-[0.2em] text-[11px] shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl border border-stone-200/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-4 group"
+                                        >
+                                            <div className="w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-brand-500/30">
+                                                <Zap size={14} className="text-brand-950" />
+                                            </div>
+                                            GUARDAR TODOS LOS AJUSTES
+                                        </Button>
+                                    </motion.div>
                                 </div>
                             </div>
-
-                            <div className="bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-white/5 p-5 rounded-3xl">
-                                <h4 className="text-red-800 dark:text-red-400 font-black text-sm mb-1 uppercase tracking-wider">Zona de Peligro</h4>
-                                <p className="text-red-700/70 dark:text-red-400/60 text-[10px] font-bold mb-4 uppercase tracking-[0.1em]">Estas acciones son irreversibles y afectan a toda la plataforma.</p>
-                                        <div className="flex gap-3">
-                                            <Button variant="outline" size="sm" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/50 dark:hover:bg-red-900/20 bg-white dark:bg-stone-900 font-black shadow-sm">Resetear Estadísticas</Button>
-                                            <Button variant="outline" size="sm" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/50 dark:hover:bg-red-900/20 bg-white dark:bg-stone-900 font-black shadow-sm">Limpiar Caché Global</Button>
-                                        </div>
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
-            </>
-        )}
         {showTour && (
             <OnboardingTour 
                 tourId="admin-onboarding" 

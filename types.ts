@@ -231,6 +231,7 @@ export interface GlobalConfig {
   baseDeliveryFee: number; // e.g., 45
   feePerKm: number; // e.g., 12
   supportEmail: string;
+  supportPhone: string;
   maintenanceMode: boolean;
   paymentMode: 'CENTRALIZED' | 'DECENTRALIZED'; // New: For Payment Strategy
   categories: string[]; // New: Dynamic categories for stores and services

@@ -315,11 +315,11 @@ export const DriverView: React.FC = () => {
             </div>
         </div>
         
-        <div className="flex p-1 bg-stone-100 dark:bg-stone-700/50 rounded-xl border border-amber-300 dark:border-stone-700 lg:max-w-2xl lg:mx-auto lg:justify-center">
+        <div className="flex lg:hidden p-1 bg-stone-100 dark:bg-stone-700/50 rounded-xl border border-amber-300 dark:border-stone-700 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x">
             <button 
                 id="deliveries-tab"
                 onClick={() => setDriverViewState('DELIVERIES')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all relative ${driverViewState === 'DELIVERIES' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
+                className={`flex-none w-32 py-2 text-sm font-bold rounded-lg transition-all relative snap-start ${driverViewState === 'DELIVERIES' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
                 Disponibles ({availableOrders.length})
                 {availableOrders.some(o => o.status === OrderStatus.READY) && (
@@ -332,27 +332,27 @@ export const DriverView: React.FC = () => {
             <button 
                 id="route-tab"
                 onClick={() => setDriverViewState('MAP')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'MAP' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
+                className={`flex-none w-28 py-2 text-sm font-bold rounded-lg transition-all snap-start ${driverViewState === 'MAP' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
                 Mi Ruta ({myTasks.length})
             </button>
             <button 
                 onClick={() => setDriverViewState('WALLET')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'WALLET' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
+                className={`flex-none w-28 py-2 text-sm font-bold rounded-lg transition-all snap-start ${driverViewState === 'WALLET' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
                 Billetera
             </button>
             <button 
                 id="history-tab"
                 onClick={() => setDriverViewState('HISTORY')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'HISTORY' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
+                className={`flex-none w-28 py-2 text-sm font-bold rounded-lg transition-all snap-start ${driverViewState === 'HISTORY' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
                 Historial
             </button>
             <button 
                 id="settings-tab"
                 onClick={() => setDriverViewState('PROFILE')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${driverViewState === 'PROFILE' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
+                className={`flex-none w-28 py-2 text-sm font-bold rounded-lg transition-all snap-start ${driverViewState === 'PROFILE' ? 'bg-white dark:bg-stone-800 shadow-sm text-stone-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10' : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'}`}
             >
                 Perfil
             </button>

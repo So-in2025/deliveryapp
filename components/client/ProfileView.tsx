@@ -118,8 +118,8 @@ export const ProfileView: React.FC = () => {
                                   <Zap size={12} fill="currentColor" className="text-brand-950" />
                                   <span className="text-[7px] font-black uppercase text-brand-950 tracking-widest">Referidos Gourmet</span>
                               </div>
-                              <h4 className="font-black text-3xl tracking-tighter mb-2 leading-tight text-brand-950">Invita y Gana Crédito</h4>
-                              <p className="text-brand-900/60 font-bold text-sm mb-6 leading-tight">Obtén {formatCurrency(config.referralRewardAmount)} por cada amigo.</p>
+                              <h4 className="font-black text-3xl tracking-tighter mb-2 leading-tight text-brand-950 uppercase italic">Invita y suma puntos para usar funciones PLUS+</h4>
+                              <p className="text-brand-900/70 font-black text-[10px] mb-6 leading-tight uppercase tracking-widest italic opacity-80">PROXIMAMENTE: Veremos qué beneficios activamos con PLUS...</p>
                               
                               <div className="flex flex-col sm:flex-row gap-2">
                                   <div className="flex-1 bg-white/10 backdrop-blur-md rounded-xl p-3 flex items-center justify-between border border-white/20">

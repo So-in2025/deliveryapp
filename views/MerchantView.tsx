@@ -1399,7 +1399,7 @@ export const MerchantView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex p-1.5 mx-6 lg:mx-12 mb-4 bg-stone-100 dark:bg-white/5 rounded-2xl border border-black/[0.03] dark:border-white/[0.03] overflow-x-auto lg:overflow-visible lg:justify-center dark:bg-stone-800">
+            <div className="flex lg:hidden p-1.5 mx-6 mb-4 bg-stone-100 dark:bg-white/5 rounded-2xl border border-black/[0.03] dark:border-white/[0.03] overflow-x-auto dark:bg-stone-800">
               <button
                 id="orders-tab"
                 onClick={() => setMerchantViewState('ORDERS')}

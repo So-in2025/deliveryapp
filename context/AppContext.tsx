@@ -152,6 +152,10 @@ interface AppContextType {
   productToCustomize: Product | null;
   setProductToCustomize: (product: Product | null) => void;
   cartStoreId: string | null;
+  selectedReceiptOrder: Order | null;
+  setSelectedReceiptOrder: (order: Order | null) => void;
+  reviewOrder: Order | null;
+  setReviewOrder: (order: Order | null) => void;
   resetOrders: () => void; // New: For forcing a reset of orders
   darkMode: boolean;
   toggleDarkMode: () => void;
@@ -281,6 +285,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     baseDeliveryFee: APP_CONFIG.baseDeliveryFee,
     feePerKm: APP_CONFIG.feePerKm,
     supportEmail: 'soporte@telollevo.com',
+    supportPhone: '+5213312345678',
     maintenanceMode: false,
     paymentMode: 'CENTRALIZED',
     categories: ['Comida', 'Supermercado', 'Farmacia', 'Mascotas', 'Servicios Profesionales'],
@@ -727,6 +732,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           baseDeliveryFee: APP_CONFIG.baseDeliveryFee,
           feePerKm: APP_CONFIG.feePerKm,
           supportEmail: 'soporte@telollevo.com',
+          supportPhone: '+5213312345678',
           maintenanceMode: false,
           paymentMode: 'CENTRALIZED',
           referralRewardAmount: 0,
@@ -850,6 +856,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       return null; 
   });
+
+  const [selectedReceiptOrder, setSelectedReceiptOrder] = useState<Order | null>(null);
+  const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
 
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
@@ -1680,19 +1689,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [stores.length, authUser?.uid, showToast]);
 
-  // Auto-seed if stores are empty and we are admin
-  useEffect(() => {
-    const isAdmin = user.role === UserRole.ADMIN || (authUser?.email && ADMIN_EMAILS.includes(authUser.email));
-    if (isAuthReady && stores.length === 0 && isAdmin) {
-      const timer = setTimeout(() => {
-        // Double check after a short delay to ensure stores snapshot isn't just loading
-        if (stores.length === 0) {
-          seedDemoData();
-        }
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthReady, stores.length, user.role, authUser?.email, seedDemoData]);
+  // Auto-seed has been removed so admins can have an empty platform.
 
   return (
     <AppContext.Provider value={{ 
@@ -1761,6 +1758,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       isDriverOnline,
       toggleDriverStatus,
       cartStoreId,
+      selectedReceiptOrder,
+      setSelectedReceiptOrder,
+      reviewOrder,
+      setReviewOrder,
       resetOrders,
       darkMode,
       toggleDarkMode,

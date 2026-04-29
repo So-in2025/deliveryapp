@@ -77,15 +77,17 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
     const step = steps[currentStep];
     
     // Calculate tooltip position
+    const margin = 16;
+    const cardWidth = Math.min(window.innerWidth - 32, 340);
+    
     const tooltipStyle: React.CSSProperties = {
         position: 'fixed',
         zIndex: 1000,
         pointerEvents: 'auto',
+        width: window.innerWidth < 768 ? 'calc(100% - 32px)' : `${cardWidth}px`,
+        maxWidth: 'calc(100vw - 32px)',
     };
 
-    const margin = 16;
-    const cardWidth = Math.min(window.innerWidth - 32, 340);
-    
     const stepPosition = step.position || 'bottom';
 
     // Simplified robust placement
@@ -96,8 +98,8 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
         } else {
             tooltipStyle.bottom = margin + 80; // Above tab bar if any
         }
-        tooltipStyle.left = '50%';
-        tooltipStyle.transform = 'translateX(-50%)';
+        tooltipStyle.left = margin;
+        tooltipStyle.right = margin;
     } else {
         // Desktop: Relative to target
         if (stepPosition === 'bottom') {
@@ -140,7 +142,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplet
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 10 }}
                     style={tooltipStyle}
-                    className="w-[320px] max-h-[80vh] flex flex-col bg-white dark:bg-stone-900 rounded-[2rem] shadow-2xl border border-brand-500/20 p-6 pointer-events-auto"
+                    className="max-h-[80vh] flex flex-col bg-white dark:bg-stone-900 rounded-[2rem] shadow-2xl border border-brand-500/20 p-6 pointer-events-auto"
                 >
                     <div className="flex items-center justify-between mb-4 shrink-0">
                         <div className="flex items-center gap-2 text-brand-600 dark:text-brand-400">

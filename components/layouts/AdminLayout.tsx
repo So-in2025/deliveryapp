@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings, ShoppingBag, Bike, User, Activity, DollarSign } from 'lucide-react';
+import { Shield, LogOut, Users, Store, Truck, Database, AlertTriangle, Bell, HelpCircle, Settings, ShoppingBag, Bike, User, Activity, DollarSign, Tag } from 'lucide-react';
 import { SettingsOverlay } from '../ui/SettingsOverlay';
 import { UserRole } from '../../types';
 
@@ -67,11 +67,17 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <div id="fleet-tab">
                 <DesktopNavItem icon={<Truck />} label="Flota" active={adminViewState === 'FLEET'} onClick={() => setAdminViewState('FLEET')} />
             </div>
+            <div id="banners-tab">
+                <DesktopNavItem icon={<Tag />} label="Promociones" active={adminViewState === 'BANNERS'} onClick={() => setAdminViewState('BANNERS')} />
+            </div>
             <div id="disputes-tab">
                 <DesktopNavItem icon={<AlertTriangle />} label="Reclamos" active={adminViewState === 'DISPUTES'} onClick={() => setAdminViewState('DISPUTES')} />
             </div>
             <div id="settlements-tab">
                 <DesktopNavItem icon={<DollarSign />} label="Liquidaciones" active={adminViewState === 'SETTLEMENTS'} onClick={() => setAdminViewState('SETTLEMENTS')} />
+            </div>
+            <div id="config-tab">
+                <DesktopNavItem icon={<Settings />} label="Configuración" active={adminViewState === 'SETTINGS'} onClick={() => setAdminViewState('SETTINGS')} />
             </div>
             
             <div className="pt-4 pb-2 px-4">
@@ -87,9 +93,6 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           </nav>
 
           <div className="p-4 border-t border-stone-800 space-y-1">
-            <div id="config-tab">
-                <DesktopNavItem icon={<Settings />} label="Configuración" active={adminViewState === 'SETTINGS'} onClick={() => setAdminViewState('SETTINGS')} />
-            </div>
             <div id="profile-tab">
                 <DesktopNavItem icon={<User />} label="Perfil" active={false} onClick={toggleSettings} />
             </div>
@@ -126,19 +129,6 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                     {unreadCount > 0 && (
                         <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-600 rounded-full" />
                     )}
-                </button>
-                <button 
-                    onClick={toggleSettings}
-                    className="p-2 rounded bg-white/5 text-stone-400 hover:text-white transition-colors"
-                    title="Perfil"
-                >
-                    <User size={16} />
-                </button>
-                <button 
-                    onClick={handleSignOut}
-                    className="p-2 rounded bg-red-600/10 text-red-500 hover:bg-red-600/20 transition-colors"
-                >
-                    <LogOut size={16} />
                 </button>
             </div>
           </header>

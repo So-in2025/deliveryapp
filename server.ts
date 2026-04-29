@@ -22,6 +22,19 @@ if (vapidPublicKey && vapidPrivateKey) {
   );
 }
 
+import { GoogleGenAI, Type } from '@google/genai';
+
+// AI Instance (Lazy)
+let aiInstance: GoogleGenAI | null = null;
+function getAi(): GoogleGenAI {
+  if (!aiInstance) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error('GEMINI_API_KEY missing');
+    aiInstance = new GoogleGenAI({ apiKey: key });
+  }
+  return aiInstance;
+}
+
 async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
@@ -72,8 +85,13 @@ async function startServer() {
   if (process.env.REDIS_URL) {
     redisClient = createClient({ url: process.env.REDIS_URL });
     redisClient.on('error', (err) => console.error('Redis Client Error', err));
-    await redisClient.connect().catch(console.error);
-    console.log('✅ Redis connected successfully');
+    // Don't await strictly so server can boot even if Redis is slow
+    redisClient.connect()
+      .then(() => console.log('✅ Redis connected successfully'))
+      .catch(err => {
+        console.error('⚠️ Redis connection failed, using memory fallback:', err);
+        redisClient = null;
+      });
   } else {
     console.warn('⚠️ No REDIS_URL provided. Using in-memory fallback for caching.');
   }
@@ -140,6 +158,24 @@ async function startServer() {
         const paymentId = data?.id || req.query.id;
         if (!paymentId) return res.sendStatus(400);
 
+        // We need an access token to check the payment status
+        // Webhooks usually use the default platform token
+        let accessToken = process.env.MP_ACCESS_TOKEN;
+        try {
+          const secretsDoc = await getDoc(doc(db, 'config', 'global', 'private', 'mercadoPago'));
+          if (secretsDoc.exists()) {
+            accessToken = secretsDoc.data()?.mpAccessToken;
+          }
+        } catch (e) {
+          console.error('Error fetching MP token for webhook:', e);
+        }
+
+        if (!accessToken) {
+          console.error('No MP Access Token for webhook verification');
+          return res.sendStatus(500);
+        }
+
+        const mpClient = new MercadoPagoConfig({ accessToken });
         const payment = new Payment(mpClient);
         const paymentData = await payment.get({ id: String(paymentId) });
         
@@ -236,7 +272,7 @@ async function startServer() {
             quantity: Number(item.quantity),
             currency_id: 'ARS' // Change as needed
           })),
-          ...(customAccessToken && calculatedFee > 0 ? { marketplace_fee: calculatedFee } : {}),
+          ...(accessToken && calculatedFee > 0 ? { marketplace_fee: calculatedFee } : {}),
           back_urls: {
             success: `${req.protocol}://${req.get('host')}/order-success?id=${orderId}`,
             failure: `${req.protocol}://${req.get('host')}/order-failure?id=${orderId}`,
@@ -261,6 +297,79 @@ async function startServer() {
     // server-side reads to the users collection will fail with permission limits.
     // Push notifications are handled via real-time foreground updates and service workers.
     return res.json({ success: true, warning: 'Push notifications disabled in preview environment without Admin SDK' });
+  });
+
+  // --- PHASE 3: AI ENDPOINTS ---
+  app.post('/api/ai/extract-products', async (req, res) => {
+    try {
+      const { base64Image } = req.body;
+      if (!base64Image) return res.status(400).json({ error: 'No image provided' });
+
+      const ai = getAi();
+      const result = await ai.models.generateContent({
+        model: "gemini-3.1-pro-preview",
+        contents: [{
+          parts: [
+            { text: `Analiza esta imagen o documento de un menú. Extrae TODOS los productos. Devuelve un ARREGLO JSON con objetos: name, description, price (número), category.` },
+            { inlineData: { mimeType: "image/jpeg", data: base64Image.split(',')[1] || base64Image } }
+          ]
+        }],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                description: { type: Type.STRING },
+                price: { type: Type.NUMBER },
+                category: { type: Type.STRING }
+              },
+              required: ["name", "price"]
+            }
+          }
+        }
+      });
+
+      res.json(JSON.parse(result.text || '[]'));
+    } catch (error) {
+      console.error('AI Extraction Error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'AI processing failed' });
+      }
+    }
+  });
+
+  app.post('/api/ai/generate-banner', async (req, res) => {
+    try {
+      const { prompt: userPrompt } = req.body;
+      const ai = getAi();
+      const result = await ai.models.generateContent({
+        model: "gemini-3.1-pro-preview",
+        contents: [{
+          parts: [{ text: `Genera una promo para delivery: "${userPrompt}". JSON: title, subtitle, badge, unsplashTerm.` }]
+        }],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              subtitle: { type: Type.STRING },
+              badge: { type: Type.STRING },
+              unsplashTerm: { type: Type.STRING }
+            }
+          }
+        }
+      });
+      res.json(JSON.parse(result.text || '{}'));
+    } catch (error) {
+      console.error('AI Generation Error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'AI generation failed' });
+      }
+    }
   });
 
   // Vite middleware for development

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Order, OrderStatus, Product, Store } from '../types';
 import { Button } from '../components/ui/Button';
 import { LazyImage } from '../components/ui/LazyImage';
-import { ShoppingBag, Star, Plus, Minus, X, ArrowLeft, Heart, Trash2, Search, HelpCircle, History, MapPin, ChevronDown, Check, Tag, Map as MapIcon, Navigation, Share2, Award } from 'lucide-react';
+import { ShoppingBag, Star, Plus, Minus, X, ArrowLeft, Heart, Trash2, Search, HelpCircle, History, MapPin, ChevronDown, Check, Tag, Map as MapIcon, Share2, Award } from 'lucide-react';
 import { formatCurrency, APP_CONFIG } from '../constants';
 import { useToast } from '../context/ToastContext';
 import { OnboardingTour, TourStep } from '../components/ui/OnboardingTour';
@@ -29,22 +29,18 @@ export const ClientView: React.FC = () => {
     const { 
         stores, cart, addToCart, removeFromCart, updateCartItemQuantity, 
         orders, favorites, toggleFavorite, toggleSettings, user, 
-        updateUser, clientViewState, setClientViewState, 
+        clientViewState, setClientViewState, 
         selectedStore, setSelectedStore, banners, config, completeTour, socket,
         searchQuery, setSearchQuery, selectedCategory, setSelectedCategory,
         showLocationSelector, setShowLocationSelector,
-        productToView, setProductToView, productToCustomize, setProductToCustomize
+        productToView, setProductToView, productToCustomize, setProductToCustomize,
+        reviewOrder, setReviewOrder
     } = useApp();
     const { showToast } = useToast();
-    const { user: authUser } = useAuth();
-    
     // UI Local State
-    const [selectedReceiptOrder, setSelectedReceiptOrder] = useState<Order | null>(null);
-    const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
     const [claimOrder, setClaimOrder] = useState<Order | null>(null);
 
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
-    const isAdmin = user.role === 'ADMIN' || (authUser?.email && ['soinsoluciones2025@gmail.com', 'daniel.acevedo3134@gmail.com'].includes(authUser.email));
 
     // --- ALGORITHMIC LISTS ---
     const recommendedStores = useMemo(() => {
@@ -150,35 +146,7 @@ export const ClientView: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            {/* ADMIN DEBUG TOOLS */}
-            {isAdmin && clientViewState === 'BROWSE' && (
-                <motion.div 
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    className="fixed right-4 top-24 z-[60] flex flex-col gap-2"
-                >
-                    <button 
-                        onClick={async () => {
-                            // Synchronize with Demo Store (Angel de la Independencia)
-                            const demoLat = 19.428500;
-                            const demoLng = -99.168500;
-                            updateUser({ 
-                                lat: demoLat, 
-                                lng: demoLng, 
-                                addresses: ['Cerca del Ángel de la Independencia, CDMX', ...(user.addresses || [])] 
-                            });
-                            showToast('Ubicación sincronizada con Demo CDMX', 'success');
-                        }}
-                        className="bg-brand-500 text-brand-950 p-3 rounded-2xl shadow-2xl border border-brand-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-transform"
-                    >
-                        <Navigation size={14} /> Sincronizar Demo
-                    </button>
-                    <div className="bg-stone-900/80 backdrop-blur-md border border-white/10 p-3 rounded-2xl text-white text-[8px] font-mono leading-none">
-                        LAT: {user.lat?.toFixed(4) || '??'}<br/>
-                        LNG: {user.lng?.toFixed(4) || '??'}
-                    </div>
-                </motion.div>
-            )}
+            {/* Mantenemos el viewport limpio para producción */}
 
             {activeOrder && clientViewState !== 'TRACKING' && clientViewState === 'BROWSE' && (
                 <div onClick={() => setClientViewState('TRACKING')} className="w-full bg-brand-500 text-black p-3 flex justify-between items-center cursor-pointer shrink-0 z-50 shadow-xl animate-slide-down border-b border-black/10">
@@ -514,39 +482,33 @@ const CategoryPills = ({ categories, selected, onSelect }: { categories: string[
 
 const BannerCarousel = ({ banners }: { banners: any[] }) => {
     const activeBanners = banners.filter(b => b.isActive);
-    if (activeBanners.length === 0) return (
-        <div className="px-6 lg:px-12 py-6">
-            <div className="w-full h-56 rounded-[3rem] bg-stone-950 border border-black/5 dark:border-white/5 relative overflow-hidden group shadow-2xl">
-                <img 
-                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=1920" 
-                    alt="Premium Food" 
-                    className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity scale-105 group-hover:scale-110 transition-transform duration-1000 ease-out"
-                    referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-stone-950/90 via-stone-950/60 to-brand-950/30" />
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-                
-                <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 text-left">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-500 text-[10px] font-bold uppercase tracking-widest mb-3 w-fit backdrop-blur-md whitespace-nowrap overflow-hidden text-ellipsis max-w-[80%]">
-                        <Heart size={12} className="shrink-0" />
-                        <span className="truncate">Lo mejor de tu comunidad</span>
-                    </div>
-                    <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase leading-[1.1] max-w-[85%] break-words">
-                        LO MEJOR DE <br /> <span className="text-brand-500">LA CIUDAD.</span>
-                    </h2>
-                </div>
-            </div>
-        </div>
-    );
+    if (activeBanners.length === 0) return null;
     return (
         <div className="flex gap-6 px-6 lg:px-12 py-8 overflow-x-auto scrollbar-hide snap-x">
             {activeBanners.map(banner => (
-                <div key={banner.id} className="snap-center shrink-0 w-[85vw] lg:w-[600px] h-64 lg:h-72 rounded-[3.5rem] overflow-hidden relative shadow-2xl group cursor-pointer border border-white/5">
-                    <img src={banner.image} alt="" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2000ms] ease-out" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent p-6 sm:p-8 lg:p-14 flex flex-col justify-end">
-                        <div className="bg-brand-500 text-brand-950 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest w-fit mb-4 shadow-xl">Promoción</div>
-                        <h3 className="text-white text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight group-hover:text-brand-500 transition-colors uppercase leading-[1.1]">{banner.title}</h3>
-                        <p className="text-stone-300 text-sm font-bold mt-3 opacity-80 max-w-md line-clamp-2">{banner.subtitle}</p>
+                <div key={banner.id} onClick={() => banner.link && window.open(banner.link, '_blank')} className="snap-center shrink-0 w-[85vw] lg:w-[600px] h-64 lg:h-72 rounded-[3.5rem] overflow-hidden relative shadow-2xl group cursor-pointer border border-black/5 dark:border-white/5">
+                    <img 
+                        src={banner.image} 
+                        alt="Promoción" 
+                        className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity scale-105 group-hover:scale-110 transition-transform duration-1000 ease-out"
+                        referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-stone-950/90 via-stone-950/60 to-brand-950/30" />
+                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+                    
+                    <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 lg:p-14 text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/30 text-brand-500 text-[10px] font-bold uppercase tracking-widest mb-3 w-fit backdrop-blur-md whitespace-nowrap overflow-hidden text-ellipsis max-w-[80%]">
+                            <Heart size={12} className="shrink-0" />
+                            <span className="truncate">{banner.badge || 'Promoción'}</span>
+                        </div>
+                        <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase leading-[1.1] max-w-[85%] break-words group-hover:text-brand-500 transition-colors">
+                            {banner.title.split('\n').map((line: string, i: number) => (
+                                <React.Fragment key={i}>{line}<br/></React.Fragment>
+                            ))}
+                        </h2>
+                        {banner.subtitle && (
+                            <p className="text-stone-300 text-sm font-bold mt-3 opacity-80 max-w-md line-clamp-2">{banner.subtitle}</p>
+                        )}
                     </div>
                 </div>
             ))}
