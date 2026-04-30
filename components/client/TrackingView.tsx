@@ -149,35 +149,36 @@ const TrackingMap: React.FC<{
     }), []);
 
     return (
-        <MapContainer 
-            center={driverPos || userPos || storePos || defaultCenter} 
-            zoom={15} 
-            style={{ height: '100%', width: '100%' }} 
-            zoomControl={false}
-            scrollWheelZoom={true}
-        >
-            <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <MapController driverPos={driverPos} storePos={storePos} userPos={userPos} />
-            
-            {routePoints.length > 1 && (
-                <Polyline 
-                    key={`route-${routePoints.length}`} 
-                    positions={routePoints} 
-                    color="#FACC15" 
-                    weight={6} 
-                    opacity={0.8} 
-                    lineCap="round"
-                    lineJoin="round"
+            <MapContainer 
+                key={`map-${driverId || 'no-driver'}`}
+                center={driverPos || userPos || storePos || defaultCenter} 
+                zoom={15} 
+                style={{ height: '100%', width: '100%' }} 
+                zoomControl={false}
+                scrollWheelZoom={true}
+            >
+                <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
-            )}
+                <MapController driverPos={driverPos} storePos={storePos} userPos={userPos} />
+                
+                {routePoints.length > 1 && (
+                    <Polyline 
+                        key={`route-${routePoints.length}-${driverId || 'no-driver'}`}
+                        positions={routePoints} 
+                        color="#FACC15" 
+                        weight={6} 
+                        opacity={0.8} 
+                        lineCap="round"
+                        lineJoin="round"
+                    />
+                )}
 
-            {storePos && <Marker key="store-marker" position={storePos} icon={storeIcon}><Popup>Tienda</Popup></Marker>}
-            {userPos && <Marker key="user-marker" position={userPos} icon={userIcon}><Popup>Tu ubicación</Popup></Marker>}
-            {driverPos && <Marker key={`driver-marker-${driverId || 'id'}`} position={driverPos} icon={driverIcon}><Popup>Repartidor</Popup></Marker>}
-        </MapContainer>
+                {storePos && <Marker key="store" position={storePos} icon={storeIcon}><Popup>Tienda</Popup></Marker>}
+                {userPos && <Marker key="user" position={userPos} icon={userIcon}><Popup>Tu ubicación</Popup></Marker>}
+                {driverPos && <Marker key={`driver-${driverId || 'id'}`} position={driverPos} icon={driverIcon}><Popup>Repartidor</Popup></Marker>}
+            </MapContainer>
     );
 };
 

@@ -520,25 +520,18 @@ export const AuthView: React.FC = () => {
                             <div className="text-left">
                                 <h4 className="text-xs font-black text-amber-950 dark:text-amber-500 uppercase tracking-widest leading-tight mb-1">Verificación Necesaria</h4>
                                 <p className="text-[11px] font-medium text-amber-800 dark:text-amber-400 leading-snug italic">
-                                    Hemos enviado un enlace a <span className="font-bold underline">{authUser.email}</span>. Es vital para la seguridad de tus transacciones.
+                                    Hemos enviado un enlace a <span className="font-bold underline">{authUser.email}</span>. Si no lo ves, comprueba tu carpeta de <span className="font-bold">Spam</span>.
                                 </p>
                             </div>
                         </div>
                         <div className="flex gap-2">
-                             <button 
-                                onClick={async () => {
-                                    const { resendVerification } = await import('../context/AuthContext').then(m => m.useAuth()); // This won't work easily here, use hook from above
-                                }}
-                                // Wait, I already have resendVerification from useAuth hook
-                                className="hidden"
-                             ></button>
                              <Button 
                                 size="sm" 
                                 fullWidth 
                                 onClick={resendVerification}
                                 className="!bg-amber-500 !text-amber-950 !h-10 !text-[10px] !font-black shadow-lg shadow-amber-500/20"
                              >
-                                REENVIAR CORREO
+                                REENVIAR
                              </Button>
                              <Button 
                                 variant="outline"
@@ -547,7 +540,7 @@ export const AuthView: React.FC = () => {
                                 onClick={reloadUser}
                                 className="!h-10 !text-[10px] !font-black !border-amber-500/30"
                              >
-                                YA VERIFICADO
+                                VERIFICADO
                              </Button>
                         </div>
                     </motion.div>
@@ -644,29 +637,29 @@ export const AuthView: React.FC = () => {
                                     )}
                                 </button>
 
-                                <div className="flex flex-col gap-2 text-center pt-2">
+                                <div className="flex flex-col gap-3 pt-4">
                                     {authMode === 'EMAIL_LOGIN' && (
                                         <>
-                                            <button type="button" onClick={() => setAuthMode('EMAIL_REGISTER')} className="text-stone-500 dark:text-stone-400 hover:text-brand-500 text-xs font-bold transition-colors">
+                                            <button type="button" onClick={() => setAuthMode('EMAIL_REGISTER')} className="w-full bg-stone-100 dark:bg-stone-800/50 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold py-3 rounded-xl transition-all border border-stone-200 dark:border-stone-700 text-xs shadow-sm">
                                                 ¿No tienes cuenta? REGÍSTRATE
                                             </button>
-                                            <button type="button" onClick={() => setAuthMode('FORGOT')} className="text-stone-400 dark:text-stone-500 hover:text-stone-600 text-[10px] uppercase tracking-widest transition-colors">
-                                                Olvidé mi contraseña
+                                            <button type="button" onClick={() => setAuthMode('FORGOT')} className="text-stone-500 dark:text-stone-400 hover:text-brand-500 font-medium text-[11px] underline">
+                                                ¿Olvidé mi contraseña?
                                             </button>
                                         </>
                                     )}
                                     {authMode === 'EMAIL_REGISTER' && (
-                                        <button type="button" onClick={() => setAuthMode('EMAIL_LOGIN')} className="text-stone-500 dark:text-stone-400 hover:text-brand-500 text-xs font-bold transition-colors">
+                                        <button type="button" onClick={() => setAuthMode('EMAIL_LOGIN')} className="w-full bg-stone-100 dark:bg-stone-800/50 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-bold py-3 rounded-xl transition-all border border-stone-200 dark:border-stone-700 text-xs shadow-sm">
                                             ¿Ya tienes cuenta? INICIA SESIÓN
                                         </button>
                                     )}
                                     {authMode === 'FORGOT' && (
-                                        <button type="button" onClick={() => setAuthMode('EMAIL_LOGIN')} className="text-stone-500 dark:text-stone-400 hover:text-brand-500 text-xs font-bold transition-colors">
+                                        <button type="button" onClick={() => setAuthMode('EMAIL_LOGIN')} className="text-stone-500 dark:text-stone-400 hover:text-brand-500 font-medium text-[11px] underline">
                                             VOLVER AL INGRESO
                                         </button>
                                     )}
-                                    <button type="button" onClick={() => setAuthMode('GOOGLE')} className="text-stone-400 dark:text-stone-500 hover:text-stone-600 text-[10px] uppercase tracking-widest transition-colors mt-2">
-                                        OTRAS OPCIONES DE INGRESO
+                                    <button type="button" onClick={() => setAuthMode('GOOGLE')} className="text-stone-400 dark:text-stone-500 hover:text-stone-600 font-bold text-xs uppercase tracking-widest py-2">
+                                        Otras opciones
                                     </button>
                                 </div>
                             </form>

@@ -271,10 +271,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const reloadUser = async () => {
-    if (!user) return;
+    // Re-fetch the latest user reference directly from auth
+    const currentAuthUser = auth.currentUser;
+    if (!currentAuthUser) return;
+    
     try {
-      await user.reload();
-      setUser({ ...auth.currentUser } as User);
+      await currentAuthUser.reload();
+      // After reload, get the fresh user object
+      const freshUser = auth.currentUser;
+      if (freshUser) {
+        setUser({ ...freshUser } as User);
+      }
     } catch (err) {
       console.error('Reload user error:', err);
     }
