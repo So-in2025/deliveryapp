@@ -119,7 +119,7 @@ interface AppContextType {
   createPaymentPreference: (orderId: string, items: { name: string, price: number, quantity: number }[]) => Promise<{ id: string, init_point: string } | null>;
   updateStore: (storeId: string, data: Partial<Store>) => void;
   deleteStore: (storeId: string) => Promise<void>;
-  updateLocation: (lat: number, lng: number) => void;
+  updateLocation: (lat: number, lng: number, activeOrderId?: string) => void;
   socket: Socket | null;
   
   // Chat Real-time
@@ -232,9 +232,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   const [user, setUser] = useState<UserProfile>(() => {
     try {
+      const storedGuest = localStorage.getItem('codex_guest_v1');
+      const guestData = storedGuest ? JSON.parse(storedGuest) : {};
       const storedTours = localStorage.getItem('codex_completed_tours_v1');
       const completedTours = storedTours ? JSON.parse(storedTours) : [];
-      return { ...DEFAULT_USER, completedTours };
+      return { ...DEFAULT_USER, ...guestData, completedTours };
     } catch {
       return DEFAULT_USER;
     }
@@ -243,7 +245,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateUser = useCallback(async (data: Partial<UserProfile>) => {
     if (!authUser?.uid || authUser.uid === 'guest') {
-      setUser(prev => ({ ...prev, ...data }));
+      setUser(prev => {
+        const next = { ...prev, ...data };
+        localStorage.setItem('codex_guest_v1', JSON.stringify({
+          addresses: next.addresses,
+          phone: next.phone,
+          name: next.name
+        }));
+        return next;
+      });
       return;
     }
     try {
@@ -411,12 +421,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Driver GPS State
   const [driverLocation, setDriverLocation] = useState({ lat: -34.6037, lng: -58.3816 });
 
-  const updateLocation = useCallback(async (lat: number, lng: number) => {
+  const updateLocation = useCallback(async (lat: number, lng: number, activeOrderId?: string) => {
+    if (!authUser?.uid || authProfile?.role !== 'DRIVER' || !authProfile?.isApprovedDriver) {
+        return;
+    }
     setDriverLocation({ lat, lng });
     if (authUser?.uid) {
       // 1. High-frequency update via WebSockets
       if (socket) {
-        socket.emit('update_location', { driverId: authUser.uid, lat, lng });
+        socket.emit('update_location', { driverId: authUser.uid, lat, lng, orderId: activeOrderId });
       }
       
       // 2. Geohash for optimized spatial queries
@@ -425,37 +438,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const geofire = await import('geofire-common');
         hash = geofire.geohashForLocation([lat, lng]);
       } catch (e) {
-        console.warn('Geofire not loaded yet');
+        // Silently skip geohash if failed
       }
 
-      // 3. Update Firestore with location and geohash + offline check
+      // 3. Update Firestore
       try {
-        const localforage = (await import('localforage')).default;
-        
+        // Update User Profile
         await updateDoc(doc(db, 'users', authUser.uid), { 
           lat, 
           lng,
-          ...(hash ? { geohash: hash } : {})
+          ...(hash ? { geohash: hash } : {}),
+          lastUpdate: serverTimestamp()
         });
 
-        // Sync offline queue if back online
-        const offlineQueue: any[] = await localforage.getItem('offline_locations') || [];
-        if (offlineQueue.length > 0) {
-          console.log(`Syncing ${offlineQueue.length} offline locations...`);
-          // Could do a batch update here ideally, but for now we just clear it upon success
-          await localforage.setItem('offline_locations', []);
+        // If there is an active order, update it too for immediate client visibility
+        if (activeOrderId) {
+            await updateDoc(doc(db, 'orders', activeOrderId), {
+                driverLat: lat,
+                driverLng: lng,
+                updatedAt: serverTimestamp()
+            });
         }
-
       } catch (error) {
-        if (error instanceof Error && error.message.includes('offline')) {
-            console.log("Offline: Queueing location...");
-            const localforage = (await import('localforage')).default;
-            const offlineQueue: any[] = await localforage.getItem('offline_locations') || [];
-            offlineQueue.push({ lat, lng, hash, timestamp: Date.now() });
-            await localforage.setItem('offline_locations', offlineQueue);
-        } else {
-            console.error('Error updating location:', error);
-        }
+        // Handle offline or errors silently for location
+        console.warn('Silent location update error:', error);
       }
     }
   }, [authUser?.uid, socket]);
@@ -580,7 +586,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     } else if (isAuthReady) {
       // Only reset if auth is definitely finished and no profile exists
-      setUser(DEFAULT_USER);
+      let guestData = {};
+      try {
+        const storedGuest = localStorage.getItem('codex_guest_v1');
+        guestData = storedGuest ? JSON.parse(storedGuest) : {};
+      } catch (e) {
+        // Ignore parsing errors for guest data
+      }
+      
+      setUser({ ...DEFAULT_USER, ...guestData });
       setRoleState(UserRole.NONE);
       setIsDriverOnline(false);
     }
@@ -690,7 +704,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     let unsubscribeUsers = () => {};
     if (usersQuery) {
       unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
-        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+        const usersData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return { id: doc.id, uid: doc.id, ...data } as UserProfile;
+        });
         setUsers(usersData);
       }, (error) => {
         if (error.code === 'permission-denied') {

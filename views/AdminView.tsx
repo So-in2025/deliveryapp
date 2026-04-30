@@ -42,31 +42,45 @@ interface KpiCardProps {
   sub: string;
   icon: React.ElementType;
   color: string;
+  onClick?: () => void;
 }
 
-const KpiCard = ({ title, value, sub, icon: Icon, color }: KpiCardProps) => (
-  <div className="bg-white/40 dark:bg-black/10 p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-stone-200/50 dark:border-white/[0.05] backdrop-blur-md flex items-start justify-between group hover:border-brand-500/30 transition-all duration-500">
+const KpiCard = ({ title, value, sub, icon: Icon, color, onClick }: KpiCardProps) => (
+  <div onClick={onClick} className={`bg-white/40 dark:bg-black/10 p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-stone-200/50 dark:border-white/[0.05] backdrop-blur-md flex items-start justify-between group transition-all duration-500 ${onClick ? 'cursor-pointer hover:border-brand-500/50 hover:bg-brand-500/5 active:scale-95' : 'hover:border-brand-500/30'}`}>
     <div>
       <p className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">{title}</p>
       <h3 className="text-3xl font-black text-stone-950 dark:text-white tracking-tighter">{value}</h3>
       <p className={`text-[10px] font-black uppercase tracking-widest mt-2 ${color}`}>{sub}</p>
     </div>
-    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-stone-50 dark:bg-white/5 border border-transparent dark:border-white/5 shadow-inner group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-brand-950 transition-all duration-500 ${color.replace('text-', 'text-')}`}>
+    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-stone-50 dark:bg-white/5 border border-transparent dark:border-white/5 shadow-inner transition-all duration-500 ${color.replace('text-', 'text-')} ${onClick ? 'group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-brand-950 group-hover:rotate-12' : 'group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-brand-950'}`}>
       <Icon size={22} strokeWidth={2.5} />
     </div>
   </div>
 );
 
-const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: { 
+const SettlementsTab = ({ orders, stores, settleMerchantOrder, settleDriverOrder }: { 
     orders: Order[], 
+    stores: Store[],
     settleMerchantOrder: (id: string) => Promise<void>,
     settleDriverOrder: (id: string) => Promise<void>
 }) => {
     const [activeSubTab, setActiveSubTab] = useState<'MERCHANTS' | 'DRIVERS'>('MERCHANTS');
 
-    const merchantSettlements = useMemo(() => {
+    useEffect(() => {
+    console.log('[DEBUG] AdminView Stores:', stores.length, stores.map(s => s.name));
+  }, [stores]);
+
+  const merchantSettlements = useMemo(() => {
         const settlements: { [storeId: string]: { storeName: string, pending: number, settled: number, total: number, orders: Order[] } } = {};
         
+        // Initialize with all stores to ensure they are visible even with 0 balance
+        stores.forEach(s => {
+            settlements[s.id] = { storeName: s.name, pending: 0, settled: 0, total: 0, orders: [] };
+        });
+
+        // Debug: Log total stores in settlements
+        console.log(`Settlements processing for ${Object.keys(settlements).length} stores`);
+
         orders.filter(o => o.status === OrderStatus.DELIVERED).forEach(order => {
             if (!settlements[order.storeId]) {
                 settlements[order.storeId] = { storeName: order.storeName, pending: 0, settled: 0, total: 0, orders: [] };
@@ -82,7 +96,7 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
         });
 
         return Object.entries(settlements).map(([id, data]) => ({ id, ...data }));
-    }, [orders]);
+    }, [orders, stores]);
 
     const driverSettlements = useMemo(() => {
         const settlements: { [driverId: string]: { driverName: string, pending: number, settled: number, total: number, orders: Order[] } } = {};
@@ -133,10 +147,10 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h3 className="font-black text-stone-950 text-xl uppercase tracking-tighter italic dark:text-white">{s.storeName}</h3>
-                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mt-1">ID: {s.id}</p>
+                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mt-1">ID Comercio: {s.id}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mb-1">Pendiente</p>
+                                    <p className="text-[10px] text-stone-400 font-black uppercase tracking-widest mb-1">Por pagar</p>
                                     <p className="text-3xl font-black text-red-600 tracking-tighter">{formatCurrency(s.pending)}</p>
                                 </div>
                             </div>
@@ -178,10 +192,10 @@ const SettlementsTab = ({ orders, settleMerchantOrder, settleDriverOrder }: {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h3 className="font-black text-stone-900 text-lg uppercase tracking-tight dark:text-white">{s.driverName}</h3>
-                                    <p className="text-[10px] text-stone-400 font-bold uppercase">ID: {s.id}</p>
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">ID Repartidor: {s.id}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Pendiente</p>
+                                    <p className="text-[10px] text-stone-400 font-bold uppercase">Por pagar</p>
                                     <p className="text-xl font-black text-red-500">{formatCurrency(s.pending)}</p>
                                 </div>
                             </div>
@@ -562,7 +576,7 @@ const BannersManagementTab = ({
                                     <label className="text-[10px] font-black text-stone-400 uppercase">Prioridad:</label>
                                     <input 
                                         type="number"
-                                        className="w-12 bg-stone-50 dark:bg-stone-950 rounded border dark:border-stone-800 text-[10px] font-bold p-1"
+                                        className="w-12 bg-stone-50 dark:bg-stone-950 rounded border dark:border-stone-800 text-[10px] font-bold p-1 dark:text-white text-stone-900"
                                         value={banner.priority}
                                         onChange={(e) => updateBanner(banner.id, { priority: parseInt(e.target.value) })}
                                     />
@@ -581,6 +595,16 @@ const BannersManagementTab = ({
             </div>
         </div>
     );
+};
+
+
+// Safe Date parser
+const safeParseDate = (val: any): Date => {
+  if (!val) return new Date();
+  if (val.toDate) return val.toDate();
+  if (val.seconds) return new Date(val.seconds * 1000);
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? new Date() : d;
 };
 
 export const AdminView: React.FC = () => {
@@ -661,6 +685,14 @@ export const AdminView: React.FC = () => {
     fetchSecrets();
   }, []);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  useEffect(() => {
+    if (selectedStore) {
+      const updated = stores.find(s => s.id === selectedStore.id);
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedStore)) {
+        setSelectedStore(updated);
+      }
+    }
+  }, [stores, selectedStore]);
   const [selectedUser, setSelectedUser] = useState<string | null>(null); // storing customerName for simplicity in MVP
   const [storeSearch, setStoreSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
@@ -680,7 +712,7 @@ export const AdminView: React.FC = () => {
     }).reverse();
 
     return last7Days.map(date => {
-      const dayOrders = orders.filter(o => isSameDay(new Date(o.createdAt), date));
+      const dayOrders = orders.filter(o => isSameDay(safeParseDate(o.createdAt), date));
       return {
         name: format(date, 'EEE', { locale: es }),
         sales: dayOrders.reduce((sum, o) => sum + o.total, 0),
@@ -721,7 +753,7 @@ export const AdminView: React.FC = () => {
 
   const recentActivity = useMemo(() => {
     return [...orders]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => safeParseDate(b.createdAt).getTime() - safeParseDate(a.createdAt).getTime())
       .slice(0, 10);
   }, [orders]);
 
@@ -795,6 +827,7 @@ export const AdminView: React.FC = () => {
           sub={`${kpis.completedOrders} pedidos finalizados`}
           icon={DollarSign}
           color="text-brand-950"
+          onClick={() => setAdminViewState('ORDERS')}
         />
         <KpiCard 
           title="Comisiones" 
@@ -802,6 +835,7 @@ export const AdminView: React.FC = () => {
           sub="Ingreso Bruto Plataforma"
           icon={TrendingUp}
           color="text-brand-950"
+          onClick={() => setAdminViewState('SETTLEMENTS')}
         />
         <KpiCard 
           title="Tiendas" 
@@ -809,6 +843,7 @@ export const AdminView: React.FC = () => {
           sub={`${kpis.pendingStores} por aprobar`}
           icon={StoreIcon}
           color="text-amber-700"
+          onClick={() => setAdminViewState('STORES')}
         />
         <KpiCard 
           title="Usuarios Activos" 
@@ -816,6 +851,7 @@ export const AdminView: React.FC = () => {
           sub="En línea ahora"
           icon={Users}
           color="text-orange-700"
+          onClick={() => setAdminViewState('USERS')}
         />
       </div>
 
@@ -938,7 +974,7 @@ export const AdminView: React.FC = () => {
                       {formatCurrency(order.total)}
                     </p>
                     <p className="text-[10px] text-stone-400 flex items-center gap-1">
-                      Hace 2 min • {order.items.length} items • <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
+                      Hace 2 min • {order.items.length} productos • <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
                     </p>
                  </div>
               </div>
@@ -1071,6 +1107,26 @@ export const AdminView: React.FC = () => {
 
                               <div className="bg-white dark:bg-black/20 p-8 rounded-[2.5rem] border border-stone-200/50 dark:border-white/[0.05] shadow-xl backdrop-blur-md space-y-6">
                                   <div className="flex items-center justify-between">
+                                      <h3 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-tighter italic">Propietario y Detalles</h3>
+                                      <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-white/5 flex items-center justify-center">
+                                          <Users size={18} className="text-brand-500" />
+                                      </div>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                      <div>
+                                          <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">Dueño Reclamado</p>
+                                          <p className="text-lg font-black text-stone-950 dark:text-white">{users.find(u => u.uid === selectedStore.ownerId)?.name || 'Sin Asignar'}</p>
+                                          <p className="text-xs text-stone-500 font-bold">{users.find(u => u.uid === selectedStore.ownerId)?.email || 'No disponible'}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">Fecha de Registro</p>
+                                          <p className="text-sm font-black text-stone-950 dark:text-white">{selectedStore.createdAt ? format(safeParseDate(selectedStore.createdAt), "dd MMM yyyy, hh:mm a", { locale: es }) : 'Desconocida'}</p>
+                                      </div>
+                                  </div>
+                              </div>
+
+                              <div className="bg-white dark:bg-black/20 p-8 rounded-[2.5rem] border border-stone-200/50 dark:border-white/[0.05] shadow-xl backdrop-blur-md space-y-6">
+                                  <div className="flex items-center justify-between">
                                       <h3 className="text-sm font-black text-stone-950 dark:text-white uppercase tracking-tighter italic">Configuración de Comisiones</h3>
                                       <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-white/5 flex items-center justify-center">
                                           <DollarSign size={18} className="text-brand-500" />
@@ -1081,8 +1137,7 @@ export const AdminView: React.FC = () => {
                                           <div className="flex-1">
                                               <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Comisión Personalizada</p>
                                               <div className="flex gap-2 group">
-                                                  <input 
-                                                    type="number" 
+                                                  <input type="number" 
                                                     defaultValue={(selectedStore.commissionPct || config.platformCommissionPct) * 100}
                                                     onChange={(e) => {
                                                         const val = parseFloat(e.target.value) / 100;
@@ -1137,30 +1192,80 @@ export const AdminView: React.FC = () => {
                                   </div>
                               )}
 
-                              <div className="flex gap-4">
-                                  <Button 
-                                    variant="secondary" 
-                                    fullWidth 
-                                    size="lg"
-                                    className="!bg-red-50 dark:!bg-red-900/10 !text-red-600 !rounded-2xl !border-red-100 dark:!border-red-900/20"
-                                    onClick={() => {
-                                        updateStore(selectedStore.id, { isActive: false });
-                                        showToast('Comercio Suspendido', 'info');
-                                    }}
-                                  >
-                                      SUSPENDER
-                                  </Button>
-                                  <Button 
-                                    fullWidth 
-                                    size="lg"
-                                    className="!bg-brand-500 !text-brand-950 !rounded-2xl shadow-xl shadow-brand-500/20"
-                                    onClick={() => {
-                                        updateStore(selectedStore.id, { isActive: true });
-                                        showToast('Comercio Aprobado', 'success');
-                                    }}
-                                  >
-                                      APROBAR
-                                  </Button>
+                              <div className="flex flex-col gap-4">
+                                  {selectedStore.isActive ? (
+                                      <div className="flex flex-col items-center gap-3 w-full">
+                                          <div className="w-full bg-green-500/10 text-green-500 p-4 rounded-xl font-bold text-center flex items-center justify-center gap-2">
+                                              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                                              COMERCIO ACTIVO Y APROBADO
+                                          </div>
+                                          
+                                          {(() => {
+                                              const owner = users.find(u => u.uid === selectedStore.ownerId);
+                                              const phone = selectedStore.phone || owner?.phone || '';
+                                              const msg = `¡Hola ${owner?.name || 'aliado'}! 🎉 Te escribimos del equipo de administración. Nos complace informarte que tu comercio "${selectedStore.name}" ha sido verificado. ¡Estamos listos para recibir pedidos! 🚀`;
+                                              const waLink = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`;
+                                              
+                                              return (
+                                                  <div className="grid grid-cols-2 gap-3 w-full">
+                                                      {phone.length > 5 ? (
+                                                          <a href={waLink} target="_blank" rel="noopener noreferrer" className="w-full flex justify-center p-4 bg-[#25D366] text-white rounded-2xl font-black text-[10px] sm:text-[11px] uppercase tracking-widest hover:bg-[#128C7E] transition-all text-center items-center shadow-lg shadow-green-500/20">
+                                                             Aviso WhatsApp
+                                                          </a>
+                                                      ) : (
+                                                          <div className="flex justify-center p-4 bg-stone-100 dark:bg-stone-800 text-stone-400 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center items-center">
+                                                             Sin Celular
+                                                          </div>
+                                                      )}
+                                                      <Button onClick={() => setRole(UserRole.CLIENT)} className="!rounded-2xl !bg-stone-900 dark:!bg-white !text-white dark:!text-stone-900 font-black text-[10px] sm:text-[11px] uppercase tracking-widest shadow-xl h-auto">
+                                                          Ver Tienda
+                                                      </Button>
+                                                  </div>
+                                              );
+                                          })()}
+
+                                          <Button 
+                                            variant="outline" 
+                                            fullWidth 
+                                            className="!text-red-500 !border-red-500/30 hover:!bg-red-500 hover:!text-white transition-all !rounded-2xl uppercase tracking-widest font-black text-xs mt-3 h-14"
+                                            onClick={async () => {
+                                                try {
+                                                    setSelectedStore(prev => prev ? { ...prev, isActive: false } : null);
+                                                    await updateStore(selectedStore.id, { isActive: false });
+                                                    showToast('Comercio Suspendido Correctamente', 'info');
+                                                } catch (err) {
+                                                    setSelectedStore(prev => prev ? { ...prev, isActive: true } : null);
+                                                    showToast('Error al suspender', 'error');
+                                                }
+                                            }}
+                                          >
+                                              Revocar Aprobación (Suspender)
+                                          </Button>
+                                      </div>
+                                  ) : (
+                                      <div className="flex flex-col gap-3 w-full">
+                                          <div className="w-full bg-amber-500/10 text-amber-600 dark:text-amber-400 p-4 rounded-xl font-bold text-center border border-amber-500/20">
+                                              PENDIENTE DE APROBACIÓN
+                                          </div>
+                                          <Button 
+                                            fullWidth 
+                                            size="lg"
+                                            className="!bg-brand-500 !text-brand-950 !rounded-2xl shadow-xl shadow-brand-500/20 py-6 text-sm font-black uppercase tracking-widest"
+                                            onClick={async () => {
+                                                try {
+                                                    setSelectedStore(prev => prev ? { ...prev, isActive: true } : null);
+                                                    await updateStore(selectedStore.id, { isActive: true });
+                                                    showToast('Comercio Aprobado Exitosamente', 'success');
+                                                } catch (err) {
+                                                    setSelectedStore(prev => prev ? { ...prev, isActive: false } : null);
+                                                    showToast('Error al aprobar', 'error');
+                                                }
+                                            }}
+                                          >
+                                              🚀 APROBAR COMERCIO
+                                          </Button>
+                                      </div>
+                                  )}
                               </div>
 
                               <div className="pt-6 border-t border-stone-100 dark:border-white/5">
@@ -1169,10 +1274,9 @@ export const AdminView: React.FC = () => {
                                     fullWidth 
                                     className="!text-red-500 !border-red-500/30 hover:!bg-red-500 hover:!text-white transition-all !rounded-2xl uppercase tracking-widest font-black text-xs h-14"
                                     onClick={() => {
-                                        if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente "${selectedStore.name}"? Esta acción no se puede deshacer.`)) {
-                                            deleteStore(selectedStore.id);
-                                            setSelectedStore(null);
-                                        }
+                                        deleteStore(selectedStore.id);
+                                        setSelectedStore(null);
+                                        showToast('Comercio eliminado permanentemente', 'info');
                                     }}
                                   >
                                       ELIMINAR DEFINITIVAMENTE
@@ -1196,11 +1300,10 @@ export const AdminView: React.FC = () => {
                                             <span className="text-sm font-black text-brand-600 italic tracking-tighter">{formatCurrency(p.price)}</span>
                                             <button 
                                               onClick={() => {
-                                                if (window.confirm(`¿Eliminar "${p.name}"?`)) {
-                                                  const updatedProducts = selectedStore.products.filter(item => item.id !== p.id);
-                                                  updateStore(selectedStore.id, { products: updatedProducts });
-                                                  setSelectedStore({ ...selectedStore, products: updatedProducts });
-                                                }
+                                                const updatedProducts = selectedStore.products.filter(item => item.id !== p.id);
+                                                updateStore(selectedStore.id, { products: updatedProducts });
+                                                setSelectedStore({ ...selectedStore, products: updatedProducts });
+                                                showToast('Producto eliminado', 'info');
                                               }}
                                               className="p-2 text-stone-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
                                             >
@@ -1277,9 +1380,8 @@ export const AdminView: React.FC = () => {
                     <button 
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente "${store.name}"? Esta acción no se puede deshacer.`)) {
-                                deleteStore(store.id);
-                            }
+                            deleteStore(store.id);
+                            showToast('Comercio eliminado', 'info');
                         }}
                         className="p-2.5 bg-red-50 text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all hover:bg-red-100 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20"
                     >
@@ -1409,9 +1511,30 @@ export const AdminView: React.FC = () => {
                                         <Button 
                                           size="sm"
                                           className={`!rounded-2xl !px-6 !h-12 !font-black !tracking-widest !text-[10px] ${userProfile.isApprovedDriver ? '!bg-transparent !text-brand-500 !border-brand-500/50 !border-2' : '!bg-brand-500 !text-brand-950'}`}
-                                          onClick={() => {
-                                            updateAnyUser(userProfile.uid, { isApprovedDriver: !userProfile.isApprovedDriver });
-                                            showToast(userProfile.isApprovedDriver ? 'Acceso revocado' : 'Repartidor aprobado', 'success');
+                                          onClick={async (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            
+                                            // Debug log visible para el desarrollador
+                                            console.log('--- ACCIÓN DE ADMINISTRACIÓN ---');
+                                            console.log('Usuario:', userProfile.uid || userProfile.id);
+                                            console.log('Estado actual:', userProfile.isApprovedDriver);
+
+                                            try {
+                                              const targetId = userProfile.uid || userProfile.id;
+                                              const nextState = !userProfile.isApprovedDriver;
+                                              const actionText = nextState ? 'Aprobando' : 'Revocando';
+                                              
+                                              showToast(`${actionText} acceso del repartidor...`, 'info');
+                                              
+                                              // Usamos el ID del documento explícitamente
+                                              await updateAnyUser(targetId, { isApprovedDriver: nextState });
+                                              
+                                              showToast(nextState ? 'Repartidor aprobado exitosamente' : 'Acceso de repartidor revocado', 'success');
+                                            } catch (err) {
+                                              console.error('Error crítico en cambio de estatus:', err);
+                                              showToast('Error al procesar la solicitud. Verifica permisos.', 'error');
+                                            }
                                           }}
                                         >
                                           {userProfile.isApprovedDriver ? 'REVOCAR' : 'APROBAR'}
@@ -1465,7 +1588,7 @@ export const AdminView: React.FC = () => {
                                       <div key={order.id} className="p-5 bg-stone-50 dark:bg-black/20 rounded-3xl border border-stone-100 dark:border-white/5 flex justify-between items-center hover:border-brand-500/30 transition-all group/order">
                                           <div className="text-left">
                                               <p className="font-black text-sm text-stone-900 dark:text-white italic tracking-tighter leading-none mb-1">{order.storeName}</p>
-                                              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{format(new Date(order.createdAt), 'dd MMM, yyyy')} • {formatCurrency(order.total)}</p>
+                                              <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">{format(safeParseDate(order.createdAt), 'dd MMM, yyyy')} • {formatCurrency(order.total)}</p>
                                           </div>
                                           <Badge status={order.status} />
                                       </div>
@@ -1492,7 +1615,7 @@ export const AdminView: React.FC = () => {
             <Search size={18} className="text-stone-400 ml-2" />
             <input 
                 placeholder="Buscar usuario..." 
-                className="flex-1 outline-none text-sm" 
+                className="flex-1 outline-none text-sm dark:text-white text-stone-900" 
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
             />
@@ -1759,7 +1882,7 @@ export const AdminView: React.FC = () => {
                         {adminViewState === 'FLEET' && renderDispatchTab()}
                         {adminViewState === 'ORDERS' && <OrdersTab orders={orders} />}
                         {adminViewState === 'BANNERS' && <BannersManagementTab banners={banners} addBanner={addBanner} updateBanner={updateBanner} deleteBanner={deleteBanner} />}
-                        {adminViewState === 'SETTLEMENTS' && <SettlementsTab orders={orders} settleMerchantOrder={settleMerchantOrder} settleDriverOrder={settleDriverOrder} />}
+                        {adminViewState === 'SETTLEMENTS' && <SettlementsTab orders={orders} stores={stores} settleMerchantOrder={settleMerchantOrder} settleDriverOrder={settleDriverOrder} />}
                         {adminViewState === 'STORES' && renderStoresTab()}
                         {adminViewState === 'USERS' && renderUsersTab()}
                         {adminViewState === 'DISPUTES' && renderDisputesTab()}
@@ -1796,8 +1919,7 @@ export const AdminView: React.FC = () => {
                                                     <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Porcentaje de cada venta (0.15 = 15%)</p>
                                                 </div>
                                                 <div className="relative group-hover/input:scale-105 transition-transform">
-                                                    <input 
-                                                        type="number" 
+                                                    <input type="number" 
                                                         step="0.01"
                                                         value={localConfig.platformCommissionPct} 
                                                         onChange={(e) => setLocalConfig({...localConfig, platformCommissionPct: Number(e.target.value)})}
@@ -1812,8 +1934,7 @@ export const AdminView: React.FC = () => {
                                                     <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Lo que recibe el chofer (0.80 = 80%)</p>
                                                 </div>
                                                 <div className="relative group-hover/input:scale-105 transition-transform">
-                                                    <input 
-                                                        type="number" 
+                                                    <input type="number" 
                                                         step="0.01"
                                                         value={localConfig.driverCommissionPct} 
                                                         onChange={(e) => setLocalConfig({...localConfig, driverCommissionPct: Number(e.target.value)})}
@@ -1889,8 +2010,7 @@ export const AdminView: React.FC = () => {
                                                         <span className="text-[8px] font-black uppercase tracking-[0.2em]">{param.label}</span>
                                                     </div>
                                                     <div className="flex items-end justify-between">
-                                                        <input 
-                                                            type="number" 
+                                                        <input type="number" 
                                                             value={(localConfig.deliveryRates as any)[param.key]} 
                                                             onChange={(e) => setLocalConfig({...localConfig, deliveryRates: {...localConfig.deliveryRates!, [param.key]: Number(e.target.value)}})} 
                                                             className="bg-transparent text-2xl font-black text-stone-950 dark:text-white outline-none w-full tracking-tighter"
@@ -2016,8 +2136,7 @@ export const AdminView: React.FC = () => {
                                                     <div className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight">Email de Soporte</div>
                                                     <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Canal Directo de Ayuda</p>
                                                 </div>
-                                                <input 
-                                                    type="email" 
+                                                <input type="email" 
                                                     value={localConfig.supportEmail} 
                                                     onChange={(e) => setLocalConfig({...localConfig, supportEmail: e.target.value})}
                                                     className="w-48 p-4 bg-white dark:bg-stone-950 border-2 border-stone-200 dark:border-white/10 rounded-2xl text-center text-xs font-black text-brand-600 outline-none focus:border-brand-500 transition-all" 
@@ -2029,8 +2148,7 @@ export const AdminView: React.FC = () => {
                                                     <div className="text-sm font-black text-stone-800 dark:text-stone-100 italic tracking-tight">WhatsApp de Soporte</div>
                                                     <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Atención Inmediata</p>
                                                 </div>
-                                                <input 
-                                                    type="text" 
+                                                <input type="text" 
                                                     value={localConfig.supportPhone || ''} 
                                                     onChange={(e) => setLocalConfig({...localConfig, supportPhone: e.target.value})}
                                                     placeholder="+521..."
@@ -2116,8 +2234,7 @@ export const AdminView: React.FC = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-2">
                                                 <label className="text-[8px] font-black text-stone-500 uppercase tracking-[0.2em] ml-2">Access Token (Private)</label>
-                                                <input 
-                                                    type="password" 
+                                                <input type="password" 
                                                     value={mpCredentials.mpAccessToken || ''} 
                                                     onChange={(e) => setMpCredentials({...mpCredentials, mpAccessToken: e.target.value})}
                                                     placeholder="APP_USR-..."
@@ -2126,8 +2243,7 @@ export const AdminView: React.FC = () => {
                                             </div>
                                             <div className="space-y-2">
                                                 <label className="text-[8px] font-black text-stone-500 uppercase tracking-[0.2em] ml-2">Public Key (Client Side)</label>
-                                                <input 
-                                                    type="text" 
+                                                <input type="text" 
                                                     value={mpCredentials.mpPublicKey || ''} 
                                                     onChange={(e) => setMpCredentials({...mpCredentials, mpPublicKey: e.target.value})}
                                                     placeholder="APP_USR-..."
@@ -2148,15 +2264,13 @@ export const AdminView: React.FC = () => {
                                             <div className="flex flex-wrap justify-center gap-4">
                                                 <button 
                                                     onClick={async () => {
-                                                        if (window.confirm('¿EJECUTAR PURGA TOTAL DE ESTADÍSTICAS? Esta acción borrará el historial de rendimiento acumulado.')) {
-                                                            try {
-                                                                // Logic to clear stats collection (simulated/real for production)
-                                                                const statsRef = collection(db, 'stats');
-                                                                const snap = await getDocs(statsRef);
-                                                                await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
-                                                                showToast('Purga de estadísticas completada', 'success');
-                                                            } catch (err) { showToast('Error en purga de datos', 'error'); }
-                                                        }
+                                                        try {
+                                                            // Logic to clear stats collection (simulated/real for production)
+                                                            const statsRef = collection(db, 'stats');
+                                                            const snap = await getDocs(statsRef);
+                                                            await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+                                                            showToast('Purga de estadísticas completada', 'success');
+                                                        } catch (err) { showToast('Error en purga de datos', 'error'); }
                                                     }}
                                                     className="px-8 h-14 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/30 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all hover:scale-105 active:scale-95"
                                                 >
@@ -2164,10 +2278,8 @@ export const AdminView: React.FC = () => {
                                                 </button>
                                                 <button 
                                                     onClick={() => {
-                                                        if (window.confirm('¿WIPE DE CACHÉ GLOBAL? Esto reseteará las configuraciones volátiles del sistema.')) {
-                                                            setLocalConfig({ ...config, updatedAt: serverTimestamp() });
-                                                            showToast('Caché global de configuración reseteada', 'success');
-                                                        }
+                                                        setLocalConfig({ ...config, updatedAt: serverTimestamp() });
+                                                        showToast('Caché global de configuración reseteada', 'success');
                                                     }}
                                                     className="px-8 h-14 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-500/30 rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all hover:scale-105 active:scale-95 text-nowrap"
                                                 >

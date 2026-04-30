@@ -211,8 +211,7 @@ export const CheckoutView: React.FC = () => {
                             <div className="space-y-4">
                                 <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2 ml-2"><Tag size={12} /> Descuentos Especiales</label>
                                 <div className="flex gap-2 p-1.5 bg-stone-50 dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-white/5">
-                                    <input 
-                                        type="text" 
+                                    <input type="text" 
                                         placeholder="CÓDIGO DE CUPÓN" 
                                         value={couponCode}
                                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}

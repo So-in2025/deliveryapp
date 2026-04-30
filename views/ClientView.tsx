@@ -729,6 +729,7 @@ const LocationModal = ({ onClose }: { onClose: () => void }) => {
 
 const ReviewModal = ({ order, onClose }: any) => {
     const { addReview, user } = useApp();
+    const { showToast } = useToast();
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState('');
     return (
@@ -745,7 +746,20 @@ const ReviewModal = ({ order, onClose }: any) => {
                     ))}
                 </div>
                 <textarea placeholder="¿Qué tal estuvo todo?" value={comment} onChange={e => setComment(e.target.value)} className="w-full bg-stone-50 dark:bg-white/5 rounded-2xl p-4 text-xs font-bold outline-none border border-black/[0.03] h-24 mb-6 resize-none" />
-                <Button fullWidth onClick={() => { addReview({ id: `r-${Date.now()}`, storeId: order.storeId, orderId: order.id, rating, comment, createdAt: new Date().toISOString(), userName: user.name }); showToast('¡Gracias por tu opinión!', 'success'); onClose(); }}>ENVIAR COMENTARIO</Button>
+                <Button fullWidth onClick={() => { 
+                    addReview({ 
+                        id: `r-${Date.now()}`, 
+                        storeId: order.storeId, 
+                        orderId: order.id, 
+                        rating, 
+                        comment, 
+                        createdAt: new Date().toISOString(), 
+                        userName: user.name, 
+                        customerId: user.uid 
+                    }); 
+                    showToast('¡Gracias por tu opinión!', 'success'); 
+                    onClose(); 
+                }}>ENVIAR COMENTARIO</Button>
             </div>
         </div>
     );

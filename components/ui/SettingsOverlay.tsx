@@ -762,16 +762,14 @@ export const SettingsOverlay: React.FC = () => {
           <div className="bg-white dark:bg-stone-900 p-4 rounded-2xl shadow-sm border border-amber-200 dark:border-stone-800 space-y-4 transition-colors duration-300">
               <div>
                   <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Nombre Completo</label>
-                  <input 
-                    value={editName}
+                  <input value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-amber-300 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
                   />
               </div>
               <div>
                   <label className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase ml-1">Correo Electrónico</label>
-                  <input 
-                    value={editEmail}
+                  <input value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
                     className="w-full mt-1 bg-stone-50 dark:bg-stone-800 border border-amber-300 dark:border-stone-700 rounded-xl p-3 outline-none focus:border-brand-500 font-medium text-stone-900 dark:text-white transition-colors"
                   />
@@ -969,8 +967,7 @@ export const SettingsOverlay: React.FC = () => {
                     <option value="Sugerencia">Sugerencia de Mejora</option>
                 </select>
 
-                <textarea 
-                    placeholder="Describe tu situación con detalle..."
+                <textarea placeholder="Describe tu situación con detalle..."
                     value={supportForm.message}
                     onChange={(e) => setSupportForm({...supportForm, message: e.target.value})}
                     className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-xs text-white outline-none focus:border-brand-500 transition-all min-h-[100px] resize-none"

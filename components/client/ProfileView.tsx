@@ -168,8 +168,7 @@ export const ProfileView: React.FC = () => {
                               <div className="space-y-2 group">
                                   <label className="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em] flex items-center gap-1.5 ml-2"><User size={10} /> Nombre Completo</label>
                                   <div className="relative">
-                                    <input 
-                                        type="text" 
+                                    <input type="text" 
                                         value={name} 
                                         onChange={(e) => setName(e.target.value)}
                                         disabled={!isEditing}
@@ -185,7 +184,7 @@ export const ProfileView: React.FC = () => {
                                         type="email" 
                                         value={email} 
                                         disabled={true}
-                                        className="w-full bg-stone-50 dark:bg-stone-900/50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-base outline-none font-black tracking-tight text-stone-500"
+                                        className="w-full bg-stone-50 dark:bg-stone-900/50 border-2 border-transparent rounded-[1.5rem] px-6 py-4 text-base outline-none font-black tracking-tight text-stone-500 dark:text-white"
                                     />
                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-20"><Zap size={20} /></div>
                                   </div>

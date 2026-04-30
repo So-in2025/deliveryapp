@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { AppProvider } from './context/AppContext';
 import { ToastProvider } from './context/ToastContext';
 import { ConnectivityProvider } from './context/ConnectivityContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ClientView } from './views/ClientView';
 import { MerchantView } from './views/MerchantView';
 import { DriverView } from './views/DriverView';
@@ -81,7 +81,8 @@ const SplashScreen: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 
 // Component to handle View Switching based on Role
 const ViewRouter = () => {
-  const { role, isNotificationsOpen, setIsNotificationsOpen, user, myStore } = useApp();
+  const { role, isNotificationsOpen, setIsNotificationsOpen, user: appUser, myStore } = useApp();
+  const { user: fireUser } = useAuth();
 
   return (
     <>
@@ -90,6 +91,14 @@ const ViewRouter = () => {
       {(() => {
         if (!role) return <AuthView />;
         
+        // GLOBAL SECURITY BARRIER: Email Verification
+        // Admins and Devs are trusted by the rules, but we guide others to verify
+        const isMasterDev = ['soinsoluciones2025@gmail.com', 'daniel.acevedo3134@gmail.com', 'telollevo1389@gmail.com', 'Espaciovacio@gmail.com', 'ofeliaacevedo41@gmail.com'].includes(fireUser?.email || '');
+        
+        if (fireUser && !fireUser.emailVerified && !isMasterDev) {
+            return <StatusBarrier type="VERIFICATION" />;
+        }
+
         switch (role) {
           case UserRole.NONE:
             return <AuthView />;
@@ -111,7 +120,7 @@ const ViewRouter = () => {
             );
           case UserRole.DRIVER:
             // SECURITY GUARD: Approval Verification
-            if (!user.isApprovedDriver) {
+            if (!appUser?.isApprovedDriver) {
                 return <StatusBarrier type="DRIVER" />;
             }
             return (

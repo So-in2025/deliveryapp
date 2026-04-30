@@ -4,14 +4,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ===============================================================
-    // PILLAR 0: DEFAULT DENY CATCH-ALL
+    // PILAR 0: DENEGACIÓN POR DEFECTO (REGLA DE ORO)
     // ===============================================================
     match /{document=**} {
       allow read, write: if false;
     }
 
     // ===============================================================
-    // PILLAR 3: PRIMITIVE HELPERS & HARDENING
+    // AUXILIARES DE HARDENING (PRIMITIVAS)
     // ===============================================================
     
     function isAuthenticated() {
@@ -19,46 +19,43 @@ service cloud.firestore {
     }
 
     function isVerified() {
-      // Relaxed for demo environment: Just isAuthenticated
-      // In production, require request.auth.token.email_verified == true
-      return isAuthenticated();
+      // Blindaje de Producción: Solo usuarios verificados o la lista de Devs Maestros
+      return isAuthenticated() && (
+        request.auth.token.email_verified == true || 
+        request.auth.token.email in ['soinsoluciones2025@gmail.com', 'daniel.acevedo3134@gmail.com', 'telollevo1389@gmail.com', 'Espaciovacio@gmail.com', 'ofeliaacevedo41@gmail.com']
+      );
     }
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Path Variable Hardening (ID Poisoning Guard)
     function isValidId(id) {
       return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
-    // Dynamic Admin Check: Fetched from the database instead of hardcoded strings
     function isAdmin() {
-      let isDev = request.auth.token.email in ['soinsoluciones2025@gmail.com', 'daniel.acevedo3134@gmail.com', 'telollevo1389@gmail.com', 'Espaciovacio@gmail.com', 'ofeliaacevedo41@gmail.com'];
+      let masterDevs = ['soinsoluciones2025@gmail.com', 'daniel.acevedo3134@gmail.com', 'telollevo1389@gmail.com', 'Espaciovacio@gmail.com', 'ofeliaacevedo41@gmail.com'];
       
-      let configExists = exists(/databases/$(database)/documents/config/global);
-      let configDoc = configExists ? get(/databases/$(database)/documents/config/global).data : {};
-      let hasAdminItem = configExists && ('adminEmails' in configDoc) && request.auth.token.email in configDoc.adminEmails;
+      // Comprobación de rol en documento de usuario
+      let userInDB = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
       
-      let userExists = exists(/databases/$(database)/documents/users/$(request.auth.uid));
-      let userDoc = userExists ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : {};
-      
-      return isVerified() && (isDev || hasAdminItem || (userExists && 'role' in userDoc && userDoc.role == 'ADMIN'));
+      return isVerified() && (
+        request.auth.token.email in masterDevs || 
+        (userInDB != null && userInDB.role == 'ADMIN')
+      );
     }
 
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
     
-    // Temporal Integrity
+    // Integridad temporal (Previene ataques de replay)
     function isRecent(time) {
-      return time is timestamp && 
-             time > request.time - duration.value(10, 'm') &&
-             time <= request.time;
+      return time is timestamp && time <= request.time && time > request.time - duration.value(5, 'm');
     }
 
     // ===============================================================
-    // PILLAR 2: VALIDATION BLUEPRINTS (Anti-Update-Gap)
+    // BLUEPRINTS DE VALIDACIÓN (ANTI-UPDATE-GAP) - NIVEL ELITE
     // ===============================================================
 
     function isValidUser(data) {
@@ -78,7 +75,7 @@ service cloud.firestore {
     }
 
     function isValidOrder(data) {
-      return (data.keys().hasAll(['storeId', 'total', 'status', 'customerId', 'createdAt', 'items']) && data.keys().size() >= 6 && data.keys().size() <= 40) &&
+      return (data.keys().hasAll(['storeId', 'total', 'status', 'customerId', 'createdAt', 'items']) && data.keys().size() >= 6 && data.keys().size() <= 60) &&
              (data.storeId is string && isValidId(data.storeId)) &&
              (data.total is number && data.total >= 0) &&
              (data.status is string && data.status.size() <= 30) &&
@@ -87,22 +84,27 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // PILLAR 4-8: ACTION-BASED RULES
+    // REGLAS BASADAS EN ACCIONES (ELITE)
     // ===============================================================
 
     match /users/{userId} {
       allow get: if isValidId(userId) && (isOwner(userId) || isAdmin() || (existing().role == 'DRIVER' && isAuthenticated()));
       allow list: if isAdmin() || (isAuthenticated() && resource.data.role == 'DRIVER');
 
-      // Allow initial profile creation upon registration even if email is not yet verified
-      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(incoming()) && 
+      // CREATE: Un usuario nuevo solo puede crearse con rol CLIENT o DRIVER (no ADMIN)
+      allow create: if isAuthenticated() && isOwner(userId) && 
+                    isValidUser(incoming()) && 
                     (incoming().role in ['CLIENT', 'DRIVER'] || isAdmin()) &&
-                    (!('createdAt' in incoming()) || isRecent(incoming().createdAt));
+                    (!('isApprovedDriver' in incoming()) || incoming().isApprovedDriver == false);
 
+      // UPDATE: El usuario puede editar sus datos perfil, pero NO su rol ni su estado de aprobación
       allow update: if isAuthenticated() && (
         (isOwner(userId) && 
-         (!('role' in incoming()) || (incoming().role in ['CLIENT', 'MERCHANT', 'DRIVER'] && (isVerified() || incoming().role == existing().role)) || (incoming().role == 'ADMIN' && isAdmin())) &&
-         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline', 'completedTours', 'lat', 'lng', 'referralCode', 'referralEarnings', 'referredBy', 'isFirstPurchaseDone', 'isApprovedDriver', 'ownedStoreId', 'isDriver', 'driverLicense', 'vehicleInsurance', 'vehiclePlate', 'role', 'adminAccessRequested', 'requestedAt'])) ||
+         incoming().role == existing().role && 
+         incoming().email == existing().email &&
+         incoming().isApprovedDriver == existing().isApprovedDriver &&
+         (!('referralEarnings' in incoming()) || incoming().referralEarnings == existing().referralEarnings) &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'fcmToken', 'addresses', 'lastActive', 'isOnline', 'completedTours', 'lat', 'lng', 'isDriver', 'vehiclePlate', 'adminAccessRequested', 'requestedAt', 'updatedAt'])) ||
         isAdmin()
       );
 
@@ -110,44 +112,34 @@ service cloud.firestore {
     }
 
     match /stores/{storeId} {
-      // Publicly readable for browsing
       allow get: if isValidId(storeId);
       allow list: if true;
       
       allow create: if isVerified() && isValidStore(incoming()) && 
-                    (incoming().ownerId == request.auth.uid || isAdmin()) &&
-                    (!('createdAt' in incoming()) || isRecent(incoming().createdAt)) &&
-                    exists(/databases/$(database)/documents/users/$(request.auth.uid));
+                    (incoming().ownerId == request.auth.uid || isAdmin());
       
       allow update: if isVerified() && (
         (existing().ownerId == request.auth.uid && isValidStore(incoming()) &&
          incoming().ownerId == existing().ownerId &&
+         // Protección contra auto-reactivación si el admin suspendió la tienda
+         (incoming().isActive == existing().isActive || isAdmin()) &&
          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'image', 'deliveryTimeMin', 'deliveryTimeMax', 'deliveryFee', 'isActive', 'rating', 'reviewsCount', 'mpPublicKey', 'customFont', 'customColor', 'bankName', 'taxId', 'clabe', 'bankAccount', 'address', 'phone', 'isOpen', 'products', 'updatedAt', 'lat', 'lng', 'legalName', 'schedules', 'autoSchedule', 'pendingName'])) ||
         isAdmin()
       );
 
       allow delete: if isVerified() && (existing().ownerId == request.auth.uid || isAdmin());
 
-      // PILLAR 6: PII Isolation & Secure Credentials
       match /private/{docId} {
         allow read, write: if isVerified() && (get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid || isAdmin());
       }
-
+      
       match /products/{productId} {
         allow read: if isValidId(productId);
-        allow write: if isVerified() && (
-          (get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid) || 
-          isAdmin()
-        );
-        allow delete: if isVerified() && (
-          (get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid) || 
-          isAdmin()
-        );
+        allow write, delete: if isVerified() && (get(/databases/$(database)/documents/stores/$(storeId)).data.ownerId == request.auth.uid || isAdmin());
       }
     }
 
     match /orders/{orderId} {
-      // PILLAR 8: Secure List Queries
       allow get: if isValidId(orderId) && isAuthenticated() && (
         resource.data.customerId == request.auth.uid ||
         resource.data.driverId == request.auth.uid ||
@@ -167,21 +159,23 @@ service cloud.firestore {
                     (!('createdAt' in incoming()) || isRecent(incoming().createdAt)) &&
                     exists(/databases/$(database)/documents/stores/$(incoming().storeId));
 
-      allow update: if isVerified() && isValidOrder(incoming()) && (                
-        // Action: Customer Cancel (cannot cancel if already out for delivery or finished)
-        (existing().customerId == request.auth.uid && incoming().status == 'CANCELLED' && 
-         existing().status in ['PENDING', 'ACCEPTED', 'PREPARING'] && incoming().customerId == existing().customerId &&
+      allow update: if isVerified() && (                
+        // El cliente solo puede cancelar si el pedido no está en preparación avanzada
+        (existing().customerId == request.auth.uid && isValidOrder(incoming()) &&
+         incoming().status == 'CANCELLED' && 
+         existing().status in ['PENDING', 'ACCEPTED', 'PREPARING'] &&
          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'cancelledReason', 'updatedAt'])) ||
         
-        // Action: Driver Assign/Progress
+        // Driver actualizando estado
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'DRIVER' &&
-         ((!('driverId' in existing()) && incoming().driverId == request.auth.uid && incoming().status == 'ACCEPTED') ||
-          (existing().driverId == request.auth.uid && incoming().driverId == existing().driverId)) &&
-         incoming().diff(existing()).affectedKeys().hasAll(['status']) &&
-         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'deliveredAt', 'updatedAt', 'claimReason', 'claimStatus'])) ||
+         isValidOrder(incoming()) &&
+         ((!('driverId' in existing()) && incoming().driverId == request.auth.uid) || 
+          (existing().driverId == request.auth.uid)) &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'driverLat', 'driverLng', 'deliveredAt', 'updatedAt', 'claimReason', 'claimStatus'])) ||
         
-        // Action: Merchant Progress
+        // Merchant actualizando preparación
         (get(/databases/$(database)/documents/stores/$(existing().storeId)).data.ownerId == request.auth.uid &&
+         isValidOrder(incoming()) &&
          incoming().storeId == existing().storeId &&
          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'driverId', 'driverName', 'paymentStatus', 'merchantSettled', 'updatedAt', 'merchantEarnings', 'claimReason', 'claimStatus'])) ||
         
@@ -192,14 +186,12 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if isValidId(reviewId);
       allow list: if true;
-      allow create: if isVerified() && incoming().customerId == request.auth.uid &&
-                    exists(/databases/$(database)/documents/stores/$(incoming().storeId));
+      allow create: if isVerified() && incoming().customerId == request.auth.uid;
       allow delete, update: if isAdmin();
     }
 
     match /banners/{bannerId} {
-        allow read: if isValidId(bannerId);
-        allow list: if true;
+        allow read: if true;
         allow write: if isAdmin();
     }
 
@@ -211,15 +203,13 @@ service cloud.firestore {
     }
 
     match /config/{configId} {
-      // Configuration is readable by everyone for system stability
       allow get: if true;
-      allow list: if true;
-      // Only validated Admins can push changes to global config
       allow write: if isAdmin();
+    }
 
-      match /private/{docId} {
-        allow read, write: if isAdmin();
-      }
+    match /stats/{docId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
   }
 }

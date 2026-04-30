@@ -16,6 +16,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isAuthReady: boolean;
   requestNotificationPermission: () => Promise<void>;
+  resendVerification: () => Promise<void>;
+  reloadUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -256,8 +258,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resendVerification = async () => {
+    if (!user) return;
+    try {
+      const { verifyEmail } = await import('../firebase');
+      await verifyEmail();
+      showToast('Correo de verificación enviado', 'success');
+    } catch (err) {
+      console.error('Resend verification error:', err);
+      showToast('Error al enviar correo. Intenta de nuevo más tarde.', 'error');
+    }
+  };
+
+  const reloadUser = async () => {
+    if (!user) return;
+    try {
+      await user.reload();
+      setUser({ ...auth.currentUser } as User);
+    } catch (err) {
+      console.error('Reload user error:', err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, login, loginEmail, registerEmail, resetPass, signOut, isAuthReady, requestNotificationPermission }}>
+    <AuthContext.Provider value={{ user, profile, loading, login, loginEmail, registerEmail, resetPass, signOut, isAuthReady, requestNotificationPermission, resendVerification, reloadUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -185,19 +185,28 @@ export const DriverView: React.FC = () => {
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
-                    updateLocation(latitude, longitude);
+                    // Use active order ID for prioritized tracking if available
+                const myActiveOrder = orders.find(o => o.driverId === user.uid && 
+                    (o.status === OrderStatus.ACCEPTED || o.status === OrderStatus.PREPARING || 
+                     o.status === OrderStatus.READY || o.status === OrderStatus.DRIVER_ASSIGNED || 
+                     o.status === OrderStatus.PICKED_UP));
+                
+                updateLocation(latitude, longitude, myActiveOrder?.id);
                 },
                 (error) => {
-                    // Only show toast for actual errors, not permission issues which are common in browser sandbox
-                    if (error.code !== 1) { // 1 is PERMISSION_DENIED
-                        console.error("Error watching position:", error);
-                        showToast("Error al obtener ubicación GPS: " + error.message, "error");
+                    // CODE 1: PERMISSION_DENIED
+                    // CODE 2: POSITION_UNAVAILABLE
+                    // CODE 3: TIMEOUT
+                    
+                    // Only log errors that are NOT timeouts or permission issues if already muted
+                    if (error.code !== 3) {
+                        console.error("GPS Tracking Error:", error.message);
                     }
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
+                    timeout: 15000,
+                    maximumAge: 5000
                 }
             );
         } else {

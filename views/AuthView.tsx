@@ -11,7 +11,7 @@ import { APP_CONFIG } from '../constants';
 export const AuthView: React.FC = () => {
   const { user: appUser, createStore, updateUser, setRole, config, requestAdminAccess, myStore } = useApp();
   const { showToast } = useToast();
-  const { user: authUser, login, loginEmail, registerEmail, resetPass, signOut, loading } = useAuth();
+  const { user: authUser, login, loginEmail, registerEmail, resetPass, signOut, loading, resendVerification, reloadUser } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -507,6 +507,52 @@ export const AuthView: React.FC = () => {
                 transition={{ delay: 0.1 }}
                 className="mb-10 space-y-4"
             >
+                {authUser && !authUser.emailVerified && (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-500/20 rounded-3xl p-5 mb-4 flex flex-col gap-3 shadow-xl"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center shrink-0">
+                                <Mail size={20} className="text-amber-950" />
+                            </div>
+                            <div className="text-left">
+                                <h4 className="text-xs font-black text-amber-950 dark:text-amber-500 uppercase tracking-widest leading-tight mb-1">Verificación Necesaria</h4>
+                                <p className="text-[11px] font-medium text-amber-800 dark:text-amber-400 leading-snug italic">
+                                    Hemos enviado un enlace a <span className="font-bold underline">{authUser.email}</span>. Es vital para la seguridad de tus transacciones.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                             <button 
+                                onClick={async () => {
+                                    const { resendVerification } = await import('../context/AuthContext').then(m => m.useAuth()); // This won't work easily here, use hook from above
+                                }}
+                                // Wait, I already have resendVerification from useAuth hook
+                                className="hidden"
+                             ></button>
+                             <Button 
+                                size="sm" 
+                                fullWidth 
+                                onClick={resendVerification}
+                                className="!bg-amber-500 !text-amber-950 !h-10 !text-[10px] !font-black shadow-lg shadow-amber-500/20"
+                             >
+                                REENVIAR CORREO
+                             </Button>
+                             <Button 
+                                variant="outline"
+                                size="sm" 
+                                fullWidth 
+                                onClick={reloadUser}
+                                className="!h-10 !text-[10px] !font-black !border-amber-500/30"
+                             >
+                                YA VERIFICADO
+                             </Button>
+                        </div>
+                    </motion.div>
+                )}
+
                 {!authUser ? (
                     <div className="space-y-4">
                         {authMode === 'GOOGLE' ? (
@@ -537,8 +583,7 @@ export const AuthView: React.FC = () => {
                                 {authMode === 'EMAIL_REGISTER' && (
                                     <div className="relative">
                                         <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
-                                        <input 
-                                            type="text" 
+                                        <input type="text" 
                                             placeholder="Nombre completo" 
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
@@ -550,8 +595,7 @@ export const AuthView: React.FC = () => {
                                 
                                 <div className="relative">
                                     <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
-                                    <input 
-                                        type="email" 
+                                    <input type="email" 
                                         placeholder="Correo electrónico" 
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -564,8 +608,7 @@ export const AuthView: React.FC = () => {
                                     <div className="space-y-3">
                                         <div className="relative">
                                             <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
-                                            <input 
-                                                type="password" 
+                                            <input type="password" 
                                                 placeholder="Contraseña" 
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
@@ -576,8 +619,7 @@ export const AuthView: React.FC = () => {
                                         {authMode === 'EMAIL_REGISTER' && (
                                             <div className="relative">
                                                 <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
-                                                <input 
-                                                    type="password" 
+                                                <input type="password" 
                                                     placeholder="Confirmar contraseña" 
                                                     value={confirmPassword}
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -717,8 +759,7 @@ export const AuthView: React.FC = () => {
                         <div className="space-y-4 max-h-[65vh] lg:max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar scroll-smooth">
                             <div>
                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Nombre del Local *</label>
-                                <input 
-                                    type="text" 
+                                <input type="text" 
                                     value={storeName}
                                     onChange={(e) => setStoreName(e.target.value)}
                                     placeholder="Ej. Tacos El Gordo"
@@ -727,8 +768,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <div>
                                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">RFC (13 caracteres) (opcional)</label>
-                                 <input 
-                                     type="text" 
+                                 <input type="text" 
                                      value={storeTaxId}
                                      onChange={(e) => setStoreTaxId(e.target.value)}
                                      placeholder="Ej. ABCD900101XYZ"
@@ -751,8 +791,7 @@ export const AuthView: React.FC = () => {
                              </div>
                              <div>
                                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">CLABE Interbancaria (18 dígitos) (opcional)</label>
-                                 <input 
-                                     type="text" 
+                                 <input type="text" 
                                      inputMode="numeric"
                                      pattern="[0-9]*"
                                      value={storeClabe}
@@ -765,8 +804,7 @@ export const AuthView: React.FC = () => {
                              </div>
                              <div>
                                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Número de Cuenta (opcional)</label>
-                                 <input 
-                                     type="text" 
+                                 <input type="text" 
                                      value={storeBankAccount}
                                      onChange={(e) => setStoreBankAccount(e.target.value)}
                                      placeholder="Número de cuenta"
@@ -775,8 +813,7 @@ export const AuthView: React.FC = () => {
                              </div>
                              <div>
                                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Dirección del Local *</label>
-                                 <input 
-                                     type="text" 
+                                 <input type="text" 
                                      value={storeAddress}
                                      onChange={(e) => setStoreAddress(e.target.value)}
                                      placeholder="Ej. Av. Principal 123"
@@ -785,8 +822,7 @@ export const AuthView: React.FC = () => {
                              </div>
                              <div>
                                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Teléfono del Local *</label>
-                                 <input 
-                                     type="tel" 
+                                 <input type="tel" 
                                      value={storePhone}
                                      onChange={(e) => setStorePhone(e.target.value)}
                                      placeholder="Ej. 33 1234 5678"
@@ -869,8 +905,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Teléfono de Contacto *</label>
-                                <input 
-                                    type="tel" 
+                                <input type="tel" 
                                     value={phoneNumber}
                                     onChange={(e) => setPhoneNumber(e.target.value)}
                                     placeholder="Ej. 33 1234 5678"
@@ -879,8 +914,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Licencia de Conducir (Opcional)</label>
-                                <input 
-                                    type="text" 
+                                <input type="text" 
                                     value={driverLicense}
                                     onChange={(e) => setDriverLicense(e.target.value)}
                                     placeholder="Dejar en blanco si no aplica"
@@ -889,8 +923,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Placa del Vehículo (Opcional)</label>
-                                <input 
-                                    type="text" 
+                                <input type="text" 
                                     value={vehiclePlate}
                                     onChange={(e) => setVehiclePlate(e.target.value)}
                                     placeholder="Dejar en blanco si no aplica"
@@ -899,8 +932,7 @@ export const AuthView: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Póliza de Seguro</label>
-                                <input 
-                                    type="text" 
+                                <input type="text" 
                                     value={vehicleInsurance}
                                     onChange={(e) => setVehicleInsurance(e.target.value)}
                                     placeholder="Número de póliza (Opcional)"

@@ -100,7 +100,14 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
           setPosition(newPos);
         },
         (error) => {
-          console.error('Error getting location:', error);
+          if (error.code !== 3) {
+            console.error('Error getting location:', error);
+          }
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 10000
         }
       );
     }
@@ -173,7 +180,7 @@ export const MapSelector: React.FC<MapSelectorProps> = ({ initialLocation, onSel
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
               <Input 
                 placeholder="Buscar dirección..." 
-                className="pl-10"
+                className="pl-10 dark:text-white text-stone-900"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}

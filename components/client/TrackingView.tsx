@@ -60,16 +60,53 @@ const TrackingMap: React.FC<{
     storeLat?: number; 
     storeLng?: number;
     driverId?: string; 
-    storePosKey?: string; 
     storeLogo?: string; 
     userLat?: number; 
-    userLng?: number 
-}> = ({ driverLat, driverLng, storeLat, storeLng, driverId, storePosKey, storeLogo, userLat, userLng }) => {
+    userLng?: number;
+    onRouteUpdate?: (dist: number, time: number) => void;
+}> = ({ driverLat, driverLng, storeLat, storeLng, driverId, storeLogo, userLat, userLng, onRouteUpdate }) => {
     const defaultCenter: [number, number] = [-34.6037, -58.3816];
+    const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
     
     const driverPos: [number, number] | undefined = typeof driverLat === 'number' && typeof driverLng === 'number' && !isNaN(driverLat) && !isNaN(driverLng) ? [driverLat, driverLng] : undefined;
     const storePos: [number, number] | undefined = typeof storeLat === 'number' && typeof storeLng === 'number' && !isNaN(storeLat) && !isNaN(storeLng) ? [storeLat, storeLng] : undefined;
     const userPos: [number, number] | undefined = typeof userLat === 'number' && typeof userLng === 'number' && !isNaN(userLat) && !isNaN(userLng) ? [userLat, userLng] : undefined;
+
+    // Fetch route from OSRM
+    useEffect(() => {
+        const fetchRoute = async () => {
+            const start = driverPos || storePos;
+            const end = userPos;
+            
+            if (start && end) {
+                try {
+                    const response = await fetch(
+                        `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`
+                    );
+                    const data = await response.json();
+                    
+                    if (data.status === 'error' || !data.routes || data.routes.length === 0) {
+                        setRoutePoints([start, end]); // Fallback to direct line
+                        return;
+                    }
+                    
+                    const route = data.routes[0];
+                    const coords = route.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+                    setRoutePoints(coords);
+                    
+                    if (onRouteUpdate) {
+                        onRouteUpdate(route.distance / 1000, Math.ceil(route.duration / 60));
+                    }
+                } catch (e) {
+                    console.error('Error fetching tracking route:', e);
+                    setRoutePoints([start, end]);
+                }
+            }
+        };
+
+        const timer = setTimeout(fetchRoute, 500); // Debounce route requests
+        return () => clearTimeout(timer);
+    }, [driverLat, driverLng, storeLat, storeLng, userLat, userLng]);
 
     // Memoize icons to prevent constant recreation
     const driverIcon = React.useMemo(() => L.divIcon({
@@ -111,14 +148,6 @@ const TrackingMap: React.FC<{
         iconAnchor: [20, 20]
     }), []);
 
-    // Create polyline paths
-    const routePath: [number, number][] = [];
-    if (driverPos && userPos) {
-        routePath.push(driverPos, userPos);
-    } else if (storePos && userPos) {
-        routePath.push(storePos, userPos);
-    }
-
     return (
         <MapContainer 
             center={driverPos || userPos || storePos || defaultCenter} 
@@ -133,7 +162,17 @@ const TrackingMap: React.FC<{
             />
             <MapController driverPos={driverPos} storePos={storePos} userPos={userPos} />
             
-            {routePath.length > 1 && <Polyline key={`route-${routePath.length}`} positions={routePath} color="#000000" weight={4} dashArray="10, 10" opacity={0.4} />}
+            {routePoints.length > 1 && (
+                <Polyline 
+                    key={`route-${routePoints.length}`} 
+                    positions={routePoints} 
+                    color="#FACC15" 
+                    weight={6} 
+                    opacity={0.8} 
+                    lineCap="round"
+                    lineJoin="round"
+                />
+            )}
 
             {storePos && <Marker key="store-marker" position={storePos} icon={storeIcon}><Popup>Tienda</Popup></Marker>}
             {userPos && <Marker key="user-marker" position={userPos} icon={userIcon}><Popup>Tu ubicación</Popup></Marker>}
@@ -145,6 +184,7 @@ const TrackingMap: React.FC<{
 export const TrackingView: React.FC = () => {
     const { orders, setClientViewState, stores, user, socket } = useApp();
     const [liveDriverLocation, setLiveDriverLocation] = useState<{lat: number, lng: number} | null>(null);
+    const [telemetry, setTelemetry] = useState<{distance: number, time: number} | null>(null);
 
     const activeOrder = orders.find(o => 
         o.customerId === user.uid && 
@@ -235,25 +275,47 @@ export const TrackingView: React.FC = () => {
                     storeLogo={orderStore?.image || orderStore?.logo}
                     userLat={mapUserLat}
                     userLng={mapUserLng}
+                    onRouteUpdate={(dist, time) => setTelemetry({ distance: dist, time })}
                 />
                 {/* Vignette effect for depth */}
                 <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-stone-950/20 via-transparent to-stone-950/5" />
             </div>
 
             {/* Top Bar Overlay */}
-            <div className="relative z-30 p-6 flex items-start justify-between pointer-events-none">
-                <button 
-                  onClick={() => setClientViewState('BROWSE')} 
-                  className="w-14 h-14 bg-white/90 dark:bg-stone-950/90 backdrop-blur-2xl border border-stone-200/50 dark:border-white/10 rounded-[1.5rem] flex items-center justify-center text-stone-950 dark:text-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] active:scale-90 transition-all pointer-events-auto group"
-                >
-                    <ArrowLeft size={28} className="group-hover:-translate-x-1 transition-transform" />
-                </button>
-                
-                {activeOrder && (
-                     <div className="bg-white/90 dark:bg-stone-950/90 backdrop-blur-2xl px-6 py-4 rounded-[1.5rem] border border-stone-200/50 dark:border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] pointer-events-auto flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
-                        <span className="text-[10px] font-black tracking-[0.2em] uppercase text-stone-950 dark:text-white">Siguiendo envío</span>
-                     </div>
+            <div className="relative z-30 p-6 flex flex-col gap-4 pointer-events-none">
+                <div className="flex items-start justify-between">
+                    <button 
+                    onClick={() => setClientViewState('BROWSE')} 
+                    className="w-14 h-14 bg-white/90 dark:bg-stone-950/90 backdrop-blur-2xl border border-stone-200/50 dark:border-white/10 rounded-[1.5rem] flex items-center justify-center text-stone-950 dark:text-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] active:scale-90 transition-all pointer-events-auto group"
+                    >
+                        <ArrowLeft size={28} className="group-hover:-translate-x-1 transition-transform" />
+                    </button>
+                    
+                    {activeOrder && (
+                        <div className="bg-white/90 dark:bg-stone-950/90 backdrop-blur-2xl px-6 py-4 rounded-[1.5rem] border border-stone-200/50 dark:border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] pointer-events-auto flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
+                            <span className="text-[10px] font-black tracking-[0.2em] uppercase text-stone-950 dark:text-white">Siguiendo envío</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Telemetry Stats Card */}
+                {telemetry && activeOrder && (activeOrder.status === OrderStatus.DRIVER_ASSIGNED || activeOrder.status === OrderStatus.PICKED_UP) && (
+                    <motion.div 
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        className="bg-brand-500 p-4 rounded-[1.5rem] shadow-2xl flex gap-6 max-w-fit pointer-events-auto border-2 border-brand-400"
+                    >
+                        <div className="flex flex-col">
+                            <span className="text-[8px] font-black text-brand-950/50 uppercase tracking-widest">Aproximado</span>
+                            <span className="text-xl font-black text-brand-950 tabular-nums">{telemetry.time} MIN</span>
+                        </div>
+                        <div className="w-[1px] bg-brand-950/10" />
+                        <div className="flex flex-col">
+                            <span className="text-[8px] font-black text-brand-950/50 uppercase tracking-widest">Distancia</span>
+                            <span className="text-xl font-black text-brand-950 tabular-nums">{telemetry.distance.toFixed(1)} KM</span>
+                        </div>
+                    </motion.div>
                 )}
             </div>
 

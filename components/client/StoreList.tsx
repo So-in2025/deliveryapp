@@ -48,8 +48,7 @@ export const StoreList = () => {
             </div>
 
             <div className="relative group">
-                <input 
-                  type="text" 
+                <input type="text" 
                   placeholder="Busca comida, tiendas..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

@@ -500,16 +500,14 @@ const ImportReviewModal: React.FC<{
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
                 <div className="md:col-span-1">
                   <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1">Nombre</label>
-                  <input 
-                    value={prod.name} 
+                  <input value={prod.name} 
                     onChange={e => handleUpdate(prod.id, 'name', e.target.value)}
                     className="w-full bg-white dark:bg-stone-800 border-none rounded-xl px-4 py-2 font-bold text-stone-900 dark:text-white focus:ring-2 ring-brand-500/50"
                   />
                 </div>
                 <div className="md:col-span-1">
                   <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1">Precio</label>
-                  <input 
-                    type="number"
+                  <input type="number"
                     value={prod.price} 
                     onChange={e => handleUpdate(prod.id, 'price', Number(e.target.value))}
                     className="w-full bg-white dark:bg-stone-800 border-none rounded-xl px-4 py-2 font-black text-brand-600 dark:text-brand-500 focus:ring-2 ring-brand-500/50"
@@ -517,8 +515,7 @@ const ImportReviewModal: React.FC<{
                 </div>
                 <div className="md:col-span-1">
                    <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest block mb-1">Categoría</label>
-                   <input 
-                    value={prod.category || 'General'} 
+                   <input value={prod.category || 'General'} 
                     onChange={e => handleUpdate(prod.id, 'category', e.target.value)}
                     className="w-full bg-white dark:bg-stone-800 border-none rounded-xl px-4 py-2 font-bold text-stone-500 focus:ring-2 ring-brand-500/50"
                   />
@@ -837,16 +834,14 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
                                     <div className="flex gap-4 mb-6">
                                         <div className="flex-1">
                                             <p className="text-[8px] font-black uppercase text-stone-400 mb-1 ml-1">Título del Grupo</p>
-                                            <input 
-                                                value={g.name} 
+                                            <input value={g.name} 
                                                 onChange={e => _updateGroup(g.id, 'name', e.target.value)} 
                                                 className="w-full bg-white dark:bg-stone-900 p-3 rounded-xl border-none font-bold text-sm dark:text-white outline-none ring-2 ring-transparent focus:ring-brand-500" 
                                             />
                                         </div>
                                         <div className="w-20">
                                             <p className="text-[8px] font-black uppercase text-stone-400 mb-1 ml-1">Máx.</p>
-                                            <input 
-                                                type="number" 
+                                            <input type="number" 
                                                 value={g.max} 
                                                 onChange={e => _updateGroup(g.id, 'max', Number(e.target.value))} 
                                                 className="w-full bg-white dark:bg-stone-900 p-3 rounded-xl border-none font-bold text-sm dark:text-white text-center outline-none ring-2 ring-transparent focus:ring-brand-500" 
@@ -857,16 +852,14 @@ const ProductEditor: React.FC<{ store: Store }> = ({ store: myStore }) => {
                                     <div className="space-y-2">
                                         {g.options?.map(o => (
                                             <div key={o.id} className="flex gap-2 items-center bg-white dark:bg-stone-900 p-2 rounded-xl border border-black/5 dark:border-white/5 shadow-sm group/opt">
-                                                <input 
-                                                    value={o.name} 
+                                                <input value={o.name} 
                                                     onChange={e => _updateOption(g.id, o.id, 'name', e.target.value)} 
                                                     className="flex-1 bg-transparent border-none p-1 font-bold text-xs dark:text-white outline-none" 
                                                     placeholder="Nombre opción"
                                                 />
                                                 <div className="flex items-center gap-1 bg-stone-50 dark:bg-stone-800 px-3 py-1 rounded-lg">
                                                     <span className="text-[10px] text-stone-400 font-bold">$</span>
-                                                    <input 
-                                                        type="number" 
+                                                    <input type="number" 
                                                         value={o.price} 
                                                         onChange={e => _updateOption(g.id, o.id, 'price', Number(e.target.value))} 
                                                         className="w-12 bg-transparent border-none font-bold text-xs dark:text-white text-right outline-none" 
@@ -1037,8 +1030,7 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-[10px] font-black text-stone-400 mb-2 uppercase tracking-widest">Nombre Comercial</label>
-                        <input 
-                            value={name}
+                        <input value={name}
                             onChange={e => setName(e.target.value)}
                             className="w-full bg-stone-50 dark:bg-stone-900 border-none p-4 rounded-2xl dark:text-white font-bold ring-2 ring-transparent focus:ring-brand-500 transition-all outline-none" 
                             placeholder="Nombre de tu tienda"
@@ -1133,15 +1125,13 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
                                             </div>
                                             {sched.active ? (
                                                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                                                    <input 
-                                                        type="time" 
+                                                    <input type="time" 
                                                         value={sched.open}
                                                         onChange={(e) => setSchedules({...schedules, [dayIdx]: {...sched, open: e.target.value}})}
                                                         className="flex-1 sm:w-28 bg-stone-50 dark:bg-stone-950 border-none p-2 rounded-lg text-xs font-bold text-center dark:text-white outline-none focus:ring-2 ring-brand-500"
                                                     />
                                                     <span className="text-stone-400 font-bold">-</span>
-                                                    <input 
-                                                        type="time" 
+                                                    <input type="time" 
                                                         value={sched.close}
                                                         onChange={(e) => setSchedules({...schedules, [dayIdx]: {...sched, close: e.target.value}})}
                                                         className="flex-1 sm:w-28 bg-stone-50 dark:bg-stone-950 border-none p-2 rounded-lg text-xs font-bold text-center dark:text-white outline-none focus:ring-2 ring-brand-500"
@@ -1165,8 +1155,7 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
                     <div className="space-y-4">
                         <div>
                             <p className="text-[9px] font-bold text-stone-500 uppercase mb-1 ml-1">Access Token (Producción)</p>
-                            <input 
-                                type="password" 
+                            <input type="password" 
                                 value={mpToken}
                                 onChange={e => setMpToken(e.target.value)}
                                 placeholder="APP_USR-..."
@@ -1175,8 +1164,7 @@ const StoreSettings: React.FC<{ store: Store }> = ({ store }) => {
                         </div>
                         <div>
                             <p className="text-[9px] font-bold text-stone-500 uppercase mb-1 ml-1">Public Key (Producción)</p>
-                            <input 
-                                type="text" 
+                            <input type="text" 
                                 value={mpPk}
                                 onChange={e => setMpPk(e.target.value)}
                                 placeholder="APP_USR-..."

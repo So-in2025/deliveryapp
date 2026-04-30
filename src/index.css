@@ -87,4 +87,16 @@
   body {
     @apply custom-scrollbar;
   }
+
+  input[type="number"],
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    @apply text-stone-900 dark:text-white bg-transparent;
+  }
 }

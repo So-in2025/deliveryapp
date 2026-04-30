@@ -100,8 +100,7 @@ export const ChatOverlay: React.FC<ChatOverlayProps> = ({ orderId, isOpen, onClo
             {/* Input Area */}
             <div className="p-6 bg-white dark:bg-stone-900 border-t border-black/[0.03] dark:border-white/[0.03]">
               <div className="flex gap-3">
-                <input 
-                  type="text"
+                <input type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
